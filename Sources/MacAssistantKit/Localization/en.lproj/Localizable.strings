@@ -1,0 +1,589 @@
+/* 由 /tmp/i18n-frags/kit-*.en.strings 片段合并生成。
+   新增语言:复制本文件到 <语言代码>.lproj/ 并翻译等号右侧。 */
+
+/* Recipes — categories */
+"recipe.category.finder" = "Finder";
+"recipe.category.dock" = "Dock";
+"recipe.category.screenshot" = "Screenshots";
+"recipe.category.maintenance" = "Maintenance";
+"recipe.category.security" = "Security";
+
+/* Recipes — Finder */
+"recipe.finder-show-hidden-on.name" = "Show hidden files";
+"recipe.finder-show-hidden-on.detail" = "Show files whose names begin with a dot in Finder";
+"recipe.finder-show-hidden-off.name" = "Hide hidden files";
+"recipe.finder-show-hidden-off.detail" = "Restore the default and stop showing hidden files";
+"recipe.finder-extensions.name" = "Show all filename extensions";
+"recipe.finder-extensions.detail" = "Show filename extensions everywhere";
+"recipe.finder-pathbar.name" = "Show path bar";
+"recipe.finder-pathbar.detail" = "Show the full path at the bottom of the window";
+"recipe.finder-statusbar.name" = "Show status bar";
+"recipe.finder-statusbar.detail" = "Show the item count and available space";
+"recipe.finder-no-dsstore.name" = "No .DS_Store on network volumes";
+"recipe.finder-no-dsstore.detail" = "Avoid leaving .DS_Store files on network and USB volumes";
+
+/* Recipes — Dock */
+"recipe.dock-autohide-on.name" = "Auto-hide the Dock";
+"recipe.dock-autohide-on.detail" = "Hide the Dock when the pointer leaves it";
+"recipe.dock-autohide-off.name" = "Turn off auto-hide";
+"recipe.dock-autohide-off.detail" = "Always show the Dock";
+"recipe.dock-fast.name" = "Speed up Dock show and hide";
+"recipe.dock-fast.detail" = "Remove the show and hide animation delay";
+"recipe.dock-reset-speed.name" = "Restore the default Dock animation";
+"recipe.dock-reset-speed.detail" = "Remove the speed-up settings above";
+"recipe.dock-static-only.name" = "Show running apps only";
+"recipe.dock-static-only.detail" = "Keep only running apps in the Dock";
+
+/* Recipes — Screenshots */
+"recipe.shot-jpg.name" = "Save screenshots as JPG";
+"recipe.shot-jpg.detail" = "Smaller files";
+"recipe.shot-png.name" = "Save screenshots as PNG";
+"recipe.shot-png.detail" = "Restore the default PNG format";
+"recipe.shot-no-shadow.name" = "Remove window screenshot shadow";
+"recipe.shot-no-shadow.detail" = "Window screenshots no longer include a shadow";
+"recipe.shot-location.name" = "Save screenshots to Desktop/Screenshots";
+"recipe.shot-location.detail" = "Keep the desktop tidy";
+
+/* Recipes — Maintenance */
+"recipe.restart-finder.name" = "Restart Finder";
+"recipe.restart-dock.name" = "Restart the Dock";
+"recipe.restart-menubar.name" = "Restart the menu bar";
+"recipe.restart-controlcenter.name" = "Restart Control Center";
+"recipe.clear-clipboard.name" = "Clear the clipboard";
+"recipe.flush-dns.name" = "Flush the DNS cache";
+"recipe.flush-dns.detail" = "Requires an administrator password";
+"recipe.rebuild-launchservices.name" = "Fix duplicate Open With entries";
+"recipe.rebuild-launchservices.detail" = "Rebuild the LaunchServices database";
+"recipe.spotlight-reindex.name" = "Rebuild the Spotlight index";
+"recipe.spotlight-reindex.detail" = "Reindexes the startup volume; requires an administrator password";
+"recipe.memory-pressure.name" = "View memory pressure";
+"recipe.memory-pressure.detail" = "Read-only memory_pressure summary; caches are not cleared";
+
+/* Recipes — Security */
+"recipe.remove-quarantine.name" = "Fix “damaged” or “can’t be opened” apps";
+"recipe.remove-quarantine.detail" = "Removes the download quarantine attribute from an app (replace the path with your app)";
+"recipe.gatekeeper-assess.name" = "Assess Gatekeeper (read-only)";
+"recipe.gatekeeper-assess.detail" = "Does not change the global security policy; replace the path with your app";
+"recipe.gatekeeper-settings.name" = "Open Privacy & Security";
+"recipe.gatekeeper-settings.detail" = "Use Apple’s Open Anyway flow to allow a single app";
+
+/* System information */
+"sysinfo.hostname" = "Host name";
+"sysinfo.model" = "Model";
+"sysinfo.unknown" = "Unknown";
+"sysinfo.chip" = "Chip";
+"sysinfo.architecture" = "Architecture";
+"sysinfo.cpu.cores" = "CPU cores";
+"sysinfo.cpu.cores.value" = "%@ physical / %@ logical";
+"sysinfo.memory.total" = "Total memory";
+"sysinfo.uptime" = "Uptime";
+"sysinfo.memory.used" = "Memory used";
+"sysinfo.disk" = "Disk";
+"sysinfo.battery" = "Battery";
+"sysinfo.battery.discharging" = "On battery";
+"sysinfo.battery.charging" = "Charging";
+"sysinfo.battery.charged" = "Charged";
+"sysinfo.battery.ac-power" = "On power adapter";
+"sysinfo.uptime.days" = "%dd";
+"sysinfo.uptime.hours" = "%dh";
+"sysinfo.uptime.minutes" = "%dm";
+
+/* Memory tools */
+"memory.pressure.healthy" = "Normal";
+"memory.pressure.warning" = "Elevated";
+"memory.pressure.critical" = "Critical";
+"memory.pressure.unknown" = "Unknown";
+"memory.error.command-failed" = "Couldn’t read memory information: %@";
+"memory.error.invalid-pid" = "Invalid PID";
+"memory.error.protected-process" = "Quitting %@ could destabilize the system, so it isn’t allowed";
+"memory.error.permission-denied" = "You don’t have permission to quit this process";
+"memory.error.process-not-found" = "The process has already exited";
+"memory.error.signal-failed" = "Couldn’t send the signal (errno %d)";
+"memory.error.purge-unavailable" = "The purge command isn’t available on this Mac";
+"memory.purge.title" = "Clear the file cache (purge)";
+"memory.purge.explanation" = "Intended only for cold-cache development and benchmarking. It usually doesn’t free an app’s anonymous memory, later file reads may be slower, and it won’t necessarily speed anything up.";
+"memory.process.self" = "Mac Assistant itself";
+
+/* App repair */
+"repair.resign.preview.layered" = "Sign nested Mach-O files and bundles from the inside out";
+"repair.resign.preview.inner-component" = "inner component";
+"repair.error.sign-failed" = "Couldn’t sign %@: %@";
+"repair.error.verify-failed" = "Signature verification failed: %@";
+"repair.gatekeeper.current-macos" = "This version of macOS";
+"repair.gatekeeper.guidance" = "%@: try opening the app first, then go to System Settings > Privacy & Security, check where it came from, and click Open Anyway. That button is usually available for about an hour after the app is first blocked. Gatekeeper is never turned off system-wide.";
+"repair.error.invalid-pid-list" = "The PID list contains invalid values";
+"repair.kill.no-process" = "No processes to quit";
+"repair.error.invalid-snapshot-date" = "The snapshot date format is invalid";
+"repair.error.rosetta-apple-silicon-only" = "Rosetta 2 can only be installed on Apple Silicon. An Intel Mac is already x86_64 and needs no translation layer.";
+
+/* Cleanup — risk and category */
+"cleanup.risk.safe" = "Safe, regenerates";
+"cleanup.risk.caution" = "Use caution";
+"cleanup.risk.permanent" = "Permanent";
+"cleanup.risk.view-only" = "Review only";
+"cleanup.risk.external" = "External tool";
+"cleanup.category.system" = "System & user data";
+"cleanup.category.xcode" = "Xcode & simulators";
+"cleanup.category.package-manager" = "Package manager caches";
+
+/* Cleanup — path validation errors */
+"cleanup.path.error.invalid-url" = "The path isn’t a valid absolute local path";
+"cleanup.path.error.outside-home" = "The path is outside your home folder";
+"cleanup.path.error.outside-allowed-roots" = "The path is outside the allowed cleanup scope";
+"cleanup.path.error.protected-root" = "Refusing to touch a protected root folder";
+"cleanup.path.error.missing" = "The path no longer exists";
+"cleanup.path.error.permission-denied" = "You don’t have permission to access this path";
+"cleanup.path.error.symbolic-link" = "Symbolic links are rejected to stay inside the allowed scope";
+"cleanup.path.error.changed-since-scan" = "The path has changed since the scan";
+
+/* Cleanup — targets */
+"cleanup.user-caches.name" = "User caches";
+"cleanup.user-caches.detail" = "~/Library/Caches is broad; running apps may regenerate its contents";
+"cleanup.browser-caches.name" = "Browser caches";
+"cleanup.browser-caches.detail" = "Regenerable Chrome, Edge, Brave, Firefox, and Safari caches";
+"cleanup.developer-caches.name" = "Developer tool caches";
+"cleanup.developer-caches.detail" = "Regenerable Xcode, SwiftPM, Go, pnpm, and Cargo caches";
+"cleanup.xcode-derived.name" = "Xcode DerivedData";
+"cleanup.xcode-derived.detail" = "Intermediate build products; the next build will be slower";
+"cleanup.xcode-devicesupport.name" = "Xcode device support";
+"cleanup.xcode-devicesupport.detail" = "Debug symbol caches for physical devices; downloaded again when needed";
+"cleanup.xcode-archives.name" = "Xcode Archives";
+"cleanup.xcode-archives.detail" = "Holds your archives and upload history; review it in Finder instead";
+"cleanup.simulator-caches.name" = "Simulator caches";
+"cleanup.simulator-caches.detail" = "Regenerable CoreSimulator caches";
+"cleanup.logs.name" = "User logs";
+"cleanup.logs.detail" = "Still useful for troubleshooting, so not selected by default";
+"cleanup.trash.name" = "Trash";
+"cleanup.trash.detail" = "Emptying can’t be undone, so it needs a separate confirmation";
+"cleanup.npm.name" = "npm cache";
+"cleanup.yarn.name" = "Yarn cache";
+"cleanup.pip.name" = "pip cache";
+"cleanup.homebrew.name" = "Homebrew cleanup";
+"cleanup.homebrew.detail" = "External commands are previewed and confirmed on their own, never mixed with ordinary caches";
+"cleanup.cocoapods.name" = "CocoaPods cache";
+"cleanup.gradle.name" = "Gradle cache";
+"cleanup.legacy.name" = "Developer caches";
+"cleanup.legacy.detail" = "Legacy cleanup";
+
+/* Cleanup — scan and execution feedback */
+"cleanup.status.external-excluded" = "External commands aren’t part of ordinary cleanup";
+"cleanup.message.cancelled-before-start" = "Cancelled before processing started";
+"cleanup.message.cancelled-no-rollback" = "Cancelled; finished operations aren’t rolled back";
+"cleanup.message.not-file-cleanup" = "This item isn’t part of ordinary file cleanup";
+"cleanup.message.trash-needs-confirmation" = "Emptying the Trash needs a separate confirmation";
+"cleanup.message.no-read-permission" = "%@: no read permission";
+"cleanup.message.no-read-permission.generic" = "No read permission";
+"cleanup.message.no-write-permission" = "%@: no read and write permission";
+"cleanup.message.detail" = "%@: %@";
+"cleanup.message.size-unreadable" = "%@: couldn’t read the size";
+"cleanup.message.size-incomplete" = "%@: incomplete size estimate";
+"cleanup.message.attributes-unreadable" = "%@: couldn’t read the attributes";
+"cleanup.message.enumeration-failed" = "Couldn’t list the folder contents";
+"cleanup.message.more-read-errors" = "%d more read errors";
+"cleanup.message.empty-directory" = "%@: folder is empty";
+"cleanup.message.gone-before-processing" = "%@: no longer existed before processing";
+"cleanup.message.symlink-skipped" = "%@: symbolic link skipped";
+"cleanup.message.path-missing" = "%@: path doesn’t exist";
+"cleanup.message.overlap-skipped" = "%@: already covered by a broader cleanup target";
+
+/* SigningService */
+"signing.error.commandFailed" = "Signing command failed: %@";
+"signing.error.noIdentitySelected" = "No signing identity selected";
+"signing.error.profileParse" = "Failed to parse the provisioning profile: %@";
+"signing.error.toolMissing" = "Missing tool: %@";
+"signing.error.profileExpired" = "The provisioning profile has expired, so signing was stopped.";
+"signing.error.teamMismatch" = "The signing identity Team ID (%@) doesn't match the provisioning profile (%@).";
+"signing.error.bundleIDMismatch" = "Bundle ID %@ isn't covered by the provisioning profile App ID %@.";
+"signing.error.entitlementNotAllowed" = "The entitlement %@ isn't authorized by the provisioning profile, or its value doesn't match.";
+"signing.error.unsupportedExtensions" = "Found extensions that need their own provisioning profiles (%@). This beta doesn't support per-extension profile mapping yet, so it stopped instead of reporting a false success.";
+"signing.error.missingProfileMappings" = "These nested bundles have no provisioning profile mapping: %@";
+"signing.error.stepFailed" = "%@ failed (exit code %d): %@";
+"signing.error.signFileFailed" = "Signing %@ failed: %@";
+"signing.error.signMainAppFailed" = "Signing the main app failed: %@";
+"signing.error.outputExists" = "The output already exists, so overwriting was refused: %@";
+"signing.profileParse.invalidPlist" = "Invalid plist";
+"signing.profileParse.missingTeamIdentifier" = "Missing TeamIdentifier";
+"signing.profileParse.missingApplicationIdentifier" = "Missing application-identifier";
+"signing.profileParse.entitlementsPlistNotFound" = "No entitlements plist found";
+"signing.profileParse.entitlementsRootNotDictionary" = "The entitlements root object isn't a dictionary";
+"signing.profileParse.missingBundleIdentifier" = "%@ is missing CFBundleIdentifier";
+"signing.profileParse.invalidInfoPlist" = "%@ has an invalid Info.plist";
+"signing.step.readEntitlements" = "Read the original app entitlements";
+"signing.step.signFile" = "Sign %@";
+"signing.step.finalVerify" = "Final codesign verification";
+"signing.step.updateBundleID" = "Update the main app bundle ID";
+"signing.log.skipped" = "Skipped signing: %@";
+"signing.log.signed" = "Signed: %@";
+"signing.log.signedNode" = "Signed: %@";
+"signing.log.strictVerifyPassed" = "✅ codesign strict verification passed";
+"signing.log.graphVerifyPassed" = "✅ Signing graph and codesign strict verification passed";
+"signing.log.profileInfo" = "Profile: %@ · App ID: %@";
+"signing.log.embeddedWritten" = "Wrote embedded.mobileprovision";
+"signing.log.bundleIDSet" = "Set CFBundleIdentifier = %@";
+"signing.log.mainBundleIDSet" = "Set the main app bundle ID = %@";
+"signing.log.profileMapped" = "Mapped profile: %@";
+"signing.log.signedMainApp" = "Signed the main app (with entitlements)";
+"signing.log.repackaged" = "Repackaged: %@";
+"signing.hint.entitlements" = "• The entitlements exceed what the provisioning profile authorizes. Use the entitlements from the target .mobileprovision instead of copying the original app's.";
+"signing.hint.bundleID" = "• The bundle id doesn't match the provisioning profile App ID. CFBundleIdentifier must fall inside the profile's App ID, either exactly or through its wildcard.";
+"signing.hint.expired" = "• The provisioning profile or certificate has expired. Generate a new profile (personal certificates are valid for 7 days).";
+"signing.hint.noIdentity" = "• No signing identity was found. Make sure the certificate and its private key are in your keychain and appear in security find-identity.";
+"signing.hint.resourceFork" = "• Extended attributes or resource forks are present. Run xattr -cr on the .app before re-signing.";
+"signing.hint.generic" = "• If installation fails, check the bundle id against the App ID, make sure the device UDID is in the profile, and confirm the entitlements aren't over-privileged.";
+
+/* IpaService */
+"ipa.log.unpacked" = "Unpacked the IPA";
+"ipa.log.mainExecutable" = "Main executable: %@";
+"ipa.log.dylibCopied" = "Copied dylib → %@";
+"ipa.log.repackaged" = "Repackaged: %@";
+"ipa.error.installNameToolUnavailable" = "install_name_tool is needed to add an rpath, but it isn't available.";
+"ipa.error.commandFailed" = "Command failed: %@";
+"ipa.error.appNotFound" = "No .app was found in Payload";
+"ipa.error.executableNotFound" = "No valid main executable (Mach-O) was found";
+"ipa.error.outputExists" = "The output already exists, so overwriting was refused: %@";
+"ipa.error.architectureMismatch" = "The dylib doesn't cover every required architecture. Executable: %@; dylib: %@; missing: %@";
+"ipa.error.invalidPayload" = "The IPA Payload structure is invalid: %@";
+"ipa.invalidPayload.infoPlistRootNotDictionary" = "The Info.plist root object isn't a dictionary";
+"ipa.invalidPayload.missingPayloadDirectory" = "The Payload directory is missing";
+"ipa.invalidPayload.appCount" = "Payload must contain exactly one top-level .app, but it contains %d.";
+
+/* InjectionPlan */
+"plan.loadKind.required" = "Required (recommended)";
+"plan.loadKind.weak" = "Optional (weak)";
+"plan.validation.ipaExtension" = "The IPA input must end in .ipa";
+"plan.validation.appExtension" = "The app input must be a .app directory";
+"plan.validation.noItems" = "Add at least one dylib";
+"plan.validation.notDylib" = "%@ isn't a .dylib";
+"plan.validation.invalidLoadPath" = "The load path for %@ is invalid";
+"plan.validation.duplicateMapping" = "The same dylib can't be mapped to the same target twice: %@";
+"plan.validation.resourceConflict" = "Conflicting resource destination: %@";
+"plan.validation.destructiveUnconfirmed" = "Removing Watch, PlugIns, or AppClips requires explicit confirmation of this destructive action";
+"plan.validation.outputName" = "The custom output name can't contain path separators";
+"plan.validation.displayNameEmpty" = "The display name can't be empty";
+"plan.validation.bundleIDFormat" = "Invalid Bundle ID format";
+"plan.error.invalidRelativePath" = "Invalid target relative path: %@";
+"plan.error.validation" = "The injection plan didn't pass validation:";
+
+/* IpaInjectionWorkflow */
+"ipaflow.error.preflight" = "Injection preflight didn't pass:";
+"ipaflow.error.targetNotFound" = "Can't find the target Mach-O: %@";
+"ipaflow.error.pathEscapesApp" = "The target path escapes the app: %@";
+"ipaflow.error.resourceConflict" = "The resource destination already exists, so overwriting was refused: %@";
+"ipaflow.error.unsupportedIcon" = "Unsupported icon format: %@";
+"ipaflow.error.auditFailed" = "The final artifact audit failed: %@";
+"ipaflow.error.outputExists" = "The output already exists, so overwriting was refused: %@";
+"ipaflow.error.infoPlistRootNotDictionary" = "The Info.plist root object isn't a dictionary";
+"ipaflow.error.removalUnconfirmed" = "Removing components requires confirmation of this destructive action";
+"ipaflow.log.ipaExpanded" = "Safely expanded the IPA";
+"ipaflow.log.appCopyCreated" = "Created an editable copy of the .app";
+"ipaflow.log.preflightPassed" = "Execution checks passed: %d injection mappings";
+"ipaflow.log.stagedAuditPassed" = "Staged app audit passed";
+"ipaflow.log.packaging" = "Packaging the output archive";
+"ipaflow.log.archiveValidated" = "Output archive structure validated";
+"ipaflow.log.signingSkipped" = "Skipped signing as planned";
+"ipaflow.log.finalAuditPassed" = "Final per-slice load command, dependency, and archive audit passed";
+"ipaflow.log.embedded" = "Embedded %@";
+"ipaflow.log.dylibReplaced" = "Replaced the existing dylib with %@";
+"ipaflow.log.resourceAdded" = "Added resource %@";
+"ipaflow.log.resourceReplaced" = "Replaced resource %@";
+"ipaflow.log.resourceReplaced" = "Replaced resource %@";
+"ipaflow.log.displayNameUpdated" = "Updated the display name";
+"ipaflow.log.bundleIDUpdated" = "Updated the Bundle ID";
+"ipaflow.log.componentBundleIDsUpdated" = "Updated Bundle IDs for %d embedded components";
+"ipaflow.log.iconsCopied" = "Copied and registered %d icon files";
+"ipaflow.log.fileSharingEnabled" = "Enabled Files app / iTunes file sharing";
+"ipaflow.log.whiteIconRepaired" = "Repaired icon metadata";
+"ipaflow.log.voipRemoved" = "Removed VOIP background mode";
+"ipaflow.log.urlSchemesRemoved" = "Removed app URL scheme registrations";
+"ipaflow.log.componentRemoved" = "Removed %@ as confirmed in the plan";
+"ipaflow.finding.dylibMissing" = "Can't find %@";
+"ipaflow.finding.targetCryptid" = "The cryptid of %@ is non-zero, so injecting into this encrypted target was refused.";
+"ipaflow.finding.dylibCryptid" = "%@ is still encrypted";
+"ipaflow.finding.architectureMismatch" = "%@ doesn't cover the target architectures %@";
+"ipaflow.finding.arm64e" = "%@ contains arm64e, but the dylib has no arm64e slice";
+"ipaflow.finding.modernRuntime" = "%@ uses Swift, chained fixups, or arm64e. Only static capability checks were performed.";
+"ipaflow.finding.loadDuplicate" = "%@ already contains %@";
+"ipaflow.finding.loadPartial" = "Only some slices contain %@, so it can't be skipped safely";
+"ipaflow.finding.loadKindMismatch" = "The existing %@ has a required/weak kind that doesn't match the plan, so it can't be skipped";
+"ipaflow.finding.loadSkip" = "Every slice already contains %@, so it will be skipped during execution";
+"ipaflow.finding.loadReplace" = "The existing %@ will have its required/weak kind replaced as planned";
+"ipaflow.finding.sameContent" = "%@ has the same content as another input";
+"ipaflow.finding.installNameConflict" = "Dylibs with different content share the same install name: %@";
+"ipaflow.finding.dependencyUnresolved" = "%@ is missing the non-system dependency %@";
+"ipaflow.finding.embedConflict" = "The destination already contains different content: %@";
+"ipaflow.finding.resourceDuplicate" = "Duplicate resource destination: %@";
+"ipaflow.finding.resourceMissing" = "Can't find the resource: %@";
+"ipaflow.finding.resourceConflict" = "The resource destination already exists: %@";
+"ipaflow.finding.resourceRemovedComponent" = "The resource destination is inside a component selected for removal: %@";
+"ipaflow.finding.resourceReplace" = "The resource will replace the existing destination: %@";
+"ipaflow.finding.resourceReplace" = "The resource will replace the existing destination: %@";
+"ipaflow.finding.iconAssetCatalog" = "This app uses a modern icon asset catalog. This version won't rewrite an incomplete plist and claim a false success.";
+"ipaflow.finding.iconUnsupported" = "Only PNG and ICNS icon resources are accepted: %@";
+"ipaflow.finding.iconConflict" = "An icon with this name already exists in the app root: %@";
+"ipaflow.finding.profileMissing" = "Device signing is missing a provisioning profile: %@";
+"ipaflow.finding.profileInvalid" = "The provisioning profile for %@ is invalid: %@";
+"ipaflow.finding.bundleIDLocal" = "The Bundle ID was changed. Signing modes other than device signing can't prove that the provisioning profile matches.";
+"ipaflow.audit.missingStagingRoot" = "The IPA staging root directory is missing";
+"ipaflow.audit.missingEmbedded" = "%@ is missing";
+"ipaflow.audit.sliceMissingLoad" = "%@ slice %d is missing %@";
+"ipaflow.audit.sliceKindMismatch" = "%@ slice %d has a mismatched required/weak kind";
+
+/* ClassDumpService */
+"classdump.error.notMachO" = "Not a valid Mach-O file";
+"classdump.error.encrypted" = "This binary is FairPlay-encrypted (cryptid=1), so static parsing only yields garbage. You need an unencrypted binary obtained in a jailbroken or otherwise authorized environment first; this app does not decrypt binaries.";
+"classdump.error.unsupportedBuiltIn" = "The built-in Class Dump does not support this yet: %@. No fabricated headers were written; you can retry with an external enhancer.";
+"classdump.error.needsExternalTool" = "An external tool is required: %@";
+"classdump.error.noExternalTool" = "No usable header export tool is installed. %@";
+"classdump.error.commandFailed" = "The external tool failed: %@";
+"classdump.error.externalToolNoDeclarations" = "The external tool produced no declarations";
+"classdump.error.buildExternalToolYourself" = "Detected %@. Verify and build the external tool yourself from its project page, then try again. This app never downloads or bundles binaries with unclear licensing.";
+"classdump.error.noHeadersInOutputDirectory" = "class-dump wrote no .h files to the output directory";
+"classdump.error.unsupportedTool" = "Unsupported tool %@";
+"classdump.error.cannotReadOutputDirectory" = "Cannot read the class-dump output directory";
+"classdump.error.outputExceedsSafetyLimit" = "class-dump output exceeds the safety limit";
+"classdump.skip.noClassList" = "No __objc_classlist found";
+"classdump.skip.emptyClassList" = "The Objective-C class list is empty or malformed";
+"classdump.skip.unresolvableClassPointer" = "A class metadata pointer could not be resolved";
+"classdump.skip.unresolvableMethodListPointer" = "A method list pointer could not be resolved";
+"classdump.skip.relativeMethodList" = "Relative method lists are beyond the scope of the built-in experimental parser";
+"classdump.skip.partialTraditionalMethods" = "Some traditional method entries could not be parsed";
+"classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1: you must first obtain an unencrypted binary in a legally authorized environment";
+"classdump.reason.arm64eMayNeedExternal" = "arm64e pointer authentication may require an external enhancer";
+"classdump.reason.chainedFixupsUnsupported" = "Chained fixups are not supported by the built-in pointer parser";
+"classdump.reason.swiftOutOfScope" = "Swift types are not fully covered by Objective-C headers";
+"classdump.reason.metadataNotTraversedYet" = "Metadata has not been traversed yet; actual coverage is reported after export";
+"classdump.reason.swiftMetadataDetected" = "Swift metadata detected; the built-in engine only covers Objective-C metadata";
+"classdump.reason.arm64eUnsupported" = "The arm64e pointer authentication format is not supported by the built-in parser";
+"classdump.reason.containsSwiftTypes" = "contains Swift types";
+"classdump.reason.nativeFoundNoClasses" = "the native parser found no Objective-C classes";
+"classdump.reasonSeparator" = ", ";
+"classdump.warning.externalNoCoverageStats" = "External results do not report method, property, or protocol coverage";
+"classdump.warning.fellBackToExternal" = "Fell back to an external tool: %@";
+"classdump.warning.cannotSplitExternalResult" = "External enhancer output cannot be split reliably, so an aggregate header was written instead.";
+"classdump.header.generatedBy" = "// Generated by the Mac Assistant native Objective-C parser (best effort, unencrypted + traditional pointer format)";
+"classdump.header.fileSummary" = "// File: %@  Architecture: %@  Classes: %d";
+
+/* DebService */
+"deb.error.validationFailed" = "The packaging information has problems:\n%@";
+"deb.error.arTarVerificationFailed" = "Verification failed after building with ar + tar";
+"deb.error.compatibilityModeLabel" = "Compatibility mode:";
+"deb.error.tarEmptyOrUnparsable" = "The tar archive is empty or its listing could not be parsed";
+"deb.error.commandFailed" = "Command failed: %@";
+"deb.error.missingMember" = "Missing required member: %@";
+"deb.error.outputExists" = "Output already exists; refusing to overwrite: %@";
+"deb.validation.packageID" = "Package ID must be a lowercase reverse domain name, such as com.example.tweak";
+"deb.validation.nameEmpty" = "Name cannot be empty";
+"deb.validation.version" = "Version must start with a digit and may only contain characters allowed in Debian versions";
+"deb.validation.architectureUnsupported" = "Architecture is not supported";
+"deb.validation.rootlessArchitecture" = "A rootless tweak should use iphoneos-arm64, iphoneos-arm64e, or all";
+"deb.validation.roothideArchitecture" = "A roothide package must use iphoneos-arm64e; Mach-O slices and package Architecture are checked separately";
+"deb.validation.roothideNeedsArm64e" = "%@ has no arm64e Mach-O slice and cannot be packaged for the roothide profile";
+"deb.validation.descriptionEmpty" = "Description cannot be empty";
+"deb.validation.maintainerEmpty" = "Maintainer cannot be empty";
+"deb.validation.fieldNoNewline" = "%@ cannot contain line breaks";
+"deb.validation.needsDylib" = "Select at least one .dylib";
+"deb.validation.notDylib" = "%@ is not a .dylib";
+"deb.validation.fileNotFound" = "Cannot find %@";
+"deb.validation.invalidPlist" = "%@ is not a valid plist";
+"deb.validation.illegalPackagePath" = "Invalid path inside the package: %@";
+"deb.validation.duplicatePackagePath" = "Duplicate path inside the package: %@";
+
+/* DebEditableWorkspace */
+"deb.workspace.error.invalidPath" = "The workspace path is invalid or escapes the workspace: %@";
+"deb.workspace.error.notDylib" = "The replacement file is not a valid dylib: %@";
+"deb.workspace.error.scriptInvalid" = "Invalid maintainer script: %@";
+"deb.workspace.error.controlInvalid" = "Invalid control file: %@";
+"deb.workspace.error.unsupportedFidelity" = "This package cannot be edited with full fidelity right now: %@";
+"deb.workspace.error.repackVerificationFailed" = "The repacked archive failed control/contents verification";
+"deb.workspace.fidelity.linkEntries" = "The package contains link entries; this version blocks editing instead of silently losing link metadata";
+"deb.workspace.limitation.numericOwner" = "A normal-user workspace on macOS cannot prove that Debian numeric uid/gid values are fully preserved; rebuilding with --root-owner-group normalizes them to root:root.";
+"deb.workspace.limitation.failClosedLinks" = "Editing mode fails closed on symlinks, hardlinks, and special nodes rather than silently lowering the fidelity level.";
+"deb.workspace.limitation.extendedAttributes" = "xattrs, ACLs, and PAX extended attributes do not reach the writer yet; when found, they should block a fidelity-preserving build.";
+"deb.workspace.control.needsTrailingNewline" = "It must end with a newline and cannot contain NUL";
+"deb.workspace.control.missingCoreFields" = "Missing Package, Version, or Architecture";
+"deb.workspace.control.mustKeepTrailingNewline" = "control must keep its trailing newline and cannot contain NUL";
+"deb.workspace.control.missingRequiredFields" = "Missing required fields";
+"deb.workspace.script.requirements" = "%@ must have a shebang, be executable, must not be world-writable, and cannot contain NUL";
+
+/* DebArchiveWorkflow */
+"deb.archive.error.artifactNotFound" = "Cannot find scanned item %@";
+"deb.archive.error.noDylibsFound" = "The safety scan found no dynamic libraries to collect";
+"deb.archive.error.destinationNotEmpty" = "The output directory is not empty; refusing to overwrite: %@";
+"deb.archive.error.outputConflict" = "Extraction output path conflict: %@";
+"deb.archive.error.invalidExtractedPath" = "An extracted path escapes the workspace: %@";
+"deb.archive.error.manifestVerificationFailed" = "The extraction manifest failed verification after it was written";
+
+/* DebDependencyAdvisor */
+"deb.dependency.reason.substrate" = "The install name uses the Substrate API. The target bootstrap may be provided by Substrate, ElleKit, or a compatibility layer, so the repository mapping has to be confirmed.";
+"deb.dependency.reason.elleKit" = "The install name explicitly contains ElleKit, but you still need to confirm the package name and version in the target repository.";
+"deb.dependency.reason.unresolved" = "Without a trusted Packages index, a Debian package ID cannot be inferred from an install name.";
+
+/* TweakInjectService */
+"tweak.error.noTweakFound" = "No injectable tweak dylib was found in the selected files";
+"tweak.error.commandFailed" = "Command failed: %@";
+"tweak.error.architectureMismatch" = "Architecture mismatch: %@";
+"tweak.error.architectureMismatchDetail" = "%@ does not cover the main executable slices %@; tweak=%@, main executable=%@";
+"tweak.error.unresolvedDependency" = "Unsatisfied dependency: %@";
+"tweak.error.outputExists" = "Output already exists; refusing to overwrite: %@";
+"tweak.error.rewriteFailed" = "Failed to rewrite %@ → %@: %@";
+"tweak.error.missingSubstrateFramework" = "%@ depends on CydiaSubstrate, but no compatible CydiaSubstrate.framework was provided";
+"tweak.error.missingInstallNameTool" = "install_name_tool is missing, so the required rpath cannot be added";
+"tweak.log.mainExecutable" = "Main executable: %@  Architectures: %@";
+"tweak.log.frameworkPlaced" = "Added dependency framework: %@";
+"tweak.log.addedRPath" = "Added rpath: @executable_path/Frameworks";
+"tweak.log.resigning" = "Starting re-signing (%@)";
+"tweak.log.repackaged" = "Repackaged: %@";
+"tweak.warning.noDylibInDeb" = "No dylib found in %@";
+"macapp.clone.error.invalidApp" = "The selected item is not a valid macOS app";
+"macapp.clone.error.invalidDisplayName" = "The clone name must not be empty or contain path separators";
+"macapp.clone.error.invalidBundleID" = "The clone Bundle ID is invalid";
+"macapp.clone.error.outputExists" = "The clone output already exists: %@";
+
+/* SlimService */
+"slim.error.commandFailed" = "Command failed: %@";
+"slim.error.stripUnavailable" = "The strip tool is unavailable; full symbol stripping was skipped";
+"slim.error.outputExists" = "Output already exists; refusing to overwrite: %@";
+"slim.log.unpacked" = "Unpacked. Original: %@ unpacked / %@ compressed";
+"slim.log.removedEmbeddedDSYM" = "Removed embedded dSYM: %@";
+"slim.log.lipoThin" = "lipo kept only %@: %@";
+"slim.log.lipoRemoveArchs" = "lipo removed architectures %@: %@";
+"slim.log.stripSymbolsDone" = "strip -rSTx finished (⚠️ crash logs can no longer be symbolicated)";
+"slim.log.gentleStripDone" = "Gentle strip -x on Frameworks finished (public symbols kept)";
+"slim.log.resigning" = "Mach-O / bundle changes detected. Starting re-signing (%@)";
+"slim.log.noResignNeeded" = "Nothing inside .app was touched, so no re-signing is needed";
+"slim.log.repackaged" = "Repackaged: %@";
+"slim.log.afterSlimming" = "After slimming: %@ unpacked / %@ compressed";
+"slim.log.removedRootSymbols" = "Removed top-level Symbols/";
+"slim.log.removedRootItem" = "Removed top-level %@";
+
+/* DylibService */
+"dylib.error.installNameUnchanged" = "The install name did not change to %@";
+"dylib.error.dependencyUnchanged" = "The dependency did not change from %@ to %@";
+"dylib.error.rpathNotAdded" = "The rpath %@ was not added";
+"dylib.error.rpathNotDeleted" = "The rpath %@ was not removed";
+"dylib.error.commandFailed" = "Command failed: %@";
+"dylib.error.notMachO" = "Not a valid Mach-O: %@";
+"dylib.error.noExpectedChange" = "The edit command did not produce the expected result: %@";
+
+/* DylibInjector */
+"dylib.macho.error.notMachO" = "Not a valid Mach-O file";
+"dylib.macho.error.truncated" = "The file is truncated or corrupted";
+"dylib.macho.error.unsupported" = "Unsupported Mach-O: %@";
+"dylib.macho.error.noSpace" = "There is not enough header space in the %@ architecture to insert a new load command. Try again with “Remove code signature” selected.";
+"dylib.macho.error.emptyFat" = "The fat binary contains no architecture slices";
+"dylib.macho.error.duplicateDylib" = "Every target slice already contains %@; refusing to inject it again";
+"dylib.macho.unsupported.emptyPath" = "The dylib path is empty or contains NUL";
+"dylib.macho.unsupported.pathTooLong" = "The dylib path is too long";
+"dylib.macho.unsupported.duplicateInSlice" = "A single slice contains duplicate load commands: %@";
+"dylib.macho.unsupported.referenceKindMismatch" = "The existing %@ uses a strong/weak reference kind that differs from the plan, so it cannot be skipped";
+"dylib.macho.unsupported.partialSlices" = "Only some slices contain %@, so it cannot be skipped safely";
+"dylib.macho.unsupported.fatSliceOverflow" = "A fat slice offset or length overflows";
+"dylib.macho.unsupported.fatSliceOverlap" = "Fat slice ranges overlap";
+"dylib.macho.log.skippedExisting" = "Skipped existing load command: %@";
+"dylib.macho.log.replacedWithWeak" = "Replaced the existing command in slice %d with a weak reference: %@";
+"dylib.macho.log.replacedWithStrong" = "Replaced the existing command in slice %d with a strong reference: %@";
+"dylib.macho.log.strippedCodeSignature" = "Removed LC_CODE_SIGNATURE from the %@-bit slice to free up space";
+"dylib.macho.log.injectedIntoSlice" = "Injected into the %@-bit slice: %@";
+
+/* BundleMachOWorkflow */
+"machobundle.kind.standalone" = "Single Mach-O";
+"machobundle.kind.mainExecutable" = "Main executable";
+"machobundle.kind.dylib" = "Standalone dylib";
+"machobundle.target.restrictedNote" = "Restricted target: needs its own signature plus a matching profile, platform, and architecture. Not selected by default.";
+"machobundle.error.unsupportedInput" = "Unsupported input: %@. Choose a single Mach-O, an .app directory, or an .ipa.";
+"machobundle.error.targetNotFound" = "Cannot find binary target: %@";
+"machobundle.error.outputExists" = "Output already exists; refusing to overwrite: %@";
+"machobundle.error.hashMismatch" = "SHA-256 verification failed after copying: %@";
+"machobundle.analysis.noSignatureInfo" = "No signature information";
+
+/* ArchiveSafety */
+"archive.error.malformed" = "The archive is corrupted or unsupported: %@";
+"archive.error.unsafePath" = "The archive contains an unsafe path: %@";
+"archive.error.symbolicLink" = "The archive contains a symlink and was rejected to prevent link escapes: %@";
+"archive.error.entryLimit" = "The archive has %d entries, which exceeds the safety limit";
+"archive.error.singleFileLimit" = "Archive entry %@ expands to %@ bytes, which exceeds the single-file limit";
+"archive.error.totalSizeLimit" = "The archive is expected to expand to %@ bytes, which exceeds the total size limit";
+"archive.malformed.missingEndRecord" = "The ZIP end record is missing";
+"archive.malformed.noCentralDirectory" = "The ZIP central directory was not found";
+"archive.malformed.centralDirectoryOutOfRange" = "The central directory range is out of bounds";
+"archive.malformed.centralEntryTruncated" = "A central directory entry is truncated";
+"archive.malformed.encryptedZIP" = "Encrypted ZIP archives are not unpacked";
+"archive.malformed.nameOrExtraOutOfRange" = "An entry name or extra field is out of bounds";
+"archive.malformed.nameNotUTF8" = "An entry name is not UTF-8";
+"archive.malformed.localEntryOutOfRange" = "A local entry offset is out of bounds";
+"archive.malformed.centralDirectorySizeMismatch" = "The central directory size is inconsistent";
+
+/* ExternalTools */
+"tool.error.invalidFormula" = "Invalid Homebrew formula name";
+"tool.error.homebrewMissing" = "Homebrew is not installed. Install Homebrew first.";
+"tool.error.noAutomaticInstall" = "This tool cannot be installed automatically";
+"tool.error.installFailed" = "Installation failed: %@";
+"tool.homebrew.guidance.legacy" = "See the official installation instructions or the signed installer at brew.sh. Homebrew's supported range changes over time, and this app makes no promise that macOS 13 is still supported.";
+"tool.homebrew.guidance.current" = "See Homebrew's official installation instructions, system requirements, and signed installer at brew.sh. This app never runs curl | bash.";
+"tool.classDump.builtInFallback" = "The built-in Class Dump works out of the box; external class-dump only adds support for complex formats";
+"tool.dsdump.builtInFallback" = "Built-in parsing does not need dsdump; that project's license is unclear, so only its project page is offered";
+"tool.installHint.openProjectPage" = "Open project page";
+
+/* FileSystem */
+"fs.access.pathsPrefix" = "The following paths cannot be accessed:\n%@\n\n";
+"fs.access.selectedFilesEnough" = "Files you choose yourself are accessible, so “Full Disk Access” is usually unnecessary. ";
+"fs.access.systemSettingsHint" = "If the file is in Desktop, Documents, or Downloads, allow access in System Settings > Privacy & Security > Files and Folders, then try again. ";
+"fs.access.fullDiskAccessNote" = "“Full Disk Access” is only for advanced troubleshooting and grants much broader permission.\n\n";
+"fs.access.underlyingError" = "Original error: %@";
+
+/* Shell */
+"shell.error.launchFailed" = "Cannot launch %@: %@";
+"shell.error.executableNotFound" = "Executable not found: %@";
+
+/* HostArchitecture */
+"arch.slice.unknown" = "Unknown";
+"arch.summary.translated" = "%@ · this process runs as %@ under Rosetta";
+
+/* AdminRunner */
+"admin.error.notAllowed" = "The administrator command is not in the allowlist: %@";
+"admin.error.emptyCommand" = "The administrator command is empty";
+
+/* SignMethod */
+"signMethod.codesignAdhoc" = "codesign (ad-hoc)";
+"signMethod.ldid" = "ldid (fake signature)";
+"signMethod.none" = "Don’t sign";
+
+/* Localization */
+"language.system" = "System";
+
+/* Sidebar */
+"sidebar.dashboard" = "Overview";
+"sidebar.repair" = "App Repair";
+"sidebar.cleanup" = "Cleanup";
+"sidebar.memory" = "Memory";
+"sidebar.network" = "Network";
+"sidebar.cheatsheet" = "Commands";
+"sidebar.recipes" = "Quick Toggles";
+"sidebar.deb" = "DEB Tools";
+"sidebar.dylib" = "DYLIB Tools";
+"sidebar.ipa" = "IPA Toolbox";
+"sidebar.macApp" = "macOS App Injection";
+"sidebar.binary" = "Binary Tools";
+"sidebar.environment" = "Environment";
+"sidebar.about" = "About";
+
+/* Risk levels */
+"risk.safe" = "Safe";
+"risk.caution" = "Caution";
+"risk.danger" = "Danger";
+
+/* Command categories */
+"cmd.category.signing" = "Signing & security";
+"cmd.category.quarantine" = "Quarantine & Gatekeeper";
+"cmd.category.install" = "Install & uninstall";
+"cmd.category.sip" = "SIP · permissions · disks";
+"cmd.category.cleanup" = "System cleanup";
+"cmd.category.network" = "Network";
+"cmd.category.interface" = "Interface tips";
+"cmd.category.reverse" = "Reverse engineering";
+"cmd.category.performance" = "Performance · battery · hardware";
+"cmd.category.backup" = "Time Machine · login items";
+"cmd.category.homebrew" = "Homebrew";
+"cmd.category.securityToggles" = "Security switches";
+"cmd.category.terminal" = "Terminal & input";
+"cmd.category.diagnostics" = "Diagnostics";

@@ -1,0 +1,589 @@
+/* 由 /tmp/i18n-frags/kit-*.zh.strings 片段合并生成。
+   新增语言:复制本文件到 <语言代码>.lproj/ 并翻译等号右侧。 */
+
+/* Recipes — 分类 */
+"recipe.category.finder" = "访达";
+"recipe.category.dock" = "程序坞";
+"recipe.category.screenshot" = "截图";
+"recipe.category.maintenance" = "维护";
+"recipe.category.security" = "安全";
+
+/* Recipes — 访达 */
+"recipe.finder-show-hidden-on.name" = "显示隐藏文件";
+"recipe.finder-show-hidden-on.detail" = "在访达中显示以点开头的隐藏文件";
+"recipe.finder-show-hidden-off.name" = "隐藏隐藏文件";
+"recipe.finder-show-hidden-off.detail" = "恢复默认,不显示隐藏文件";
+"recipe.finder-extensions.name" = "显示所有文件扩展名";
+"recipe.finder-extensions.detail" = "全局显示文件扩展名";
+"recipe.finder-pathbar.name" = "显示路径栏";
+"recipe.finder-pathbar.detail" = "窗口底部显示完整路径";
+"recipe.finder-statusbar.name" = "显示状态栏";
+"recipe.finder-statusbar.detail" = "显示项目数量与剩余空间";
+"recipe.finder-no-dsstore.name" = "网络盘不生成 .DS_Store";
+"recipe.finder-no-dsstore.detail" = "避免在网络/U 盘留下 .DS_Store";
+
+/* Recipes — 程序坞 */
+"recipe.dock-autohide-on.name" = "自动隐藏程序坞";
+"recipe.dock-autohide-on.detail" = "鼠标离开时隐藏 Dock";
+"recipe.dock-autohide-off.name" = "取消自动隐藏";
+"recipe.dock-autohide-off.detail" = "始终显示 Dock";
+"recipe.dock-fast.name" = "加快 Dock 显隐";
+"recipe.dock-fast.detail" = "去掉显示/隐藏动画延迟";
+"recipe.dock-reset-speed.name" = "恢复 Dock 默认动画";
+"recipe.dock-reset-speed.detail" = "移除上面的加速设置";
+"recipe.dock-static-only.name" = "仅显示活跃应用";
+"recipe.dock-static-only.detail" = "Dock 只保留正在运行的 App";
+
+/* Recipes — 截图 */
+"recipe.shot-jpg.name" = "截图存为 JPG";
+"recipe.shot-jpg.detail" = "更小的体积";
+"recipe.shot-png.name" = "截图存为 PNG";
+"recipe.shot-png.detail" = "恢复默认 PNG 格式";
+"recipe.shot-no-shadow.name" = "去掉窗口截图阴影";
+"recipe.shot-no-shadow.detail" = "窗口截图不再带阴影";
+"recipe.shot-location.name" = "截图保存到 桌面/Screenshots";
+"recipe.shot-location.detail" = "整理桌面截图";
+
+/* Recipes — 维护 */
+"recipe.restart-finder.name" = "重启访达";
+"recipe.restart-dock.name" = "重启程序坞";
+"recipe.restart-menubar.name" = "重启菜单栏";
+"recipe.restart-controlcenter.name" = "重启控制中心";
+"recipe.clear-clipboard.name" = "清空剪贴板";
+"recipe.flush-dns.name" = "刷新 DNS 缓存";
+"recipe.flush-dns.detail" = "需要管理员权限";
+"recipe.rebuild-launchservices.name" = "修复“打开方式”重复项";
+"recipe.rebuild-launchservices.detail" = "重建 LaunchServices 数据库";
+"recipe.spotlight-reindex.name" = "重建 Spotlight 索引";
+"recipe.spotlight-reindex.detail" = "重新索引启动卷,需要管理员权限";
+"recipe.memory-pressure.name" = "查看内存压力";
+"recipe.memory-pressure.detail" = "只读查看系统 memory_pressure 摘要，不清理缓存";
+
+/* Recipes — 安全 */
+"recipe.remove-quarantine.name" = "移除“已损坏/无法打开”限制";
+"recipe.remove-quarantine.detail" = "对指定 App 去除下载隔离属性(把路径替换为目标 App)";
+"recipe.gatekeeper-assess.name" = "只读评估 Gatekeeper";
+"recipe.gatekeeper-assess.detail" = "不会更改全局安全策略；把路径替换为目标 App";
+"recipe.gatekeeper-settings.name" = "打开隐私与安全性";
+"recipe.gatekeeper-settings.detail" = "按 Apple 官方流程使用“仍要打开”授予单个 App 例外";
+
+/* 系统信息 */
+"sysinfo.hostname" = "主机名";
+"sysinfo.model" = "型号";
+"sysinfo.unknown" = "未知";
+"sysinfo.chip" = "芯片";
+"sysinfo.architecture" = "架构";
+"sysinfo.cpu.cores" = "CPU 核心";
+"sysinfo.cpu.cores.value" = "%@ 物理 / %@ 逻辑";
+"sysinfo.memory.total" = "内存总量";
+"sysinfo.uptime" = "系统运行";
+"sysinfo.memory.used" = "内存已用";
+"sysinfo.disk" = "磁盘";
+"sysinfo.battery" = "电池";
+"sysinfo.battery.discharging" = "放电中";
+"sysinfo.battery.charging" = "充电中";
+"sysinfo.battery.charged" = "已充满";
+"sysinfo.battery.ac-power" = "电源供电";
+"sysinfo.uptime.days" = "%d 天";
+"sysinfo.uptime.hours" = "%d 小时";
+"sysinfo.uptime.minutes" = "%d 分钟";
+
+/* 内存工具 */
+"memory.pressure.healthy" = "正常";
+"memory.pressure.warning" = "偏高";
+"memory.pressure.critical" = "严重";
+"memory.pressure.unknown" = "未知";
+"memory.error.command-failed" = "读取内存信息失败：%@";
+"memory.error.invalid-pid" = "PID 无效";
+"memory.error.protected-process" = "为避免系统不稳定，不能结束 %@";
+"memory.error.permission-denied" = "没有权限结束该进程";
+"memory.error.process-not-found" = "进程已经退出";
+"memory.error.signal-failed" = "发送信号失败（errno %d）";
+"memory.error.purge-unavailable" = "当前系统没有可用的 purge 命令";
+"memory.purge.title" = "清理文件缓存（purge）";
+"memory.purge.explanation" = "仅用于开发测试冷缓存或基准测试；通常不会释放应用匿名内存，随后读取文件可能变慢，也不保证提速。";
+"memory.process.self" = "Mac 小助手自身";
+
+/* App 修复 */
+"repair.resign.preview.layered" = "由内向外签署嵌套 Mach-O / bundle";
+"repair.resign.preview.inner-component" = "内层组件";
+"repair.error.sign-failed" = "签署 %@ 失败：%@";
+"repair.error.verify-failed" = "签名验证失败：%@";
+"repair.gatekeeper.current-macos" = "当前 macOS";
+"repair.gatekeeper.guidance" = "%@：先尝试打开 App，再到“系统设置 > 隐私与安全性”核对来源并点“仍要打开”。该按钮通常在首次拦截后一小时内可用。不会全局关闭 Gatekeeper。";
+"repair.error.invalid-pid-list" = "PID 列表包含非法值";
+"repair.kill.no-process" = "没有需要结束的进程";
+"repair.error.invalid-snapshot-date" = "快照日期格式非法";
+"repair.error.rosetta-apple-silicon-only" = "Rosetta 2 只能装在 Apple Silicon 上:Intel Mac 本身就是 x86_64,不需要转译层。";
+
+/* 系统清理 — 风险与分类 */
+"cleanup.risk.safe" = "安全可再生";
+"cleanup.risk.caution" = "需谨慎";
+"cleanup.risk.permanent" = "永久操作";
+"cleanup.risk.view-only" = "仅建议查看";
+"cleanup.risk.external" = "外部工具";
+"cleanup.category.system" = "系统与用户数据";
+"cleanup.category.xcode" = "Xcode 与模拟器";
+"cleanup.category.package-manager" = "包管理器缓存";
+
+/* 系统清理 — 路径校验错误 */
+"cleanup.path.error.invalid-url" = "路径不是有效的绝对本地路径";
+"cleanup.path.error.outside-home" = "路径超出当前用户主目录";
+"cleanup.path.error.outside-allowed-roots" = "路径不在允许的清理范围内";
+"cleanup.path.error.protected-root" = "拒绝处理受保护的根目录";
+"cleanup.path.error.missing" = "路径已不存在";
+"cleanup.path.error.permission-denied" = "没有访问该路径的权限";
+"cleanup.path.error.symbolic-link" = "为避免越界，已拒绝符号链接";
+"cleanup.path.error.changed-since-scan" = "路径自扫描后已发生变化";
+
+/* 系统清理 — 清理目标 */
+"cleanup.user-caches.name" = "用户缓存";
+"cleanup.user-caches.detail" = "~/Library/Caches 范围较广；运行中的 App 可能重新生成内容";
+"cleanup.browser-caches.name" = "浏览器缓存";
+"cleanup.browser-caches.detail" = "Chrome、Edge、Brave、Firefox 与 Safari 的可再生缓存";
+"cleanup.developer-caches.name" = "开发工具缓存";
+"cleanup.developer-caches.detail" = "Xcode、SwiftPM、Go、pnpm 与 Cargo 的可再生缓存";
+"cleanup.xcode-derived.name" = "Xcode DerivedData";
+"cleanup.xcode-derived.detail" = "构建中间产物，删除后首次编译会变慢";
+"cleanup.xcode-devicesupport.name" = "Xcode 设备支持";
+"cleanup.xcode-devicesupport.detail" = "真机调试符号缓存，需要时会重新下载";
+"cleanup.xcode-archives.name" = "Xcode Archives";
+"cleanup.xcode-archives.detail" = "包含用户归档与上传记录，仅建议在 Finder 中检查";
+"cleanup.simulator-caches.name" = "模拟器缓存";
+"cleanup.simulator-caches.detail" = "CoreSimulator 可再生缓存";
+"cleanup.logs.name" = "用户日志";
+"cleanup.logs.detail" = "可能仍用于故障诊断，默认不选";
+"cleanup.trash.name" = "废纸篓";
+"cleanup.trash.detail" = "清空后无法从废纸篓恢复，需独立二次确认";
+"cleanup.npm.name" = "npm 缓存";
+"cleanup.yarn.name" = "Yarn 缓存";
+"cleanup.pip.name" = "pip 缓存";
+"cleanup.homebrew.name" = "Homebrew 清理";
+"cleanup.homebrew.detail" = "外部命令必须单独预览与确认，不与普通缓存混跑";
+"cleanup.cocoapods.name" = "CocoaPods 缓存";
+"cleanup.gradle.name" = "Gradle 缓存";
+"cleanup.legacy.name" = "开发缓存";
+"cleanup.legacy.detail" = "兼容清理";
+
+/* 系统清理 — 扫描与执行反馈 */
+"cleanup.status.external-excluded" = "外部命令不进入普通清理任务";
+"cleanup.message.cancelled-before-start" = "用户已取消，未开始处理";
+"cleanup.message.cancelled-no-rollback" = "用户已取消；已完成的操作不会回滚";
+"cleanup.message.not-file-cleanup" = "该项目不属于普通文件清理";
+"cleanup.message.trash-needs-confirmation" = "清空废纸篓需要独立二次确认";
+"cleanup.message.no-read-permission" = "%@：没有读取权限";
+"cleanup.message.no-read-permission.generic" = "没有读取权限";
+"cleanup.message.no-write-permission" = "%@：没有读写权限";
+"cleanup.message.detail" = "%@：%@";
+"cleanup.message.size-unreadable" = "%@：无法读取大小";
+"cleanup.message.size-incomplete" = "%@：大小估算不完整";
+"cleanup.message.attributes-unreadable" = "%@：无法读取属性";
+"cleanup.message.enumeration-failed" = "无法枚举目录内容";
+"cleanup.message.more-read-errors" = "另有 %d 处读取错误";
+"cleanup.message.empty-directory" = "%@：目录为空";
+"cleanup.message.gone-before-processing" = "%@：处理前已不存在";
+"cleanup.message.symlink-skipped" = "%@：符号链接已跳过";
+"cleanup.message.path-missing" = "%@：路径不存在";
+"cleanup.message.overlap-skipped" = "%@：已由更大范围的清理目标处理";
+
+/* SigningService */
+"signing.error.commandFailed" = "签名命令失败:%@";
+"signing.error.noIdentitySelected" = "未选择签名身份";
+"signing.error.profileParse" = "描述文件解析失败:%@";
+"signing.error.toolMissing" = "缺少工具:%@";
+"signing.error.profileExpired" = "描述文件已过期，拒绝继续签名";
+"signing.error.teamMismatch" = "签名身份 Team ID（%@）与描述文件（%@）不匹配";
+"signing.error.bundleIDMismatch" = "Bundle ID %@ 不在描述文件 App ID %@ 的授权范围内";
+"signing.error.entitlementNotAllowed" = "entitlement %@ 未被描述文件授权或值不匹配";
+"signing.error.unsupportedExtensions" = "发现需要独立描述文件的扩展（%@）。当前 Beta 尚不支持逐扩展 profile 映射，已停止以避免假成功。";
+"signing.error.missingProfileMappings" = "以下嵌套 bundle 缺少独立描述文件映射：%@";
+"signing.error.stepFailed" = "%@ 失败（退出码 %d）：%@";
+"signing.error.signFileFailed" = "签名 %@ 失败:%@";
+"signing.error.signMainAppFailed" = "签名主 App 失败:%@";
+"signing.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"signing.profileParse.invalidPlist" = "非法 plist";
+"signing.profileParse.missingTeamIdentifier" = "缺少 TeamIdentifier";
+"signing.profileParse.missingApplicationIdentifier" = "缺少 application-identifier";
+"signing.profileParse.entitlementsPlistNotFound" = "未找到 entitlements plist";
+"signing.profileParse.entitlementsRootNotDictionary" = "entitlements 根对象不是字典";
+"signing.profileParse.missingBundleIdentifier" = "%@ 缺少 CFBundleIdentifier";
+"signing.profileParse.invalidInfoPlist" = "%@ Info.plist 无效";
+"signing.step.readEntitlements" = "读取原 App entitlements";
+"signing.step.signFile" = "签名 %@";
+"signing.step.finalVerify" = "最终 codesign 校验";
+"signing.step.updateBundleID" = "更新主 App Bundle ID";
+"signing.log.skipped" = "跳过签名:%@";
+"signing.log.signed" = "已签名:%@";
+"signing.log.signedNode" = "已签名：%@";
+"signing.log.strictVerifyPassed" = "✅ codesign 严格校验通过";
+"signing.log.graphVerifyPassed" = "✅ 签名图与 codesign 严格校验通过";
+"signing.log.profileInfo" = "描述文件:%@ · AppID:%@";
+"signing.log.embeddedWritten" = "已写入 embedded.mobileprovision";
+"signing.log.bundleIDSet" = "已设置 CFBundleIdentifier = %@";
+"signing.log.mainBundleIDSet" = "已设置主 App Bundle ID = %@";
+"signing.log.profileMapped" = "已映射 profile：%@";
+"signing.log.signedMainApp" = "已签名主 App(带 entitlements)";
+"signing.log.repackaged" = "已重新打包:%@";
+"signing.hint.entitlements" = "• entitlements 超出描述文件授权范围:请用目标 .mobileprovision 里的 entitlements,别照搬原 App 的。";
+"signing.hint.bundleID" = "• bundle id 与描述文件 App ID 不匹配:CFBundleIdentifier 必须落在 profile 的 App ID(精确或通配 *)范围内。";
+"signing.hint.expired" = "• 描述文件或证书已过期:重新生成 profile(个人证书 7 天有效)。";
+"signing.hint.noIdentity" = "• 找不到签名身份:确认钥匙串已导入证书 + 私钥,并用 security find-identity 能看到。";
+"signing.hint.resourceFork" = "• 存在扩展属性/资源分叉:先对 .app 执行 xattr -cr 再重签。";
+"signing.hint.generic" = "• 若装机失败,优先排查:bundle id 是否匹配 App ID、设备 UDID 是否在 profile、entitlements 是否越权。";
+
+/* IpaService */
+"ipa.log.unpacked" = "已解包 IPA";
+"ipa.log.mainExecutable" = "主可执行文件:%@";
+"ipa.log.dylibCopied" = "已拷贝 dylib → %@";
+"ipa.log.repackaged" = "已重新打包:%@";
+"ipa.error.installNameToolUnavailable" = "需要 install_name_tool 添加 rpath，但当前不可用";
+"ipa.error.commandFailed" = "命令执行失败:%@";
+"ipa.error.appNotFound" = "在 Payload 中未找到 .app";
+"ipa.error.executableNotFound" = "未找到有效的主可执行文件(Mach-O)";
+"ipa.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"ipa.error.architectureMismatch" = "dylib 架构覆盖不足。主程序：%@；dylib：%@；缺少：%@";
+"ipa.error.invalidPayload" = "IPA Payload 结构无效：%@";
+"ipa.invalidPayload.infoPlistRootNotDictionary" = "Info.plist 根对象不是字典";
+"ipa.invalidPayload.missingPayloadDirectory" = "缺少 Payload 目录";
+"ipa.invalidPayload.appCount" = "Payload 必须且只能包含一个顶层 .app，当前为 %d 个";
+
+/* InjectionPlan */
+"plan.loadKind.required" = "必需加载（推荐）";
+"plan.loadKind.weak" = "可选加载（弱引用）";
+"plan.validation.ipaExtension" = "IPA 输入必须以 .ipa 结尾";
+"plan.validation.appExtension" = "App 输入必须是 .app 目录";
+"plan.validation.noItems" = "至少添加一个 dylib";
+"plan.validation.notDylib" = "%@ 不是 .dylib";
+"plan.validation.invalidLoadPath" = "%@ 的 load path 无效";
+"plan.validation.duplicateMapping" = "同一 dylib 不能重复映射到同一目标：%@";
+"plan.validation.resourceConflict" = "资源目标冲突：%@";
+"plan.validation.destructiveUnconfirmed" = "移除 Watch、PlugIns 或 AppClips 前必须明确确认危险操作";
+"plan.validation.outputName" = "自定义输出名不能包含路径分隔符";
+"plan.validation.displayNameEmpty" = "显示名称不能为空";
+"plan.validation.bundleIDFormat" = "Bundle ID 格式无效";
+"plan.error.invalidRelativePath" = "目标相对路径无效：%@";
+"plan.error.validation" = "注入计划未通过校验：";
+
+/* IpaInjectionWorkflow */
+"ipaflow.error.preflight" = "注入预检未通过：";
+"ipaflow.error.targetNotFound" = "找不到目标 Mach-O：%@";
+"ipaflow.error.pathEscapesApp" = "目标路径逃逸 App：%@";
+"ipaflow.error.resourceConflict" = "资源目标已存在，拒绝覆盖：%@";
+"ipaflow.error.unsupportedIcon" = "图标格式不支持：%@";
+"ipaflow.error.auditFailed" = "最终产物审计失败：%@";
+"ipaflow.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"ipaflow.error.infoPlistRootNotDictionary" = "Info.plist 根对象不是字典";
+"ipaflow.error.removalUnconfirmed" = "移除组件缺少危险操作确认";
+"ipaflow.log.ipaExpanded" = "已安全展开 IPA";
+"ipaflow.log.appCopyCreated" = "已创建 .app 修改副本";
+"ipaflow.log.preflightPassed" = "执行检查通过：%d 条注入映射";
+"ipaflow.log.stagedAuditPassed" = "暂存目录审计通过";
+"ipaflow.log.packaging" = "正在打包输出归档";
+"ipaflow.log.archiveValidated" = "输出归档结构校验通过";
+"ipaflow.log.signingSkipped" = "已按计划跳过签名";
+"ipaflow.log.finalAuditPassed" = "最终逐切片 load command、依赖与归档审计通过";
+"ipaflow.log.embedded" = "已嵌入 %@";
+"ipaflow.log.dylibReplaced" = "已移除旧 dylib 并替换为 %@";
+"ipaflow.log.resourceAdded" = "已加入资源 %@";
+"ipaflow.log.resourceReplaced" = "已替换资源 %@";
+"ipaflow.log.resourceReplaced" = "已替换资源 %@";
+"ipaflow.log.displayNameUpdated" = "已更新显示名称";
+"ipaflow.log.bundleIDUpdated" = "已更新 Bundle ID";
+"ipaflow.log.componentBundleIDsUpdated" = "已同步更新 %d 个嵌套组件 Bundle ID";
+"ipaflow.log.iconsCopied" = "已复制并登记 %d 个图标文件";
+"ipaflow.log.fileSharingEnabled" = "已开启 Files App / iTunes 文件共享";
+"ipaflow.log.whiteIconRepaired" = "已修复图标元数据";
+"ipaflow.log.voipRemoved" = "已移除 VOIP 后台模式";
+"ipaflow.log.urlSchemesRemoved" = "已移除应用 URL Scheme 注册";
+"ipaflow.log.componentRemoved" = "已按确认计划移除 %@";
+"ipaflow.finding.dylibMissing" = "找不到 %@";
+"ipaflow.finding.targetCryptid" = "%@ 的 cryptid 非零，拒绝对加密目标注入";
+"ipaflow.finding.dylibCryptid" = "%@ 仍处于加密状态";
+"ipaflow.finding.architectureMismatch" = "%@ 未覆盖目标架构 %@";
+"ipaflow.finding.arm64e" = "%@ 含 arm64e，但 dylib 不含 arm64e 切片";
+"ipaflow.finding.modernRuntime" = "%@ 使用 Swift、chained fixups 或 arm64e；仅完成静态能力检查";
+"ipaflow.finding.loadDuplicate" = "%@ 已含 %@";
+"ipaflow.finding.loadPartial" = "仅部分切片含 %@，不能安全跳过";
+"ipaflow.finding.loadKindMismatch" = "现有 %@ 的 required/weak 类型与计划不符，不能跳过";
+"ipaflow.finding.loadSkip" = "所有切片已含 %@，执行时跳过";
+"ipaflow.finding.loadReplace" = "现有 %@ 将按计划替换强/弱引用类型";
+"ipaflow.finding.sameContent" = "%@ 与另一输入内容相同";
+"ipaflow.finding.installNameConflict" = "不同内容的 dylib 使用相同 install name：%@";
+"ipaflow.finding.dependencyUnresolved" = "%@ 缺少非系统依赖 %@";
+"ipaflow.finding.embedConflict" = "目标已存在不同内容：%@";
+"ipaflow.finding.resourceDuplicate" = "资源目标重复：%@";
+"ipaflow.finding.resourceMissing" = "找不到资源：%@";
+"ipaflow.finding.resourceConflict" = "资源目标已存在：%@";
+"ipaflow.finding.resourceRemovedComponent" = "资源目标位于将被移除的组件内：%@";
+"ipaflow.finding.resourceReplace" = "资源将替换已有目标：%@";
+"ipaflow.finding.resourceReplace" = "资源将替换已有目标：%@";
+"ipaflow.finding.iconAssetCatalog" = "此 App 使用现代图标 asset catalog；当前版本不会用不完整 plist 改写伪报成功";
+"ipaflow.finding.iconUnsupported" = "只接受 PNG/ICNS 图标资源：%@";
+"ipaflow.finding.iconConflict" = "App 根目录已存在图标：%@";
+"ipaflow.finding.profileMissing" = "真机签名缺少 profile：%@";
+"ipaflow.finding.profileInvalid" = "%@ 的 profile 无效：%@";
+"ipaflow.finding.bundleIDLocal" = "Bundle ID 已修改；非真机签名模式不会证明描述文件匹配";
+"ipaflow.audit.missingStagingRoot" = "缺少 IPA staging 根目录";
+"ipaflow.audit.missingEmbedded" = "缺少 %@";
+"ipaflow.audit.sliceMissingLoad" = "%@ 切片 %d 缺少 %@";
+"ipaflow.audit.sliceKindMismatch" = "%@ 切片 %d 的强/弱引用类型不符";
+
+/* ClassDumpService */
+"classdump.error.notMachO" = "不是有效的 Mach-O 文件";
+"classdump.error.encrypted" = "该二进制已被 FairPlay 加密(cryptid=1),静态解析只会得到乱码;需先在越狱/授权环境脱壳,本工具不提供脱壳。";
+"classdump.error.unsupportedBuiltIn" = "内置 Class Dump 暂不支持：%@。没有生成伪造头文件；可选择外部增强后重试。";
+"classdump.error.needsExternalTool" = "需要外部工具:%@";
+"classdump.error.noExternalTool" = "未安装可用的头文件导出工具。%@";
+"classdump.error.commandFailed" = "外部工具执行失败:%@";
+"classdump.error.externalToolNoDeclarations" = "外部工具未输出任何声明";
+"classdump.error.buildExternalToolYourself" = "检测到 %@。请从项目官网自行核验并构建外部工具后重试；应用不会下载或捆绑许可不明的二进制。";
+"classdump.error.noHeadersInOutputDirectory" = "class-dump 未在输出目录生成 .h 文件";
+"classdump.error.unsupportedTool" = "不支持的工具 %@";
+"classdump.error.cannotReadOutputDirectory" = "无法读取 class-dump 输出目录";
+"classdump.error.outputExceedsSafetyLimit" = "class-dump 输出超过安全限制";
+"classdump.skip.noClassList" = "未发现 __objc_classlist";
+"classdump.skip.emptyClassList" = "Objective-C 类列表为空或异常";
+"classdump.skip.unresolvableClassPointer" = "类元数据指针无法解析";
+"classdump.skip.unresolvableMethodListPointer" = "方法列表指针无法解析";
+"classdump.skip.relativeMethodList" = "relative method list 超出内置实验性解析范围";
+"classdump.skip.partialTraditionalMethods" = "部分传统方法条目无法解析";
+"classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1：必须先在合法授权环境获得未加密二进制";
+"classdump.reason.arm64eMayNeedExternal" = "arm64e 指针认证可能需要外部增强工具";
+"classdump.reason.chainedFixupsUnsupported" = "chained fixups 不受内置指针解析支持";
+"classdump.reason.swiftOutOfScope" = "Swift 类型不在 ObjC 头文件完整覆盖范围内";
+"classdump.reason.metadataNotTraversedYet" = "尚未执行元数据遍历；导出后会给出实际覆盖率";
+"classdump.reason.swiftMetadataDetected" = "检测到 Swift 元数据；内置引擎仅覆盖 Objective-C 元数据";
+"classdump.reason.arm64eUnsupported" = "arm64e 指针认证格式不受内置解析支持";
+"classdump.reason.containsSwiftTypes" = "含 Swift 类型";
+"classdump.reason.nativeFoundNoClasses" = "原生解析未找到 ObjC 类";
+"classdump.reasonSeparator" = "、";
+"classdump.warning.externalNoCoverageStats" = "外部结果不统计方法、属性和协议覆盖率";
+"classdump.warning.fellBackToExternal" = "已回退外部工具:%@";
+"classdump.warning.cannotSplitExternalResult" = "外部增强结果无法可靠拆分，已改为聚合头文件。";
+"classdump.header.generatedBy" = "// 由 Mac 小助手原生 ObjC 解析器生成(尽力而为,未加密 + 传统指针格式)";
+"classdump.header.fileSummary" = "// 文件:%@  架构:%@  类数:%d";
+
+/* DebService */
+"deb.error.validationFailed" = "打包信息有误：\n%@";
+"deb.error.arTarVerificationFailed" = "ar + tar 构建后的校验未通过";
+"deb.error.compatibilityModeLabel" = "兼容模式：";
+"deb.error.tarEmptyOrUnparsable" = "tar 归档为空或列表无法解析";
+"deb.error.commandFailed" = "命令执行失败:%@";
+"deb.error.missingMember" = "缺少必要成员:%@";
+"deb.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"deb.validation.packageID" = "Package ID 必须是小写反向域名，如 com.example.tweak";
+"deb.validation.nameEmpty" = "Name 不能为空";
+"deb.validation.version" = "Version 必须以数字开头，且只能包含 Debian 版本允许的字符";
+"deb.validation.architectureUnsupported" = "Architecture 不受支持";
+"deb.validation.rootlessArchitecture" = "rootless tweak 应使用 iphoneos-arm64、iphoneos-arm64e 或 all";
+"deb.validation.roothideArchitecture" = "roothide 包应使用 iphoneos-arm64e；Mach-O 切片与包 Architecture 分别校验";
+"deb.validation.roothideNeedsArm64e" = "%@ 缺少 arm64e Mach-O 切片，不能按 roothide profile 打包";
+"deb.validation.descriptionEmpty" = "Description 不能为空";
+"deb.validation.maintainerEmpty" = "Maintainer 不能为空";
+"deb.validation.fieldNoNewline" = "%@ 不能包含换行";
+"deb.validation.needsDylib" = "至少选择一个 .dylib";
+"deb.validation.notDylib" = "%@ 不是 .dylib";
+"deb.validation.fileNotFound" = "找不到 %@";
+"deb.validation.invalidPlist" = "%@ 不是有效的 plist";
+"deb.validation.illegalPackagePath" = "包内路径非法：%@";
+"deb.validation.duplicatePackagePath" = "包内路径重复：%@";
+
+/* DebEditableWorkspace */
+"deb.workspace.error.invalidPath" = "工作区路径无效或逃逸：%@";
+"deb.workspace.error.notDylib" = "替换文件不是有效 dylib：%@";
+"deb.workspace.error.scriptInvalid" = "维护脚本无效：%@";
+"deb.workspace.error.controlInvalid" = "control 无效：%@";
+"deb.workspace.error.unsupportedFidelity" = "当前无法保真编辑此包：%@";
+"deb.workspace.error.repackVerificationFailed" = "重打包结果未通过 control/contents 校验";
+"deb.workspace.fidelity.linkEntries" = "包含链接条目；当前版本选择阻止而不是静默丢失 link metadata";
+"deb.workspace.limitation.numericOwner" = "macOS 普通用户工作区不能证明完整保留 Debian numeric uid/gid；重建使用 --root-owner-group 时会规范化为 root:root。";
+"deb.workspace.limitation.failClosedLinks" = "当前编辑模式对 symlink/hardlink/特殊节点 fail-closed，不会静默降级保真等级。";
+"deb.workspace.limitation.extendedAttributes" = "xattr、ACL 与 PAX 扩展属性当前不进入 writer；发现时应阻止保真发布。";
+"deb.workspace.control.needsTrailingNewline" = "必须以换行结尾且不能含 NUL";
+"deb.workspace.control.missingCoreFields" = "缺少 Package、Version 或 Architecture";
+"deb.workspace.control.mustKeepTrailingNewline" = "control 必须保留尾换行且不能含 NUL";
+"deb.workspace.control.missingRequiredFields" = "缺少必要字段";
+"deb.workspace.script.requirements" = "%@ 必须有 shebang、可执行、不可 world-writable 且不能含 NUL";
+
+/* DebArchiveWorkflow */
+"deb.archive.error.artifactNotFound" = "找不到扫描条目 %@";
+"deb.archive.error.noDylibsFound" = "安全扫描未找到可汇总的动态库";
+"deb.archive.error.destinationNotEmpty" = "输出目录不是空目录，拒绝覆盖：%@";
+"deb.archive.error.outputConflict" = "提取输出路径冲突：%@";
+"deb.archive.error.invalidExtractedPath" = "解包后的路径逃逸工作区：%@";
+"deb.archive.error.manifestVerificationFailed" = "提取清单写入后校验失败";
+
+/* DebDependencyAdvisor */
+"deb.dependency.reason.substrate" = "install name 使用 Substrate API；目标 bootstrap 可能由 Substrate、ElleKit 或兼容层提供，必须确认仓库映射";
+"deb.dependency.reason.elleKit" = "install name 明确包含 ElleKit；仍需确认目标仓库包名与版本";
+"deb.dependency.reason.unresolved" = "没有可信 Packages index，不能从 install name 武断推导 Debian package ID";
+
+/* TweakInjectService */
+"tweak.error.noTweakFound" = "未在所选文件中找到可注入的 tweak dylib";
+"tweak.error.commandFailed" = "命令失败:%@";
+"tweak.error.architectureMismatch" = "架构不匹配：%@";
+"tweak.error.architectureMismatchDetail" = "%@ 未覆盖主程序切片 %@；tweak=%@，主程序=%@";
+"tweak.error.unresolvedDependency" = "依赖未满足：%@";
+"tweak.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"tweak.error.rewriteFailed" = "改写 %@ → %@ 失败：%@";
+"tweak.error.missingSubstrateFramework" = "%@ 依赖 CydiaSubstrate，但未提供兼容的 CydiaSubstrate.framework";
+"tweak.error.missingInstallNameTool" = "缺少 install_name_tool，无法添加必需 rpath";
+"tweak.log.mainExecutable" = "主程序:%@  架构:%@";
+"tweak.log.frameworkPlaced" = "已放入依赖框架:%@";
+"tweak.log.addedRPath" = "已补 rpath:@executable_path/Frameworks";
+"tweak.log.resigning" = "进入重签流程(%@)";
+"tweak.log.repackaged" = "已重新打包:%@";
+"tweak.warning.noDylibInDeb" = "%@ 中未找到 dylib";
+"macapp.clone.error.invalidApp" = "所选项目不是有效的 macOS App";
+"macapp.clone.error.invalidDisplayName" = "分身名称不能为空，且不能包含路径分隔符";
+"macapp.clone.error.invalidBundleID" = "分身 Bundle ID 格式无效";
+"macapp.clone.error.outputExists" = "分身输出已存在：%@";
+
+/* SlimService */
+"slim.error.commandFailed" = "命令失败:%@";
+"slim.error.stripUnavailable" = "未找到 strip 工具，完整去符号未执行";
+"slim.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"slim.log.unpacked" = "解包完成,原始:解包 %@ / 压缩 %@";
+"slim.log.removedEmbeddedDSYM" = "删除内嵌 dSYM:%@";
+"slim.log.lipoThin" = "lipo 仅保留 %@:%@";
+"slim.log.lipoRemoveArchs" = "lipo 去架构 %@:%@";
+"slim.log.stripSymbolsDone" = "strip -rSTx 去符号完成(⚠️ 之后崩溃日志无法符号化)";
+"slim.log.gentleStripDone" = "对 Frameworks 温和 strip -x 完成(保留公共符号)";
+"slim.log.resigning" = "检测到 Mach-O / bundle 改动,进入重签流程(%@)";
+"slim.log.noResignNeeded" = "未触碰 .app 内文件,无需重签";
+"slim.log.repackaged" = "已重新打包:%@";
+"slim.log.afterSlimming" = "瘦身后:解包 %@ / 压缩 %@";
+"slim.log.removedRootSymbols" = "删除根级 Symbols/";
+"slim.log.removedRootItem" = "删除根级 %@";
+
+/* DylibService */
+"dylib.error.installNameUnchanged" = "install name 未变为 %@";
+"dylib.error.dependencyUnchanged" = "依赖未从 %@ 变为 %@";
+"dylib.error.rpathNotAdded" = "未添加 rpath %@";
+"dylib.error.rpathNotDeleted" = "未删除 rpath %@";
+"dylib.error.commandFailed" = "命令执行失败:%@";
+"dylib.error.notMachO" = "不是有效的 Mach-O：%@";
+"dylib.error.noExpectedChange" = "修改命令未产生预期结果：%@";
+
+/* DylibInjector */
+"dylib.macho.error.notMachO" = "不是有效的 Mach-O 文件";
+"dylib.macho.error.truncated" = "文件被截断或损坏";
+"dylib.macho.error.unsupported" = "不支持的 Mach-O:%@";
+"dylib.macho.error.noSpace" = "架构 %@ 的头部空间不足,无法插入新的 load command(可勾选“去除代码签名”后重试)";
+"dylib.macho.error.emptyFat" = "胖二进制不包含任何架构切片";
+"dylib.macho.error.duplicateDylib" = "每个目标切片已包含 %@，拒绝重复注入";
+"dylib.macho.unsupported.emptyPath" = "dylib 路径为空或包含 NUL";
+"dylib.macho.unsupported.pathTooLong" = "dylib 路径过长";
+"dylib.macho.unsupported.duplicateInSlice" = "同一切片包含重复 load command：%@";
+"dylib.macho.unsupported.referenceKindMismatch" = "现有 %@ 的强/弱引用类型与计划不符，不能跳过";
+"dylib.macho.unsupported.partialSlices" = "仅部分切片包含 %@，不能安全跳过";
+"dylib.macho.unsupported.fatSliceOverflow" = "fat 切片偏移或长度溢出";
+"dylib.macho.unsupported.fatSliceOverlap" = "fat 切片范围重叠";
+"dylib.macho.log.skippedExisting" = "已跳过现有 load command：%@";
+"dylib.macho.log.replacedWithWeak" = "已把切片 %d 的现有命令替换为弱引用：%@";
+"dylib.macho.log.replacedWithStrong" = "已把切片 %d 的现有命令替换为强引用：%@";
+"dylib.macho.log.strippedCodeSignature" = "已移除 %@-bit 切片的 LC_CODE_SIGNATURE 以腾出空间";
+"dylib.macho.log.injectedIntoSlice" = "已向 %@-bit 切片注入:%@";
+
+/* BundleMachOWorkflow */
+"machobundle.kind.standalone" = "单个 Mach-O";
+"machobundle.kind.mainExecutable" = "主程序";
+"machobundle.kind.dylib" = "独立 dylib";
+"machobundle.target.restrictedNote" = "受限目标：需要独立签名、匹配的 profile、平台与架构；不会默认选择。";
+"machobundle.error.unsupportedInput" = "不支持的输入：%@。请选择单个 Mach-O、.app 目录或 .ipa。";
+"machobundle.error.targetNotFound" = "找不到二进制目标：%@";
+"machobundle.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"machobundle.error.hashMismatch" = "复制后 SHA-256 校验失败：%@";
+"machobundle.analysis.noSignatureInfo" = "无签名信息";
+
+/* ArchiveSafety */
+"archive.error.malformed" = "归档格式损坏或不受支持：%@";
+"archive.error.unsafePath" = "归档包含不安全路径：%@";
+"archive.error.symbolicLink" = "归档包含符号链接，已拒绝以防止链接逃逸：%@";
+"archive.error.entryLimit" = "归档条目数 %d 超过安全上限";
+"archive.error.singleFileLimit" = "归档条目 %@ 展开后为 %@ 字节，超过单文件上限";
+"archive.error.totalSizeLimit" = "归档预计展开为 %@ 字节，超过总大小上限";
+"archive.malformed.missingEndRecord" = "缺少 ZIP 尾记录";
+"archive.malformed.noCentralDirectory" = "找不到 ZIP 中央目录";
+"archive.malformed.centralDirectoryOutOfRange" = "中央目录范围越界";
+"archive.malformed.centralEntryTruncated" = "中央目录条目被截断";
+"archive.malformed.encryptedZIP" = "不解包加密 ZIP";
+"archive.malformed.nameOrExtraOutOfRange" = "条目名称或附加字段越界";
+"archive.malformed.nameNotUTF8" = "条目名称不是 UTF-8";
+"archive.malformed.localEntryOutOfRange" = "本地条目偏移越界";
+"archive.malformed.centralDirectorySizeMismatch" = "中央目录大小不一致";
+
+/* ExternalTools */
+"tool.error.invalidFormula" = "Homebrew formula 名称无效";
+"tool.error.homebrewMissing" = "尚未安装 Homebrew，请先安装 Homebrew";
+"tool.error.noAutomaticInstall" = "该工具不支持自动安装";
+"tool.error.installFailed" = "安装失败：%@";
+"tool.homebrew.guidance.legacy" = "请在 brew.sh 查看官方安装说明或签名安装包。Homebrew 当前支持范围会变化，本应用不承诺 macOS 13 仍受支持。";
+"tool.homebrew.guidance.current" = "请在 brew.sh 查看 Homebrew 官方安装说明、系统要求和签名安装包；本应用不会执行 curl | bash。";
+"tool.classDump.builtInFallback" = "内置 Class Dump 默认可用；外部 class-dump 仅为复杂格式增强";
+"tool.dsdump.builtInFallback" = "内置解析不依赖 dsdump；该项目许可不明，仅提供项目页";
+"tool.installHint.openProjectPage" = "打开项目官网";
+
+/* FileSystem */
+"fs.access.pathsPrefix" = "无法访问以下路径：\n%@\n\n";
+"fs.access.selectedFilesEnough" = "选择的文件即可访问，通常无需“完全磁盘访问”。";
+"fs.access.systemSettingsHint" = "若文件位于桌面、文稿或下载目录，请在“系统设置 > 隐私与安全性 > 文件与文件夹”中允许访问后重试。";
+"fs.access.fullDiskAccessNote" = "“完全磁盘访问”仅用于高级故障排除，授权范围更大。\n\n";
+"fs.access.underlyingError" = "原始错误：%@";
+
+/* Shell */
+"shell.error.launchFailed" = "无法启动 %@:%@";
+"shell.error.executableNotFound" = "找不到可执行文件:%@";
+
+/* HostArchitecture */
+"arch.slice.unknown" = "未知";
+"arch.summary.translated" = "%@ · 本进程经 Rosetta 以 %@ 运行";
+
+/* AdminRunner */
+"admin.error.notAllowed" = "管理员命令不在 allowlist：%@";
+"admin.error.emptyCommand" = "管理员命令为空";
+
+/* SignMethod */
+"signMethod.codesignAdhoc" = "codesign (ad-hoc)";
+"signMethod.ldid" = "ldid (伪签名)";
+"signMethod.none" = "不签名";
+
+/* Localization */
+"language.system" = "跟随系统";
+
+/* Sidebar */
+"sidebar.dashboard" = "系统概览";
+"sidebar.repair" = "应用修复";
+"sidebar.cleanup" = "系统清理";
+"sidebar.memory" = "内存工具";
+"sidebar.network" = "网络工具";
+"sidebar.cheatsheet" = "命令速查";
+"sidebar.recipes" = "快捷开关";
+"sidebar.deb" = "DEB 工具";
+"sidebar.dylib" = "DYLIB 工具";
+"sidebar.ipa" = "IPA 工具箱";
+"sidebar.macApp" = "macOS App 注入";
+"sidebar.binary" = "二进制工具";
+"sidebar.environment" = "环境检查";
+"sidebar.about" = "关于 / 开源";
+
+/* Risk levels */
+"risk.safe" = "安全";
+"risk.caution" = "需谨慎";
+"risk.danger" = "危险";
+
+/* Command categories */
+"cmd.category.signing" = "签名与安全";
+"cmd.category.quarantine" = "隔离与 Gatekeeper";
+"cmd.category.install" = "安装与卸载";
+"cmd.category.sip" = "SIP·权限·磁盘";
+"cmd.category.cleanup" = "系统清理";
+"cmd.category.network" = "网络";
+"cmd.category.interface" = "界面技巧";
+"cmd.category.reverse" = "逆向·开发";
+"cmd.category.performance" = "性能·电池·硬件";
+"cmd.category.backup" = "Time Machine·启动项";
+"cmd.category.homebrew" = "Homebrew";
+"cmd.category.securityToggles" = "安全开关";
+"cmd.category.terminal" = "终端·输入法";
+"cmd.category.diagnostics" = "诊断采集";

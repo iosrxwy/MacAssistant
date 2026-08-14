@@ -1,0 +1,33 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# macOS
+.DS_Store
+
+# Build output
+/dist/
+*.app
+*.zip
+
+# Scratch / temp working dirs
+/tmp/
+/scratch/
+/Tests/
+
+# Local reverse-engineering research notes
+/research/
+
+# Local planning notes
+/TODO*.md
+/docs/*TODO*.md
+/docs/*计划*.md
+/docs/*任务*.md
+/docs/*目标*.md
