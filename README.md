@@ -84,6 +84,12 @@ cd MacAssistant
 open "dist/Mac小助手.app"
 ```
 
+## Contributing
+
+- **Issue** — bugs, ideas, and usage questions. Use the form; do not open an empty PR to report a problem.
+- **Pull request** — code or docs you want merged. CI (`build`) must pass.
+- Scope and “will not accept” list: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
+
 ## Credits
 
 Developed and maintained by **Codex** · Published by [iosrxwy](https://github.com/iosrxwy).

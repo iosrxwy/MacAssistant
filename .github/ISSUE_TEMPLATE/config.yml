@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 下载安装包 / Releases
+    url: https://github.com/iosrxwy/MacAssistant/releases
+    about: 安装包从这里下载，不要用 Issue 要文件。
+  - name: 贡献说明 / Contributing
+    url: https://github.com/iosrxwy/MacAssistant/blob/master/CONTRIBUTING.md
+    about: Issue 用来反馈，PR 用来交代码；也请先看项目不做的范围。
