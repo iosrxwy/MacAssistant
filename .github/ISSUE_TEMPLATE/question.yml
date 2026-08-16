@@ -1,0 +1,28 @@
+name: 使用提问
+description: 安装、构建或某个功能怎么用
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        安装包请走 [Releases](https://github.com/iosrxwy/MacAssistant/releases)。
+        构建步骤见 README。这里用来问「按文档做了但仍不清楚」的部分。
+  - type: textarea
+    id: question
+    attributes:
+      label: 问题
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: 已经试过什么
+      placeholder: 例如：看过 README 的 Build 一节，执行了 ./build_app.sh，报错如下。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      placeholder: 应用版本、macOS 版本、芯片

@@ -1,0 +1,54 @@
+name: 缺陷报告
+description: 崩溃、结果不对，或某一步走不通
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        用 Issue 反馈问题即可，不必先开 PR。
+        本项目只处理你自己的 Mac，或你已获授权的目标。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么
+      description: 期望结果和实际结果。
+      placeholder: 例如：清理缓存预览里能看到文件，点确认后数量没变。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开……
+        2. 选择……
+        3. 点击……
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: 应用版本
+      placeholder: 例如 1.0.0-beta.1，或 commit / 自己构建
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS 版本与芯片
+      placeholder: 例如 macOS 15.6，Apple M3
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图
+      description: 崩溃报告、终端输出或界面截图，没有就写「无」。
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 范围确认
+      options:
+        - label: 这不是检测绕过、DRM、反作弊、支付或访问控制规避的请求；操作目标是我自己的或已获授权的。
+          required: true

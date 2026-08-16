@@ -76,6 +76,12 @@ cd MacAssistant
 open "dist/Mac小助手.app"
 ```
 
+## 参与贡献
+
+- **Issue** 反馈问题和需求，不要用空 PR 报 Bug。
+- **PR** 提交已经写好的代码或文档，合并前需要 CI 通过。
+- 范围说明见 [CONTRIBUTING.md](../CONTRIBUTING.md)，安全问题见 [SECURITY.md](../SECURITY.md)。
+
 ## 维护
 
 由 **Codex 开发与维护** · 由 [iosrxwy](https://github.com/iosrxwy) 发布。
