@@ -8,6 +8,7 @@ struct SigningTab: View {
     enum Mode: String, CaseIterable, Identifiable {
         case jailbreak = "越狱 / 本地"
         case realDevice = "真机证书（Beta）"
+        case appleID = "Apple ID 签名"
         var id: String { rawValue }
 
         /// rawValue 同时是选中态的标识,展示一律走这里。
@@ -15,6 +16,7 @@ struct SigningTab: View {
             switch self {
             case .jailbreak: return L("signingtab.mode.jailbreak")
             case .realDevice: return L("signingtab.mode.realDevice")
+            case .appleID: return L("signingtab.mode.appleID")
             }
         }
     }
@@ -31,6 +33,25 @@ struct SigningTab: View {
     @State private var targetSession: InjectionTargetSession?
     @State private var profilesByBundleID: [String: URL] = [:]
     @State private var overrideBundleID = ""
+
+    // Apple ID
+    @State private var appleID = ""
+    @State private var appleIDPassword = ""
+    @State private var rememberAppleID = true
+    @State private var twoFactorCode = ""
+    @State private var devices: [ConnectedDevice] = []
+    @State private var selectedDeviceID: String?
+    @State private var manualUDID = ""
+    @State private var manualDeviceName = ""
+    @State private var teams: [AppleDeveloperServices.Team] = []
+    @State private var selectedTeamID: String?
+    @State private var portalDevices: [AppleDeveloperServices.RemoteDevice] = []
+    @State private var portalCertificates: [AppleDeveloperServices.RemoteCertificate] = []
+    @State private var portalAppIDs: [AppleDeveloperServices.RemoteAppID] = []
+    @State private var installToDevice = true
+    @State private var addRenewal = true
+    @State private var renewalJobs: [AppleIDRenewalJob] = []
+    @State private var deviceMessage = ""
 
     @State private var busy = false
     @State private var ok: Bool?
@@ -55,10 +76,10 @@ struct SigningTab: View {
                 ForEach(Mode.allCases) { Text($0.title).tag($0) }
             }.pickerStyle(.segmented).labelsHidden()
 
-            if mode == .jailbreak {
-                jailbreakSection
-            } else {
-                realDeviceSection
+            switch mode {
+            case .jailbreak: jailbreakSection
+            case .realDevice: realDeviceSection
+            case .appleID: appleIDSection
             }
 
             if busy || !log.isEmpty {
@@ -184,6 +205,349 @@ struct SigningTab: View {
         }
     }
 
+    private var appleIDSection: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(L("signingtab.appleID.title")).font(.headline)
+                Text(L("signingtab.appleID.detail"))
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    TextField(L("signingtab.appleID.account"), text: $appleID)
+                        .textFieldStyle(.roundedBorder)
+                    SecureField(L("signingtab.appleID.password"), text: $appleIDPassword)
+                        .textFieldStyle(.roundedBorder)
+                }
+                HStack {
+                    Toggle(L("signingtab.appleID.remember"), isOn: $rememberAppleID)
+                    Spacer()
+                    if AppleIDSigningService.rememberedAccount() != nil {
+                        Button(L("signingtab.appleID.forget")) {
+                            AppleIDSigningService.forgetAccount()
+                            appleID = ""
+                            appleIDPassword = ""
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField(L("signingtab.appleID.twoFactor"), text: $twoFactorCode)
+                        .textFieldStyle(.roundedBorder)
+                    Text(L("signingtab.appleID.twoFactor.hint"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Button {
+                    loginAppleID()
+                } label: {
+                    Label(L("signingtab.appleID.login"), systemImage: "person.badge.key")
+                }
+                .disabled(busy || appleID.isEmpty || appleIDPassword.isEmpty)
+
+                if !teams.isEmpty {
+                    HStack {
+                        Text(L("signingtab.appleID.team")).frame(width: 120, alignment: .leading)
+                        Picker("", selection: $selectedTeamID) {
+                            ForEach(teams) { team in
+                                Text("\(team.name) (\(team.id))").tag(Optional(team.id))
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                }
+
+                HStack {
+                    Text(L("signingtab.appleID.devices")).font(.subheadline.weight(.medium))
+                    Spacer()
+                    Button {
+                        refreshDevices()
+                    } label: {
+                        Label(L("signingtab.appleID.refreshDevices"), systemImage: "arrow.clockwise")
+                    }
+                    .disabled(busy)
+                }
+                if devices.isEmpty {
+                    Text(deviceMessage.isEmpty ? L("signingtab.appleID.noDevices") : deviceMessage)
+                        .font(.footnote).foregroundStyle(.secondary)
+                } else {
+                    Picker(L("signingtab.appleID.devices"), selection: $selectedDeviceID) {
+                        Text(L("signingtab.chooseIdentity")).tag(String?.none)
+                        ForEach(devices) { device in
+                            Text(device.summary).tag(Optional(device.udid))
+                        }
+                    }
+                    .labelsHidden()
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(L("signingtab.appleID.manualUDID")).font(.subheadline.weight(.medium))
+                    HStack {
+                        TextField(L("signingtab.appleID.manualUDID.placeholder"), text: $manualUDID)
+                            .textFieldStyle(.roundedBorder)
+                        TextField(L("signingtab.appleID.manualName.placeholder"), text: $manualDeviceName)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 180)
+                    }
+                    Text(L("signingtab.appleID.manualUDID.hint"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+
+                if !portalDevices.isEmpty || !portalCertificates.isEmpty || !portalAppIDs.isEmpty {
+                    Divider()
+                    portalResourceLists
+                }
+
+                Toggle(L("signingtab.appleID.install"), isOn: $installToDevice)
+                Toggle(L("signingtab.appleID.renew"), isOn: $addRenewal)
+                if !ConnectedDeviceService.canListDevices {
+                    Label(L("signingtab.appleID.toolsMissing"), systemImage: "info.circle")
+                        .font(.footnote).foregroundStyle(.orange)
+                }
+
+                Button {
+                    signWithAppleID()
+                } label: {
+                    Label(
+                        busy ? L("signingtab.appleID.signing") : L("signingtab.appleID.signAndInstall"),
+                        systemImage: "iphone.and.arrow.forward"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent).controlSize(.large)
+                .disabled(busy || ipaURL == nil || appleID.isEmpty || appleIDPassword.isEmpty || resolvedDevice == nil)
+
+                if !renewalJobs.isEmpty {
+                    Divider()
+                    Text(L("signingtab.appleID.jobs")).font(.subheadline.weight(.medium))
+                    ForEach(renewalJobs) { job in
+                        renewalRow(job)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            restoreAppleID()
+            renewalJobs = AppleIDRenewalStore.load()
+            refreshDevices()
+        }
+    }
+
+    private func renewalRow(_ job: AppleIDRenewalJob) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(job.displayName).font(.callout.weight(.medium))
+                Spacer()
+                if job.isDue() {
+                    Text(L("signingtab.appleID.jobDue")).font(.caption).foregroundStyle(.orange)
+                }
+            }
+            Text(L("signingtab.appleID.jobExpires", job.deviceName, shortDate(job.expiresAt)))
+                .font(.caption).foregroundStyle(.secondary)
+            HStack {
+                Toggle(L("signingtab.appleID.autoRenew"), isOn: Binding(
+                    get: { job.autoRenew },
+                    set: { AppleIDRenewalStore.setAutoRenew(id: job.id, enabled: $0); reloadJobs() }
+                ))
+                Spacer()
+                Button(L("signingtab.appleID.renewNow")) {
+                    renewJob(job)
+                }
+                .disabled(busy)
+                Button(L("signingtab.appleID.removeJob"), role: .destructive) {
+                    AppleIDRenewalStore.remove(id: job.id)
+                    reloadJobs()
+                }
+                .disabled(busy)
+            }
+            .font(.caption)
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var portalResourceLists: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(L("signingtab.appleID.portalResources")).font(.subheadline.weight(.medium))
+            if !portalDevices.isEmpty {
+                Text(L("signingtab.appleID.registeredDevices", portalDevices.count))
+                    .font(.caption).foregroundStyle(.secondary)
+                ForEach(portalDevices.prefix(8)) { device in
+                    Text("\(device.name) · \(device.udid)")
+                        .font(.caption.monospaced())
+                }
+            }
+            if !portalCertificates.isEmpty {
+                Text(L("signingtab.appleID.certificates", portalCertificates.count))
+                    .font(.caption).foregroundStyle(.secondary)
+                ForEach(portalCertificates.prefix(8)) { cert in
+                    Text(cert.name).font(.caption)
+                }
+            }
+            if !portalAppIDs.isEmpty {
+                Text(L("signingtab.appleID.appIDs", portalAppIDs.count))
+                    .font(.caption).foregroundStyle(.secondary)
+                ForEach(portalAppIDs.prefix(8)) { appID in
+                    Text(appID.identifier).font(.caption.monospaced())
+                }
+            }
+        }
+    }
+
+    private var selectedDevice: ConnectedDevice? {
+        devices.first { $0.udid == selectedDeviceID }
+    }
+
+    private var resolvedDevice: ConnectedDevice? {
+        let manual = manualUDID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if ConnectedDeviceService.isLikelyUDID(manual) {
+            let name = manualDeviceName.trimmingCharacters(in: .whitespacesAndNewlines)
+            return ConnectedDevice(udid: manual, name: name.isEmpty ? manual : name)
+        }
+        return selectedDevice
+    }
+
+    private func restoreAppleID() {
+        if let account = AppleIDSigningService.rememberedAccount() {
+            appleID = account.appleID
+            appleIDPassword = AppleIDSigningService.rememberedPassword(for: account.appleID) ?? ""
+            if let session = AppleIDSigningService.currentSession(for: account.appleID) {
+                applySession(session)
+            }
+        }
+    }
+
+    private func applySession(_ token: AppleDeveloperServices.LoginToken) {
+        teams = token.teams
+        selectedTeamID = token.teamID
+    }
+
+    private func loginAppleID() {
+        let account = appleID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let password = appleIDPassword
+        let code = twoFactorCode.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
+        let remember = rememberAppleID
+        busy = true
+        ok = nil
+        log = L("signingtab.appleID.loggingIn")
+        Task {
+            do {
+                let token = try await Task.detached {
+                    try AppleIDSigningService.login(
+                        appleID: account,
+                        password: password,
+                        twoFactorCode: code,
+                        remember: remember
+                    )
+                }.value
+                applySession(token)
+                log = L("signingtab.appleID.loggedIn", token.teamName, token.teamID)
+                ok = true
+                refreshPortal(token)
+            } catch {
+                ok = false
+                log = "❌ " + error.localizedDescription
+            }
+            busy = false
+        }
+    }
+
+    private func refreshPortal(_ token: AppleDeveloperServices.LoginToken) {
+        Task {
+            let snapshot = await Task.detached {
+                try? AppleIDSigningService.fetchSnapshot(token: token)
+            }.value
+            portalDevices = snapshot?.devices ?? []
+            portalCertificates = snapshot?.certificates ?? []
+            portalAppIDs = snapshot?.appIDs ?? []
+            if let snapshot, !snapshot.teams.isEmpty {
+                teams = snapshot.teams
+            }
+        }
+    }
+
+    private func refreshDevices() {
+        deviceMessage = ""
+        Task {
+            let listed = await Task.detached {
+                (try? ConnectedDeviceService.listDevices()) ?? []
+            }.value
+            devices = listed
+            if selectedDeviceID == nil {
+                selectedDeviceID = listed.first?.udid
+            }
+            if listed.isEmpty {
+                deviceMessage = L("signingtab.appleID.noDevices")
+            }
+        }
+    }
+
+    private func reloadJobs() {
+        renewalJobs = AppleIDRenewalStore.load()
+    }
+
+    private func signWithAppleID() {
+        guard let ipa = ipaURL, let device = resolvedDevice else { return }
+        let request = AppleIDSignRequest(
+            ipaURL: ipa,
+            appleID: appleID.trimmingCharacters(in: .whitespacesAndNewlines),
+            password: appleIDPassword,
+            twoFactorCode: twoFactorCode.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank,
+            device: device,
+            teamID: selectedTeamID,
+            installToDevice: installToDevice,
+            addRenewal: addRenewal,
+            rememberAccount: rememberAppleID
+        )
+        busy = true
+        ok = nil
+        log = ""
+        Task {
+            do {
+                let result = try await Task.detached {
+                    try FileSystemHelper.withSecurityScopedAccess(to: [ipa]) {
+                        try AppleIDSigningService.sign(request)
+                    }
+                }.value
+                log = ([L("signingtab.appleID.done"), L("signingtab.output", result.outputURL.path), "———"] + result.log)
+                    .joined(separator: "\n")
+                ok = true
+                revealInFinder(result.outputURL)
+                reloadJobs()
+            } catch {
+                ok = false
+                log = "❌ " + operationError(error, paths: [ipa])
+            }
+            busy = false
+        }
+    }
+
+    private func renewJob(_ job: AppleIDRenewalJob) {
+        busy = true
+        ok = nil
+        log = L("signingtab.appleID.signing")
+        let code = twoFactorCode.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
+        Task {
+            do {
+                let result = try await Task.detached {
+                    try AppleIDSigningService.renew(job, twoFactorCode: code)
+                }.value
+                log = ([L("signingtab.appleID.done"), L("signingtab.output", result.outputURL.path), "———"] + result.log)
+                    .joined(separator: "\n")
+                ok = true
+                revealInFinder(result.outputURL)
+                reloadJobs()
+            } catch {
+                ok = false
+                log = "❌ " + error.localizedDescription
+            }
+            busy = false
+        }
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
     private var signingBundleIDs: [String] {
         guard let app = targetSession?.appURL else { return [] }
         let bid = overrideBundleID.trimmingCharacters(in: .whitespaces)
@@ -231,9 +595,33 @@ struct DeveloperSigningPicker: View {
     @State private var p12Password = ""
     @State private var certificateMessage = ""
     @State private var certificateBusy = false
+    @State private var library: [StoredSigningCertificate] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if !library.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L("signingtab.certificateLibrary")).font(.subheadline.weight(.medium))
+                    ForEach(library) { cert in
+                        HStack {
+                            Button {
+                                selectLibraryCertificate(cert)
+                            } label: {
+                                Label(cert.name, systemImage: selectedIdentity?.id == cert.identityID ? "checkmark.seal.fill" : "seal")
+                            }
+                            .buttonStyle(.borderless)
+                            expiryLabel(cert.expiryStatus)
+                            Spacer()
+                            Button(L("signingtab.removeCertificate"), role: .destructive) {
+                                SigningCertificateLibrary.remove(id: cert.id)
+                                library = SigningCertificateLibrary.load()
+                            }
+                            .buttonStyle(.borderless)
+                            .font(.caption)
+                        }
+                    }
+                }
+            }
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     FilePickerButton(
@@ -257,7 +645,13 @@ struct DeveloperSigningPicker: View {
                 }
                 HStack {
                     if let selectedIdentity {
-                        Label(L("signingtab.p12Identity", selectedIdentity.name), systemImage: "checkmark.seal")
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Label(L("signingtab.p12Identity", selectedIdentity.name), systemImage: "checkmark.seal")
+                                expiryLabel(selectedIdentity.expiryStatus)
+                            }
+                            CertificateDetailsDisclosure(identity: selectedIdentity)
+                        }
                     } else {
                         Text(L("signingtab.p12Hint"))
                             .font(.footnote).foregroundStyle(.secondary)
@@ -292,6 +686,9 @@ struct DeveloperSigningPicker: View {
                         ) { url in
                             profilesByBundleID[bundleID] = url
                         }
+                        if let profileURL = profilesByBundleID[bundleID] {
+                            ProfileCapabilitiesLoader(profileURL: profileURL)
+                        }
                     }
                 }
             }
@@ -301,13 +698,43 @@ struct DeveloperSigningPicker: View {
         .task { restoreStoredCertificate() }
     }
 
+    @ViewBuilder
+    private func expiryLabel(_ status: CertificateExpiryStatus) -> some View {
+        switch status {
+        case .unknown:
+            EmptyView()
+        case let .valid(days):
+            Text(L("signingtab.certificateValid", days))
+                .font(.caption).foregroundStyle(.secondary)
+        case let .expiringSoon(days):
+            Text(L("signingtab.certificateExpiring", days))
+                .font(.caption).foregroundStyle(.orange)
+        case .expired:
+            Text(L("signingtab.certificateExpired"))
+                .font(.caption).foregroundStyle(.red)
+        }
+    }
+
     private func restoreStoredCertificate() {
+        library = SigningCertificateLibrary.load()
         p12URL = SigningService.storedDeveloperCertificateURL()
         p12Password = SigningService.rememberedDeveloperCertificatePassword() ?? ""
         identities = SigningService.identities()
-        if let id = SigningService.rememberedDeveloperCertificateIdentityID() {
+        if let selected = SigningCertificateLibrary.selected() {
+            selectedIdentity = identities.first { $0.id.caseInsensitiveCompare(selected.identityID) == .orderedSame }
+            p12URL = SigningCertificateLibrary.p12URL(for: selected)
+            p12Password = SigningCertificateLibrary.password(for: selected.id) ?? p12Password
+        } else if let id = SigningService.rememberedDeveloperCertificateIdentityID() {
             selectedIdentity = identities.first { $0.id.caseInsensitiveCompare(id) == .orderedSame }
         }
+    }
+
+    private func selectLibraryCertificate(_ cert: StoredSigningCertificate) {
+        SigningCertificateLibrary.select(cert)
+        identities = SigningService.identities()
+        selectedIdentity = identities.first { $0.id.caseInsensitiveCompare(cert.identityID) == .orderedSame }
+        p12URL = SigningCertificateLibrary.p12URL(for: cert)
+        p12Password = SigningCertificateLibrary.password(for: cert.id) ?? ""
     }
 
     private func importP12() {
@@ -324,6 +751,7 @@ struct DeveloperSigningPicker: View {
                 }.value
                 identities = SigningService.identities()
                 selectedIdentity = identity
+                library = SigningCertificateLibrary.load()
                 certificateMessage = L("signingtab.p12Imported")
             } catch {
                 certificateMessage = "❌ " + error.localizedDescription
@@ -348,7 +776,11 @@ struct DeveloperSigningPicker: View {
         alert.addButton(withTitle: L("signingtab.cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
-        let password = field.stringValue
+        let password = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !password.isEmpty else {
+            certificateMessage = "❌ " + L("signingtab.exportPasswordEmpty")
+            return
+        }
         certificateBusy = true
         certificateMessage = ""
         Task {
@@ -364,5 +796,12 @@ struct DeveloperSigningPicker: View {
             }
             certificateBusy = false
         }
+    }
+}
+
+private extension String {
+    var nilIfBlank: String? {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
     }
 }

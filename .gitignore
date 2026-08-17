@@ -1,5 +1,6 @@
 # Swift Package Manager
 .build/
+.build-*/
 .swiftpm/
 Package.resolved
 
@@ -20,7 +21,6 @@ DerivedData/
 # Scratch / temp working dirs
 /tmp/
 /scratch/
-/Tests/
 
 # Local reverse-engineering research notes
 /research/

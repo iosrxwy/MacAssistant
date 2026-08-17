@@ -30,6 +30,12 @@ let package = Package(
                 .copy("Resources/AppIcon.png"),
                 .process("Localization")
             ]
+        ),
+        // 没有这个 target,`swift test` 找不到任何用例、直接以 0 退出,CI 会误绿。
+        .testTarget(
+            name: "MacAssistantKitTests",
+            dependencies: ["MacAssistantKit"],
+            path: "Tests/MacAssistantKitTests"
         )
     ]
 )

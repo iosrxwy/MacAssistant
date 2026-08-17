@@ -197,6 +197,8 @@
 "signing.error.entitlementNotAllowed" = "entitlement %@ 未被描述文件授权或值不匹配";
 "signing.error.unsupportedExtensions" = "发现需要独立描述文件的扩展（%@）。当前 Beta 尚不支持逐扩展 profile 映射，已停止以避免假成功。";
 "signing.error.missingProfileMappings" = "以下嵌套 bundle 缺少独立描述文件映射：%@";
+"signing.error.missingEmbeddedProfile" = "App 内没有 embedded.mobileprovision";
+"signing.error.emptyExportPassword" = "导出密码不能为空";
 "signing.error.stepFailed" = "%@ 失败（退出码 %d）：%@";
 "signing.error.signFileFailed" = "签名 %@ 失败:%@";
 "signing.error.signMainAppFailed" = "签名主 App 失败:%@";
@@ -208,6 +210,7 @@
 "signing.profileParse.entitlementsRootNotDictionary" = "entitlements 根对象不是字典";
 "signing.profileParse.missingBundleIdentifier" = "%@ 缺少 CFBundleIdentifier";
 "signing.profileParse.invalidInfoPlist" = "%@ Info.plist 无效";
+"signing.step.importP12" = "导入 p12 证书";
 "signing.step.readEntitlements" = "读取原 App entitlements";
 "signing.step.signFile" = "签名 %@";
 "signing.step.finalVerify" = "最终 codesign 校验";
@@ -230,6 +233,48 @@
 "signing.hint.noIdentity" = "• 找不到签名身份:确认钥匙串已导入证书 + 私钥,并用 security find-identity 能看到。";
 "signing.hint.resourceFork" = "• 存在扩展属性/资源分叉:先对 .app 执行 xattr -cr 再重签。";
 "signing.hint.generic" = "• 若装机失败,优先排查:bundle id 是否匹配 App ID、设备 UDID 是否在 profile、entitlements 是否越权。";
+"signing.capability.getTaskAllow" = "调试（get-task-allow）";
+"signing.capability.appID" = "App ID";
+"signing.capability.team" = "开发团队";
+"signing.capability.push" = "推送通知";
+"signing.capability.icloud" = "iCloud";
+"signing.capability.appGroups" = "App Groups";
+"signing.capability.associatedDomains" = "关联域名";
+"signing.capability.keychain" = "钥匙串共享";
+"signing.capability.increasedMemory" = "提高内存上限";
+"signing.capability.timeSensitive" = "时效性通知";
+"signing.capability.personalVPN" = "个人 VPN";
+"signing.capability.hotspot" = "热点";
+"signing.capability.healthKit" = "HealthKit";
+"signing.capability.homeKit" = "HomeKit";
+"signing.capability.siri" = "Siri";
+"signing.capability.wirelessAccessory" = "无线配件";
+"signing.capability.interAppAudio" = "Inter-App Audio";
+"signing.capability.dataProtection" = "数据保护";
+"signing.capability.sandbox" = "沙盒";
+"signing.capability.betaReports" = "TestFlight 反馈";
+"signing.capability.signInApple" = "通过 Apple 登录";
+"signing.capability.wallet" = "钱包";
+"signing.capability.applePay" = "Apple Pay";
+"signing.capability.gameCenter" = "Game Center";
+"signing.capability.nfc" = "NFC";
+"signing.capability.wifiInfo" = "无线局域网信息";
+"signing.capability.multipath" = "Multipath";
+"signing.capability.pushToTalk" = "对讲";
+"signing.capability.criticalAlerts" = "紧急通知";
+"signing.capability.communicationNotifications" = "通信通知";
+"signing.capability.appAttest" = "App Attest";
+"signing.capability.autofill" = "自动填充凭据";
+"signing.capability.classKit" = "ClassKit";
+"signing.capability.weatherKit" = "WeatherKit";
+"signing.capability.familyControls" = "屏幕使用时间";
+"signing.capability.sharedWithYou" = "与你共享";
+"signing.capability.userFonts" = "字体";
+"signing.capability.maps" = "地图";
+"signing.capability.carPlay" = "CarPlay";
+"signing.capability.extendedVirtualAddressing" = "扩展虚拟地址";
+"signing.capability.increasedDebuggingMemory" = "调试内存上限";
+"signing.capability.other" = "%@（其他）";
 
 /* IpaService */
 "ipa.log.unpacked" = "已解包 IPA";
@@ -288,6 +333,10 @@
 "ipaflow.log.resourceReplaced" = "已替换资源 %@";
 "ipaflow.log.resourceReplaced" = "已替换资源 %@";
 "ipaflow.log.displayNameUpdated" = "已更新显示名称";
+"ipaflow.log.shortVersionUpdated" = "已更新版本号";
+"ipaflow.log.buildVersionUpdated" = "已更新 Build 号";
+"ipaflow.log.minimumOSUpdated" = "已更新最低系统版本";
+"ipaflow.log.ppqBundleID" = "已为 Bundle ID 追加随机后缀：%@";
 "ipaflow.log.bundleIDUpdated" = "已更新 Bundle ID";
 "ipaflow.log.componentBundleIDsUpdated" = "已同步更新 %d 个嵌套组件 Bundle ID";
 "ipaflow.log.iconsCopied" = "已复制并登记 %d 个图标文件";
@@ -309,7 +358,7 @@
 "ipaflow.finding.loadReplace" = "现有 %@ 将按计划替换强/弱引用类型";
 "ipaflow.finding.sameContent" = "%@ 与另一输入内容相同";
 "ipaflow.finding.installNameConflict" = "不同内容的 dylib 使用相同 install name：%@";
-"ipaflow.finding.dependencyUnresolved" = "%@ 缺少非系统依赖 %@";
+"ipaflow.finding.dependencyUnconfirmed" = "%@ 引用了 %@，本机无法确认其是否可解析：%@";
 "ipaflow.finding.embedConflict" = "目标已存在不同内容：%@";
 "ipaflow.finding.resourceDuplicate" = "资源目标重复：%@";
 "ipaflow.finding.resourceMissing" = "找不到资源：%@";
@@ -425,6 +474,7 @@
 "tweak.error.architectureMismatchDetail" = "%@ 未覆盖主程序切片 %@；tweak=%@，主程序=%@";
 "tweak.error.unresolvedDependency" = "依赖未满足：%@";
 "tweak.error.outputExists" = "输出已存在，拒绝覆盖：%@";
+"tweak.error.deviceLevelPackage" = "%@ 是设备级包，不适合作为 IPA 内插件注入：\n%@";
 "tweak.error.rewriteFailed" = "改写 %@ → %@ 失败：%@";
 "tweak.error.missingSubstrateFramework" = "%@ 依赖 CydiaSubstrate，但未提供兼容的 CydiaSubstrate.framework";
 "tweak.error.missingInstallNameTool" = "缺少 install_name_tool，无法添加必需 rpath";
@@ -587,3 +637,79 @@
 "cmd.category.securityToggles" = "安全开关";
 "cmd.category.terminal" = "终端·输入法";
 "cmd.category.diagnostics" = "诊断采集";
+
+/* deb 是否适合当 IPA 内插件的判定依据 */
+"deb.plugin.factor.launchDaemon" = "包含 LaunchDaemon：%@（系统级后台服务，App 内无法运行）";
+"deb.plugin.factor.launchAgent" = "包含 LaunchAgent：%@（用户级后台服务，App 内无法运行）";
+"deb.plugin.factor.commandLineTool" = "包含命令行工具：%@（面向系统 PATH，不是 App 内插件）";
+"deb.plugin.factor.kernelOrDeviceLevel" = "包含内核/设备级组件：%@（无法在 App 沙盒内加载）";
+"deb.plugin.factor.setuid" = "包含 setuid 可执行文件：%@（依赖提权，App 内不成立）";
+"deb.plugin.factor.setgid" = "包含 setgid 可执行文件：%@（依赖提权，App 内不成立）";
+"deb.plugin.factor.maintainerScript" = "包含维护者脚本：%@（安装期行为不会在 App 内执行）";
+
+/* Tweak filter 预检结论 */
+"filter.finding.modeUnknown" = "filter 里的 Mode 无法识别：%@。按「所有条件都需满足」保守处理。";
+"filter.finding.bundlesIndeterminate" = "filter 限定的这些 bundle 是系统/Apple 提供（%@），本机无法确认目标进程是否会加载它们，需在设备上验证。";
+"filter.finding.classesIndeterminate" = "filter 通过 Classes 匹配（%@），静态检查无法判定目标是否包含这些类。";
+"filter.finding.cfVersionIndeterminate" = "filter 限定了 CoreFoundation 版本（%@），静态检查无法判定目标运行时是否落在该区间。";
+"filter.finding.unknownFilterKeys" = "filter 里有无法识别的键：%@，这些条件未参与判定。";
+"filter.finding.unknownTopLevelKeys" = "plist 顶层有无法识别的键：%@，这些内容未参与判定。";
+"filter.finding.empty" = "filter 为空，MobileSubstrate 会把该 dylib 加载进所有进程，对当前目标必然生效。";
+"filter.finding.match" = "filter 与目标 %@ 匹配，注入后会被加载。";
+"filter.finding.indeterminate" = "无法确定 filter 是否匹配目标 %@，注入后可能不会被加载。";
+"filter.finding.mismatchOverridden" = "filter 限定 %@，与目标 %@ 不匹配；已确认继续，注入后大概率不会被加载。";
+"filter.finding.mismatch" = "filter 限定 %@，与目标 %@ 不匹配，注入后不会被加载。";
+
+/* Dependency classification evidence */
+"dep.class.plugin" = "本次随插件一起提供：%@";
+"dep.class.appEmbedded" = "在 App/IPA 内找到同名内嵌库：%@";
+"dep.class.loaderRelativeUnresolved" = "loader 相对路径未在本次输入中匹配到，本机无法判定其在设备上是否可解析：%@";
+"dep.class.deviceJailbreakPath" = "指向越狱环境路径，仅设备上存在，本机无法验证：%@";
+"dep.class.systemFramework" = "iOS 系统框架（/System/Library）：%@";
+"dep.class.systemLibrary" = "已知 iOS 系统库：%@";
+"dep.class.deviceKeyword" = "/usr/lib 下疑似越狱运行时组件，本机无法验证其存在与版本：%@";
+"dep.class.usrLibUnrecognized" = "/usr/lib 下无法识别，不冒充系统库，如实归为未知：%@";
+"dep.class.unknown" = "依据不足，无法判定来源：%@";
+
+/* Connected devices / Apple ID signing */
+"device.error.noTool" = "未找到设备工具。请安装 libimobiledevice（idevice_id / ideviceinstaller），或使用附带 devicectl 的 Xcode。";
+"device.error.listFailed" = "列出设备失败：%@";
+"device.error.installFailed" = "安装到设备失败：%@";
+"device.error.noDeviceSelected" = "请先连接并选择一台 iPhone / iPad";
+"appleid.error.anisetteUnavailable" = "无法从本机 AuthKit 读取 Anisette 数据。请确认在 Mac 上已登录 iCloud，或安装 xtool 后重试。";
+"appleid.error.twoFactorRequired" = "Apple ID 需要两步验证码。请在设备上查看验证码后填入再试。";
+"appleid.error.invalidCredentials" = "Apple ID 或密码不正确";
+"appleid.error.noTeam" = "该 Apple ID 下没有可用的开发团队";
+"appleid.error.srpInvalidServer" = "Apple 登录服务器返回了无效的 SRP 参数";
+"appleid.error.developerAPI" = "Apple 开发者服务返回错误：%@";
+"appleid.error.certificateFailed" = "无法申请或导出 7 天开发证书";
+"appleid.error.profileFailed" = "无法下载匹配该 App 与设备的描述文件";
+"appleid.error.network" = "访问 Apple 服务失败：%@";
+"appleid.error.noAccount" = "请先填写 Apple ID 和密码";
+"appleid.error.noIPA" = "找不到用于签名或续签的 IPA";
+"appleid.error.noDevice" = "请连接 iPhone / iPad 并选择设备";
+"appleid.error.xtoolFailed" = "xtool 执行失败：%@";
+"appleid.error.gsaMissingToken" = "GrandSlam 登录成功但未返回开发者令牌";
+"appleid.error.emptyResponse" = "Apple 服务返回空响应";
+"appleid.error.invalidPlist" = "Apple 服务返回了无法解析的 plist";
+"appleid.log.start" = "开始 Apple ID 签名：%@ → %@";
+"appleid.log.reusedSession" = "复用已登录会话：%@（%@）";
+"appleid.log.loggingIn" = "正在登录 Apple ID：%@";
+"appleid.log.loggedIn" = "已登录团队：%@（%@）";
+"appleid.log.rewriteBundleID" = "原 Bundle ID 无法注册，已改为：%@";
+"appleid.log.installing" = "正在安装到 %@…";
+"appleid.log.installed" = "✅ 已安装到已连接设备";
+"appleid.log.renewalSaved" = "已加入 7 天续签：到期 %@";
+"appleid.log.usingXTool" = "检测到 xtool，改用其 Apple ID 签名 / 安装流程";
+"appleid.log.xtoolInstalled" = "✅ xtool 已完成签名并安装";
+"appleid.log.importedIdentity" = "已导入开发证书：%@";
+"appleid.log.profileReady" = "已下载描述文件：%@ · 到期 %@";
+"appleid.log.deviceAlreadyRegistered" = "设备已在团队中：%@";
+"appleid.log.deviceRegistered" = "已注册设备：%@（%@）";
+"appleid.log.appIDExists" = "复用已有 App ID：%@";
+"appleid.log.appIDCreated" = "已创建 App ID：%@";
+"appleid.log.revokedCertificate" = "已吊销旧开发证书以腾出名额：%@";
+"appleid.log.reusedCertificate" = "复用本机已保存的开发证书：%@";
+"appleid.log.requestingCertificate" = "正在向 Apple 申请新的开发证书";
+"appleid.log.requestingCertificateAfterRevoke" = "免费账号证书名额已满，已吊销 %d 张后重新申请";
+"appleid.log.profileDeleted" = "已删除过期描述文件以便刷新：%@";

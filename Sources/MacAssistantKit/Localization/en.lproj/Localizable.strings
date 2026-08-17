@@ -197,6 +197,8 @@
 "signing.error.entitlementNotAllowed" = "The entitlement %@ isn't authorized by the provisioning profile, or its value doesn't match.";
 "signing.error.unsupportedExtensions" = "Found extensions that need their own provisioning profiles (%@). This beta doesn't support per-extension profile mapping yet, so it stopped instead of reporting a false success.";
 "signing.error.missingProfileMappings" = "These nested bundles have no provisioning profile mapping: %@";
+"signing.error.missingEmbeddedProfile" = "The app has no embedded.mobileprovision";
+"signing.error.emptyExportPassword" = "The export password cannot be empty";
 "signing.error.stepFailed" = "%@ failed (exit code %d): %@";
 "signing.error.signFileFailed" = "Signing %@ failed: %@";
 "signing.error.signMainAppFailed" = "Signing the main app failed: %@";
@@ -208,6 +210,7 @@
 "signing.profileParse.entitlementsRootNotDictionary" = "The entitlements root object isn't a dictionary";
 "signing.profileParse.missingBundleIdentifier" = "%@ is missing CFBundleIdentifier";
 "signing.profileParse.invalidInfoPlist" = "%@ has an invalid Info.plist";
+"signing.step.importP12" = "Import the p12 certificate";
 "signing.step.readEntitlements" = "Read the original app entitlements";
 "signing.step.signFile" = "Sign %@";
 "signing.step.finalVerify" = "Final codesign verification";
@@ -230,6 +233,48 @@
 "signing.hint.noIdentity" = "• No signing identity was found. Make sure the certificate and its private key are in your keychain and appear in security find-identity.";
 "signing.hint.resourceFork" = "• Extended attributes or resource forks are present. Run xattr -cr on the .app before re-signing.";
 "signing.hint.generic" = "• If installation fails, check the bundle id against the App ID, make sure the device UDID is in the profile, and confirm the entitlements aren't over-privileged.";
+"signing.capability.getTaskAllow" = "Debugging (get-task-allow)";
+"signing.capability.appID" = "App ID";
+"signing.capability.team" = "Development team";
+"signing.capability.push" = "Push notifications";
+"signing.capability.icloud" = "iCloud";
+"signing.capability.appGroups" = "App Groups";
+"signing.capability.associatedDomains" = "Associated Domains";
+"signing.capability.keychain" = "Keychain sharing";
+"signing.capability.increasedMemory" = "Increased memory limit";
+"signing.capability.timeSensitive" = "Time-sensitive notifications";
+"signing.capability.personalVPN" = "Personal VPN";
+"signing.capability.hotspot" = "Hotspot";
+"signing.capability.healthKit" = "HealthKit";
+"signing.capability.homeKit" = "HomeKit";
+"signing.capability.siri" = "Siri";
+"signing.capability.wirelessAccessory" = "Wireless accessory";
+"signing.capability.interAppAudio" = "Inter-App Audio";
+"signing.capability.dataProtection" = "Data protection";
+"signing.capability.sandbox" = "App sandbox";
+"signing.capability.betaReports" = "TestFlight feedback";
+"signing.capability.signInApple" = "Sign in with Apple";
+"signing.capability.wallet" = "Wallet";
+"signing.capability.applePay" = "Apple Pay";
+"signing.capability.gameCenter" = "Game Center";
+"signing.capability.nfc" = "NFC";
+"signing.capability.wifiInfo" = "Wi-Fi information";
+"signing.capability.multipath" = "Multipath";
+"signing.capability.pushToTalk" = "Push to Talk";
+"signing.capability.criticalAlerts" = "Critical alerts";
+"signing.capability.communicationNotifications" = "Communication notifications";
+"signing.capability.appAttest" = "App Attest";
+"signing.capability.autofill" = "AutoFill credential provider";
+"signing.capability.classKit" = "ClassKit";
+"signing.capability.weatherKit" = "WeatherKit";
+"signing.capability.familyControls" = "Family Controls";
+"signing.capability.sharedWithYou" = "Shared with You";
+"signing.capability.userFonts" = "Fonts";
+"signing.capability.maps" = "Maps";
+"signing.capability.carPlay" = "CarPlay";
+"signing.capability.extendedVirtualAddressing" = "Extended virtual addressing";
+"signing.capability.increasedDebuggingMemory" = "Increased debugging memory";
+"signing.capability.other" = "%@ (other)";
 
 /* IpaService */
 "ipa.log.unpacked" = "Unpacked the IPA";
@@ -288,6 +333,10 @@
 "ipaflow.log.resourceReplaced" = "Replaced resource %@";
 "ipaflow.log.resourceReplaced" = "Replaced resource %@";
 "ipaflow.log.displayNameUpdated" = "Updated the display name";
+"ipaflow.log.shortVersionUpdated" = "Updated the short version string";
+"ipaflow.log.buildVersionUpdated" = "Updated the build version";
+"ipaflow.log.minimumOSUpdated" = "Updated the minimum OS version";
+"ipaflow.log.ppqBundleID" = "Appended a random suffix to the bundle ID: %@";
 "ipaflow.log.bundleIDUpdated" = "Updated the Bundle ID";
 "ipaflow.log.componentBundleIDsUpdated" = "Updated Bundle IDs for %d embedded components";
 "ipaflow.log.iconsCopied" = "Copied and registered %d icon files";
@@ -309,7 +358,7 @@
 "ipaflow.finding.loadReplace" = "The existing %@ will have its required/weak kind replaced as planned";
 "ipaflow.finding.sameContent" = "%@ has the same content as another input";
 "ipaflow.finding.installNameConflict" = "Dylibs with different content share the same install name: %@";
-"ipaflow.finding.dependencyUnresolved" = "%@ is missing the non-system dependency %@";
+"ipaflow.finding.dependencyUnconfirmed" = "%@ references %@, which cannot be confirmed on this machine: %@";
 "ipaflow.finding.embedConflict" = "The destination already contains different content: %@";
 "ipaflow.finding.resourceDuplicate" = "Duplicate resource destination: %@";
 "ipaflow.finding.resourceMissing" = "Can't find the resource: %@";
@@ -425,6 +474,7 @@
 "tweak.error.architectureMismatchDetail" = "%@ does not cover the main executable slices %@; tweak=%@, main executable=%@";
 "tweak.error.unresolvedDependency" = "Unsatisfied dependency: %@";
 "tweak.error.outputExists" = "Output already exists; refusing to overwrite: %@";
+"tweak.error.deviceLevelPackage" = "%@ is a device-level package and is not suitable for injection as an in-IPA plugin:\n%@";
 "tweak.error.rewriteFailed" = "Failed to rewrite %@ → %@: %@";
 "tweak.error.missingSubstrateFramework" = "%@ depends on CydiaSubstrate, but no compatible CydiaSubstrate.framework was provided";
 "tweak.error.missingInstallNameTool" = "install_name_tool is missing, so the required rpath cannot be added";
@@ -587,3 +637,79 @@
 "cmd.category.securityToggles" = "Security switches";
 "cmd.category.terminal" = "Terminal & input";
 "cmd.category.diagnostics" = "Diagnostics";
+
+/* Why a deb is or is not suitable as an in-IPA plugin */
+"deb.plugin.factor.launchDaemon" = "Contains a LaunchDaemon: %@ (a system-level background service that cannot run inside an app)";
+"deb.plugin.factor.launchAgent" = "Contains a LaunchAgent: %@ (a user-level background service that cannot run inside an app)";
+"deb.plugin.factor.commandLineTool" = "Contains a command line tool: %@ (meant for the system PATH, not an in-app plugin)";
+"deb.plugin.factor.kernelOrDeviceLevel" = "Contains a kernel or device-level component: %@ (cannot be loaded inside an app sandbox)";
+"deb.plugin.factor.setuid" = "Contains a setuid executable: %@ (relies on privilege elevation, which does not apply inside an app)";
+"deb.plugin.factor.setgid" = "Contains a setgid executable: %@ (relies on privilege elevation, which does not apply inside an app)";
+"deb.plugin.factor.maintainerScript" = "Contains a maintainer script: %@ (install-time behavior never runs inside an app)";
+
+/* Tweak filter preflight findings */
+"filter.finding.modeUnknown" = "Unrecognized Mode in the filter: %@. Treated conservatively as “all conditions must match”.";
+"filter.finding.bundlesIndeterminate" = "The filter targets system/Apple-provided bundles (%@); this machine cannot confirm whether the target process loads them, so verify on device.";
+"filter.finding.classesIndeterminate" = "The filter matches on Classes (%@); a static check cannot tell whether the target contains them.";
+"filter.finding.cfVersionIndeterminate" = "The filter restricts the CoreFoundation version (%@); a static check cannot tell whether the target falls in that range.";
+"filter.finding.unknownFilterKeys" = "Unrecognized keys in the filter: %@. Those conditions were not evaluated.";
+"filter.finding.unknownTopLevelKeys" = "Unrecognized top-level keys in the plist: %@. They were not evaluated.";
+"filter.finding.empty" = "The filter is empty, so MobileSubstrate loads this dylib into every process and it will always apply to the current target.";
+"filter.finding.match" = "The filter matches target %@, so the dylib will be loaded after injection.";
+"filter.finding.indeterminate" = "Cannot determine whether the filter matches target %@; the dylib may not be loaded after injection.";
+"filter.finding.mismatchOverridden" = "The filter is limited to %@, which does not match target %@. You chose to continue, so the dylib most likely will not be loaded.";
+"filter.finding.mismatch" = "The filter is limited to %@, which does not match target %@, so the dylib will not be loaded after injection.";
+
+/* Dependency classification evidence */
+"dep.class.plugin" = "Provided together with the plugin this time: %@";
+"dep.class.appEmbedded" = "An embedded library with the same name was found inside the app/IPA: %@";
+"dep.class.loaderRelativeUnresolved" = "Loader-relative path was not matched in this input; cannot verify locally whether it resolves on device: %@";
+"dep.class.deviceJailbreakPath" = "Points to a jailbreak path that only exists on device and cannot be verified locally: %@";
+"dep.class.systemFramework" = "iOS system framework (/System/Library): %@";
+"dep.class.systemLibrary" = "Known iOS system library: %@";
+"dep.class.deviceKeyword" = "Looks like a jailbreak runtime component under /usr/lib; its presence and version cannot be verified locally: %@";
+"dep.class.usrLibUnrecognized" = "Unrecognized under /usr/lib; not treated as a system library, classified as unknown: %@";
+"dep.class.unknown" = "Insufficient evidence to determine the origin: %@";
+
+/* Connected devices / Apple ID signing */
+"device.error.noTool" = "No device tool was found. Install libimobiledevice (idevice_id / ideviceinstaller), or use Xcode’s devicectl.";
+"device.error.listFailed" = "Failed to list devices: %@";
+"device.error.installFailed" = "Failed to install onto the device: %@";
+"device.error.noDeviceSelected" = "Connect and select an iPhone or iPad first";
+"appleid.error.anisetteUnavailable" = "Could not read Anisette data from this Mac’s AuthKit. Sign into iCloud on the Mac, or install xtool and try again.";
+"appleid.error.twoFactorRequired" = "This Apple ID needs a two-factor code. Enter the code from your device and try again.";
+"appleid.error.invalidCredentials" = "The Apple ID or password is incorrect";
+"appleid.error.noTeam" = "This Apple ID has no usable development team";
+"appleid.error.srpInvalidServer" = "Apple’s login server returned invalid SRP parameters";
+"appleid.error.developerAPI" = "Apple Developer Services returned an error: %@";
+"appleid.error.certificateFailed" = "Could not request or export the 7-day development certificate";
+"appleid.error.profileFailed" = "Could not download a provisioning profile that matches this app and device";
+"appleid.error.network" = "The request to Apple failed: %@";
+"appleid.error.noAccount" = "Enter an Apple ID and password first";
+"appleid.error.noIPA" = "The IPA used for signing or renewal could not be found";
+"appleid.error.noDevice" = "Connect an iPhone or iPad and select it";
+"appleid.error.xtoolFailed" = "xtool failed: %@";
+"appleid.error.gsaMissingToken" = "GrandSlam signed in but did not return a developer token";
+"appleid.error.emptyResponse" = "Apple’s service returned an empty response";
+"appleid.error.invalidPlist" = "Apple’s service returned a plist that could not be parsed";
+"appleid.log.start" = "Starting Apple ID signing: %@ → %@";
+"appleid.log.reusedSession" = "Reusing the signed-in session: %@ (%@)";
+"appleid.log.loggingIn" = "Signing in to Apple ID: %@";
+"appleid.log.loggedIn" = "Signed in to team: %@ (%@)";
+"appleid.log.rewriteBundleID" = "The original bundle ID could not be registered; it was changed to: %@";
+"appleid.log.installing" = "Installing onto %@…";
+"appleid.log.installed" = "✅ Installed onto the connected device";
+"appleid.log.renewalSaved" = "Added to 7-day renewal; expires %@";
+"appleid.log.usingXTool" = "xtool was found; using its Apple ID sign-and-install flow";
+"appleid.log.xtoolInstalled" = "✅ xtool finished signing and installing";
+"appleid.log.importedIdentity" = "Imported the development certificate: %@";
+"appleid.log.profileReady" = "Downloaded the profile: %@ · expires %@";
+"appleid.log.deviceAlreadyRegistered" = "The device is already on the team: %@";
+"appleid.log.deviceRegistered" = "Registered device: %@ (%@)";
+"appleid.log.appIDExists" = "Reusing the existing App ID: %@";
+"appleid.log.appIDCreated" = "Created App ID: %@";
+"appleid.log.revokedCertificate" = "Revoked an old development certificate to free a slot: %@";
+"appleid.log.reusedCertificate" = "Reusing the stored development certificate: %@";
+"appleid.log.requestingCertificate" = "Requesting a new development certificate from Apple";
+"appleid.log.requestingCertificateAfterRevoke" = "The free-account certificate slot is full; revoked %d certificate(s) and requested a new one";
+"appleid.log.profileDeleted" = "Deleted the old provisioning profile so it can be refreshed: %@";

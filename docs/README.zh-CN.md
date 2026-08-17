@@ -36,7 +36,7 @@
 
 - **DEB**：制作、检查、解包、转换与重新打包
 - **DYLIB**：依赖检查、动态库提取、安装名与 rpath 修改
-- **IPA**：注入流程、瘦身、头文件提取与逐层签名
+- **IPA**：拖入工作台、注入、瘦身、头文件提取、逐层签名与 Apple ID 签名
 - **Mach-O**：原生 Swift 检查与 dylib 注入，支持单架构和通用二进制
 - **环境检查**：识别所需工具并提供清晰的安装指引
 
@@ -67,6 +67,17 @@
 
 > 需要 macOS 13 或更高版本。开发者工具标记为 Beta，修改文件前请保留备份。
 
+### 首次打开被拦截？
+
+当前公开测试版是 **ad-hoc 开发构建，未经 Apple 公证**。第一次打开时，macOS 可能会提示「无法验证开发者」或直接拦截。这不是损坏，按下面做即可：
+
+1. 先双击打开一次（会被拦，这是正常的）。
+2. 打开 **系统设置 → 隐私与安全性**。
+3. 往下找到刚才被拦的提示，点 **仍要打开**。
+4. 再打开一次 App。
+
+不要全局关闭 Gatekeeper。如果看不到「仍要打开」，等一会儿再回到这一页——按钮通常在首次拦截之后才会出现。
+
 ## 构建
 
 ```bash
@@ -86,11 +97,14 @@ open "dist/Mac小助手.app"
 
 由 **Codex 开发与维护** · 由 [iosrxwy](https://github.com/iosrxwy) 发布。
 
-特别感谢以下两个可选开源工具：
+特别感谢以下开源项目（均不捆绑其二进制）：
 
+- [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore)：Apple ID 开发者服务协议参考（Riley Testut）
+- [xtool](https://github.com/xtool-org/xtool)：可选的 Apple ID 命令行
+- [libimobiledevice](https://libimobiledevice.org)：USB 列设备与装机
 - [Theos](https://github.com/theos/theos)：Tweak 项目构建环境
-- [zsign](https://github.com/zhlynn/zsign)：IPA 与 Mach-O 签名工具
+- [zsign](https://github.com/zhlynn/zsign)：可选的 IPA / Mach-O 签名工具
 
 ## 许可证
 
-[MIT](../LICENSE)
+[GNU GPL-3.0](../LICENSE)。对外分发的修改版必须继续以同样许可证提供完整对应源代码。这并不自动允许把别人的工具打进 App：`class-dump` 同为 GPL-3.0，捆绑时必须一并提供其对应源代码；`dsdump` 许可证不明，不可再分发；AltStore / AltSign 为 AGPL-3.0，本项目只参考公开协议、不捆绑其代码。

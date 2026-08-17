@@ -13,7 +13,7 @@
   <a href="https://github.com/iosrxwy/MacAssistant/actions/workflows/ci.yml"><img src="https://github.com/iosrxwy/MacAssistant/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/macOS-13%2B-111111?logo=apple" alt="macOS 13+">
   <img src="https://img.shields.io/badge/Swift-5.9%2B-F05138?logo=swift&logoColor=white" alt="Swift 5.9+">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/iosrxwy/MacAssistant" alt="MIT License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/iosrxwy/MacAssistant" alt="GPL-3.0 License"></a>
   <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=flat" alt="GitHub stars"></a>
 </p>
 
@@ -44,7 +44,7 @@
 
 - **DEB** — create, inspect, unpack, convert and rebuild packages
 - **DYLIB** — inspect dependencies, extract libraries and rewrite install names or rpaths
-- **IPA** — injection workflows, thinning, header extraction and layered signing
+- **IPA** — drag-in workbench, injection, thinning, header extraction, layered signing, and Apple ID signing
 - **Mach-O** — native Swift inspection and dylib injection for thin or universal binaries
 - **Environment check** — find required tools and get guided setup actions
 
@@ -75,6 +75,17 @@ Get the universal Apple Silicon + Intel build from [Releases](https://github.com
 
 > Requires macOS 13 or later. Developer tools are Beta; keep a backup before modifying files.
 
+### First launch blocked by macOS?
+
+This public beta is an **ad-hoc development build. Apple has not notarized it.** The first open may show “Apple cannot verify this app” or get blocked. That is expected, not a broken download.
+
+1. Try to open the app once (macOS will block it; that is normal).
+2. Open **System Settings → Privacy & Security**.
+3. Scroll to the message about this app and click **Open Anyway**.
+4. Open the app again.
+
+Do not turn Gatekeeper off globally. If the button is missing, wait a minute and check that section again — it usually appears after the first blocked launch.
+
 ## Build
 
 ```bash
@@ -94,11 +105,14 @@ open "dist/Mac小助手.app"
 
 Developed and maintained by **Codex** · Published by [iosrxwy](https://github.com/iosrxwy).
 
-Special thanks to these two optional open-source tools:
+Special thanks to these open-source projects (none of their binaries are bundled):
 
+- [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) — Apple ID developer-service protocol reference (Riley Testut)
+- [xtool](https://github.com/xtool-org/xtool) — optional Apple ID CLI
+- [libimobiledevice](https://libimobiledevice.org) — USB device listing and install
 - [Theos](https://github.com/theos/theos) — tweak project build environment
-- [zsign](https://github.com/zhlynn/zsign) — IPA and Mach-O signing tool
+- [zsign](https://github.com/zhlynn/zsign) — optional IPA / Mach-O signing tool
 
 ## License
 
-[MIT](LICENSE)
+[GNU GPL-3.0](LICENSE). Distributed modifications must remain free software under the same license, with complete corresponding source. This does not by itself authorize bundling other projects: `class-dump` is also GPL-3.0 and could be combined only together with its corresponding source; `dsdump` has no clear license and must not be redistributed; AltStore / AltSign are AGPL-3.0 and are referenced as protocol documentation only.

@@ -2,6 +2,29 @@
 
 All notable changes to MacAssistant are recorded here.
 
+## [1.0.0-beta.2] - 2026-08-18
+
+Second public prerelease. Users on 1.0.0-beta.1 can pick this up from **About → Check for updates** or from [Releases](https://github.com/iosrxwy/MacAssistant/releases).
+
+### Highlights
+
+- IPA drag-in workbench: drop an IPA, plugins, frameworks, and profiles, then run a previewable recipe pipeline. The six-step wizard remains as advanced mode.
+- Apple ID signing, certificate library, connected-device listing, and provisioning-profile capability checks. Credentials stay in the Keychain; AltSign / xtool binaries are not bundled.
+- DEB page is now one row of modes: Theos plugin, quick pack, convert, and inspect. Incoming “pack as DEB” drafts open Quick pack directly.
+- DYLIB analysis snapshot is richer; Mach-O and extract sources accept drag-and-drop and multiple files.
+- Language switch lives on About, next to update checks. First-launch Gatekeeper steps are in the README, because About is unreachable while macOS is blocking the app.
+- CI runs `swift test`. Kit tests are in the repository. Release script records Hardened Runtime entitlements and a documented notarization path.
+- License changed from MIT to GNU GPL-3.0.
+
+### Validation
+
+- Universal release build: successful.
+- Strict local code-signature verification: successful.
+
+### Distribution note
+
+This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
+
 ## [1.0.0-beta.1] - 2026-08-15
 
 First public prerelease.
@@ -24,6 +47,7 @@ First public prerelease.
 
 ### Distribution note
 
-This prerelease is ad-hoc signed and not notarized. macOS may ask you to confirm opening it in **System Settings → Privacy & Security**.
+This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.0-beta.2]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.1

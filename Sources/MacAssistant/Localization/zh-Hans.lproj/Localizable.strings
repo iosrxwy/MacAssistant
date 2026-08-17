@@ -224,6 +224,11 @@
 "ipaview.outputName" = "自定义输出名（可选）";
 "ipaview.replaceIcon" = "添加替换图标";
 "ipaview.enableFileSharing" = "开启文件访问（Files App / iTunes 文件共享）";
+"ipaview.shortVersion" = "版本号（CFBundleShortVersionString）";
+"ipaview.buildVersion" = "Build（CFBundleVersion）";
+"ipaview.minimumOS" = "最低 iOS 版本";
+"ipaview.ppqRandomize" = "给 Bundle ID 加随机后缀（避开 PPQ 检查）";
+"ipaview.ppqRandomize.hint" = "只改你拥有或已授权的包。后缀在执行时生成，改包与重签用同一个最终 ID。";
 "ipaview.repairWhiteIcon" = "修复白图标";
 "ipaview.removeVOIP" = "移除 VOIP 后台模式";
 "ipaview.removeURLSchemes" = "移除应用 URL Scheme 注册";
@@ -265,6 +270,139 @@
 "ipaview.result.audit" = "审计切片映射：%d";
 "ipaview.scanning" = "正在安全扫描 IPA / App 并发现可注入目标…";
 "ipaview.scanned" = "✅ 已发现 %d 个可注入 Mach-O";
+"ipaview.packAsDeb" = "打包为 DEB";
+"ipaview.packSelectedAsDeb" = "将已选插件 / Framework 打包为 DEB";
+"ipaview.extensionPoint" = "Extension Point：%@";
+
+/* IPA 工作台 */
+"ipaview.mode.picker" = "注入方式";
+"ipaview.mode.workbench" = "工作台";
+"ipaview.mode.advanced" = "高级向导";
+"workbench.dropZone.title" = "把文件拖到这里";
+"workbench.dropZone.hint" = "IPA / .app、.deb、.dylib、.framework、.bundle、.mobileprovision 会被自动分类，不用先决定「这是第几步的输入」。";
+"workbench.ingest.snapshotting" = "正在为 %@ 建立不可变源快照…";
+"workbench.ingest.snapshotDone" = "✅ 源快照已锁为只读，原始输入永不被修改";
+"workbench.deb.attached" = "✅ 已从 %@ 添加插件候选";
+"workbench.deb.blocked" = "已阻止 %@：不适合作为 IPA 内插件";
+"workbench.section.target" = "目标包";
+"workbench.target.immutable" = "不可变源快照——原始输入永不被覆盖";
+"workbench.target.identity" = "主 bundle ID：%@";
+"workbench.target.requiredProfiles" = "需匹配 profile 的 bundle ID：%d 个";
+"workbench.permission.iosNote" = "这里只是 macOS 侧的本机文件访问。产物在设备上的文件能力由选中的 provisioning profile 与 entitlements 决定，与 macOS 本机权限无关。";
+"workbench.section.blockedDebs" = "被阻止的 DEB";
+"workbench.blockedDebs.note" = "这些包属于设备级组件（daemon / 命令行工具 / setuid / 内核级），默认不允许作为 IPA 内插件。";
+"workbench.section.unrecognized" = "无法识别的输入";
+"workbench.unrecognized.note" = "如实保留，不做猜测。";
+"workbench.section.plugins" = "插件";
+"workbench.plugins.selectMain" = "只选一个主 tweak；依赖 closure 交给预检去算。";
+"workbench.plugin.source" = "来自 %@";
+"workbench.plugin.main" = "主 tweak";
+"workbench.filter.match" = "filter 与目标匹配";
+"workbench.filter.indeterminate" = "filter 本机无法判定——需在设备上验证";
+"workbench.filter.mismatch" = "filter 与目标不匹配——默认阻止";
+"workbench.filter.ackDetail" = "我已知情：把 dylib 直接写进 IPA 会改变原 filter 语义，此时决定加载的是 load command 而不是 loader。仍然继续。";
+"workbench.filter.pendingTarget" = "等目标包分析完成后再比对 filter。";
+"workbench.section.frameworks" = "Framework / bundle";
+"workbench.section.fileAccess" = "文件访问行为（macOS 侧）";
+"workbench.fileAccess.prompt" = "按需提示";
+"workbench.fileAccess.require" = "强制要求";
+"workbench.fileAccess.note" = "「按需提示」在需要时再请求授权；「强制要求」表示运行前必须已具备访问权限。";
+"workbench.section.signing" = "签名";
+"workbench.signing.identity" = "开发者身份";
+"workbench.signing.none" = "不选";
+"workbench.signing.profilesCount" = "%d 个描述文件，其中 %d 个已匹配到 bundle ID";
+"workbench.signing.state.unsigned" = "已修改 / 未签名";
+"workbench.signing.state.unsigned.detail" = "未提供任何签名材料。产物以未签名形式产出，供后续签名——不能直接安装。";
+"workbench.signing.state.waiting" = "等待签名材料";
+"workbench.signing.state.waiting.missingIdentity" = "尚未选择开发者身份。";
+"workbench.signing.state.waiting.missingProfiles" = "缺少这些 bundle 的 profile：%@";
+"workbench.signing.state.ready" = "材料齐备，可签名交接";
+"workbench.signing.state.readyAppleID" = "Apple ID 已就绪，执行时申请描述文件并签名";
+"workbench.signing.state.readyAppleID.detail" = "团队 %@ · 设备 %@。执行时会向 Apple 取 7 天开发证书 / 描述文件，再由内向外重签。";
+"workbench.signing.appleID" = "Apple ID 签名";
+"workbench.signing.appleID.team" = "已登录团队：%@（%@）";
+"workbench.signing.useManualUDID" = "使用手填 UDID";
+"workbench.signing.invalidUDID" = "UDID 格式不对。请填 25 位带连字符或 40 位十六进制。";
+"workbench.signing.manualUDIDApplied" = "已使用手填设备：%@";
+"workbench.running" = "执行中…";
+"workbench.execute" = "执行：源快照 → 计划 → 预检 → 执行";
+"workbench.reset" = "重置工作台";
+"workbench.cannot.noPlugin" = "请先选一个主 tweak。";
+"workbench.cannot.filterBlocked" = "需勾选知情确认才能继续（filter 不匹配）。";
+"workbench.cannot.waitingSigning" = "请补齐签名材料，或移除全部材料以产出未签名产物。";
+"workbench.result.modifiedUnsigned" = "已修改 / 未签名产物";
+"workbench.result.modifiedUnsigned.detail" = "醒目未签名：需先签名才能安装到设备。不要误以为可直接安装。";
+"workbench.result.signedHandoff" = "已签名——可进入设备安装交接";
+"workbench.result.handoffSteps" = "产物已由内向外签名、可安装。下一步：用你惯用的工具把它装到已授权设备，再在设备上验证行为。";
+"workbench.result.finalDylib" = "最后注入的 dylib 位置：%@";
+"workbench.result.pendingVerification" = "结果仍待上机验证。在设备验证前，这里不会把任何结果标为「兼容」或「成功」。";
+"workbench.audit.export" = "导出审计记录（JSON）";
+"workbench.audit.exported" = "✅ 审计已导出（已脱敏主目录路径）：%@";
+
+/* Workbench — recipe 落盘 */
+"workbench.section.recipe" = "预设（保存 / 载入）";
+"workbench.recipe.note" = "预设只保存设置（目标映射、注入顺序、文件访问、组件策略、元数据），不含具体文件路径，因此可复用到不同来源。";
+"workbench.recipe.save" = "保存预设…";
+"workbench.recipe.load" = "载入预设…";
+"workbench.recipe.saved" = "✅ 预设已保存：%@";
+"workbench.recipe.loaded" = "✅ 预设已载入：%@";
+"workbench.recipe.loadFailed" = "载入预设失败：%@";
+
+/* Workbench — 独立预检 */
+"workbench.section.preflight" = "预检报告";
+"workbench.preflight.run" = "只预检（不执行）";
+"workbench.preflight.running" = "正在预检…";
+"workbench.preflight.ok" = "✅ 预检通过，无阻止项。执行前请先看一遍告警。";
+"workbench.preflight.blocked" = "⛔️ 预检发现阻止项，请先解决再执行。";
+"workbench.preflight.noBlockers" = "无阻止项";
+"workbench.preflight.hasBlockers" = "%d 项阻止";
+"workbench.preflight.empty" = "无 findings。";
+"workbench.preflight.blockers" = "阻止项（必须解决）";
+"workbench.preflight.warnings" = "告警";
+"workbench.preflight.infos" = "信息";
+"workbench.cannot.preflightBlocked" = "预检发现阻止项，请先解决。";
+
+/* Workbench — 结果:本机检查 vs 设备验证 */
+"workbench.result.localPassed" = "本机结构检查通过";
+"workbench.result.localPassedWithUnconfirmed" = "本机检查通过，但有 %d 条依赖本机无法确认";
+"workbench.result.localFailed" = "本机检查未通过";
+"workbench.result.deviceUnverified" = "尚未在设备验证：本工具永远无法确认设备上是否能加载。本机的绿勾不代表在设备上能跑。";
+
+/* Workbench — 未确认依赖 */
+"workbench.result.unconfirmed.title" = "未确认依赖（%d）";
+"workbench.result.unconfirmed.note" = "以下依赖本机无法确认，需在已授权设备上验证。";
+"workbench.result.unconfirmed.installPath" = "安装路径：%@";
+"workbench.result.unconfirmed.referencedBy" = "被引用于：%@";
+"workbench.result.unconfirmed.classification" = "归类：%@";
+"workbench.result.unconfirmed.evidence" = "依据：%@";
+"workbench.result.unconfirmed.logLine" = "⚠️ 有 %d 条依赖本机无法确认，需上机验证。";
+
+/* Workbench — 前后 diff */
+"workbench.result.diff.title" = "前后对照（%d 处路径变化）";
+"workbench.result.diff.changedPaths" = "变更路径";
+"workbench.result.diff.addedLoad" = "＋ load command：%@";
+"workbench.result.diff.removedLoad" = "－ load command：%@";
+"workbench.result.diff.addedRpath" = "＋ rpath：%@";
+"workbench.result.diff.removedRpath" = "－ rpath：%@";
+"workbench.result.diff.signature" = "签名状态：%@ → %@";
+"workbench.result.diff.sha" = "SHA-256：%@ → %@";
+"workbench.result.diff.kind.added" = "新增";
+"workbench.result.diff.kind.removed" = "移除";
+"workbench.result.diff.kind.modified" = "修改";
+"workbench.result.diff.kind.unchanged" = "未变";
+
+/* Workbench — 依赖归类标签 */
+"workbench.dep.systemLibrary" = "系统库";
+"workbench.dep.appEmbedded" = "App 内嵌";
+"workbench.dep.deviceProvided" = "设备提供（越狱）";
+"workbench.dep.pluginProvided" = "本次插件自带";
+"workbench.dep.unknown" = "未知";
+
+/* Workbench — 签名状态标签 */
+"workbench.sig.valid" = "有效";
+"workbench.sig.invalid" = "无效";
+"workbench.sig.unsigned" = "未签名";
+"workbench.sig.unavailable" = "无法读取";
 
 /* MemoryView */
 "memoryview.title" = "内存工具";
@@ -478,6 +616,7 @@
 "signingtab.noIPA" = "尚未选择 IPA";
 "signingtab.mode.jailbreak" = "越狱 / 本地";
 "signingtab.mode.realDevice" = "真机证书（开发者）";
+"signingtab.mode.appleID" = "Apple ID 签名";
 "signingtab.log" = "执行日志";
 "signingtab.jailbreak.title" = "越狱 / 本地伪签名";
 "signingtab.method" = "签名方式";
@@ -493,6 +632,11 @@
 "signingtab.p12Identity" = "当前证书：%@";
 "signingtab.p12Hint" = "一个 .p12 证书供主 App 与所有嵌套组件共用；每个 Bundle 仍需匹配自己的 .mobileprovision。";
 "signingtab.p12Imported" = "证书已导入钥匙串，并记住密码";
+"signingtab.certificateLibrary" = "已保存的证书";
+"signingtab.removeCertificate" = "从列表移除";
+"signingtab.certificateValid" = "剩余 %d 天";
+"signingtab.certificateExpiring" = "%d 天后到期";
+"signingtab.certificateExpired" = "已过期";
 "signingtab.exportPasswordTitle" = "设置导出密码";
 "signingtab.exportPasswordHint" = "请输入新的 .p12 密码";
 "signingtab.exportConfirm" = "导出";
@@ -513,6 +657,50 @@
 "signingtab.done" = "✅ 签名完成";
 "signingtab.realDevice.done" = "✅ 开发者证书签名与严格校验通过，可用于设备安装流程";
 "signingtab.output" = "输出:%@";
+"signingtab.appleID.title" = "Apple ID 签名（连手机 / 7 天续签）";
+"signingtab.appleID.detail" = "用免费或付费 Apple ID 向 Apple 申请开发证书和描述文件，把当前设备 UDID 写进 profile，再由内向外重签。免费账号证书约 7 天过期；勾选续签后，本应用在打开时可提前提醒并一键重签。流程参考 AltSign / xtool / libimobiledevice，只对你拥有或已授权的 IPA 操作。";
+"signingtab.appleID.account" = "Apple ID";
+"signingtab.appleID.password" = "密码";
+"signingtab.appleID.remember" = "记住到钥匙串";
+"signingtab.appleID.forget" = "忘记账号";
+"signingtab.appleID.twoFactor" = "两步验证码（需要时填写）";
+"signingtab.appleID.twoFactor.hint" = "登录若提示需要验证码，把 6 位数字填在这里再点一次签名。";
+"signingtab.appleID.devices" = "已连接的 iPhone / iPad";
+"signingtab.appleID.refreshDevices" = "刷新设备";
+"signingtab.appleID.noDevices" = "未发现设备。用数据线连接并在手机上点「信任」，然后刷新。需要 idevice_id（brew install libimobiledevice）或 Xcode。";
+"signingtab.appleID.install" = "签名后直接安装到所选设备";
+"signingtab.appleID.renew" = "加入 7 天续签列表";
+"signingtab.appleID.signAndInstall" = "Apple ID 签名并安装";
+"signingtab.appleID.signing" = "正在向 Apple 申请证书并签名…";
+"signingtab.appleID.done" = "✅ Apple ID 签名完成";
+"signingtab.appleID.jobs" = "7 天续签";
+"signingtab.appleID.jobExpires" = "%@ · 到期 %@";
+"signingtab.appleID.jobDue" = "即将过期";
+"signingtab.appleID.renewNow" = "立即续签";
+"signingtab.appleID.removeJob" = "移除";
+"signingtab.appleID.autoRenew" = "到期自动续签";
+"signingtab.appleID.toolsMissing" = "未检测到 idevice_id。安装 libimobiledevice 后才能列出 USB 设备；也可使用 Xcode 的 devicectl。";
+"signingtab.appleID.login" = "登录 Apple ID";
+"signingtab.appleID.loggingIn" = "正在登录 Apple ID…";
+"signingtab.appleID.loggedIn" = "已登录：%@（%@）";
+"signingtab.appleID.team" = "开发团队";
+"signingtab.appleID.manualUDID" = "手填 UDID（无 USB 时）";
+"signingtab.appleID.manualUDID.placeholder" = "00008030-… 或 40 位十六进制";
+"signingtab.appleID.manualName.placeholder" = "设备名称（可选）";
+"signingtab.appleID.manualUDID.hint" = "没有连线设备时，把 iPhone 的 UDID 填在这里，效果与 USB 选择相同。";
+"signingtab.appleID.portalResources" = "开发者门户（只读）";
+"signingtab.appleID.registeredDevices" = "已注册设备 %d 台";
+"signingtab.appleID.certificates" = "开发证书 %d 张";
+"signingtab.appleID.appIDs" = "App ID %d 个";
+"signingtab.exportPasswordEmpty" = "导出密码不能为空";
+"signingtab.capabilities.summary" = "描述文件权限：%d 项已有，%d 项没有";
+"signingtab.capabilities.present" = "已有";
+"signingtab.capabilities.absent" = "没有";
+"signingtab.capabilities.loadFailed" = "无法读取描述文件权限";
+"signingtab.certificate.details" = "证书信息";
+"signingtab.certificate.subject" = "主题：%@";
+"signingtab.certificate.team" = "Team：%@";
+"signingtab.certificate.serial" = "序列号：%@";
 
 /* SlimTab */
 "slimtab.chooseIPA" = "选择 IPA";
@@ -575,7 +763,7 @@
 
 /* DylibView */
 "dylibview.title" = "DYLIB 工具";
-"dylibview.subtitle" = "查看依赖、修改 install name / rpath,从 App 或 .deb 中提取动态库";
+"dylibview.subtitle" = "查看依赖、修改 install name / rpath,从 App 或 .deb 中提取 dylib、framework、bundle 和资源包";
 "dylibview.chooseMachO" = "选择 Mach-O(可执行文件或 .dylib)";
 "dylibview.chooseFile" = "选择文件";
 "dylibview.packAsDeb" = "打包为 DEB";
@@ -597,18 +785,32 @@
 "dylibview.apply" = "应用修改";
 "dylibview.addRPath" = "新增 rpath";
 "dylibview.add" = "添加";
-"dylibview.extract.title" = "从 App / .deb / 目录 提取动态库";
-"dylibview.sourceFile" = "选择来源(文件)";
-"dylibview.sourceFolder" = "选择来源(目录)";
+"dylibview.extract.title" = "从 App / .deb / 目录 批量提取 dylib、framework、bundle 和资源包";
+"dylibview.sourceFile" = "选择来源(可多选)";
+"dylibview.sourceFolder" = "选择目录(可多选)";
 "dylibview.extract" = "提取";
-"dylibview.extract.placeholder" = "选择 .app 目录、.deb 或任意目录";
+"dylibview.extract.placeholder" = "拖入或选择一个或多个 .app、.ipa、.deb、framework、bundle 或目录";
 "dylibview.outputSection" = "输出";
 "dylibview.loaded" = "读取到 %d 个依赖、%d 个 rpath";
 "dylibview.noMachO" = "未发现 Mach-O 文件";
-"dylibview.extracted" = "已提取 %d 个到:%@";
+"dylibview.noPayload" = "未发现 dylib、framework、bundle 或资源包";
+"dylibview.extracted" = "已从 %d 个来源提取 %d 项";
+"dylibview.extract.failed" = "%@: %@";
+"dylibview.extracted.destination" = "→ %@";
+"dylibview.kind.dylib" = "dylib";
+"dylibview.kind.framework" = "framework";
+"dylibview.kind.bundle" = "bundle";
+"dylibview.kind.resourcePackage" = "资源包";
+"dylibview.kind.resource" = "资源";
+"dylibview.kind.machO" = "Mach-O";
 "dylibview.done.deleteRPath" = "删除 rpath完成";
 "dylibview.done.changeDependency" = "修改依赖完成";
 "dylibview.done.addRPath" = "添加 rpath完成";
+"dylibview.drop.hintMachO" = "也可将 Mach-O 可执行文件或 .dylib 拖到此处";
+"dylibview.drop.hintExtract" = "支持一次拖入多个 .deb / .ipa / .app / 目录，松开即提取";
+"dylibview.drop.notMachO" = "不是 Mach-O 可执行文件或 .dylib：%@";
+"dylibview.drop.notExtractSource" = "请拖入 .app、.ipa、.deb、framework、bundle 或目录：%@";
+"dylibview.drop.skipped" = "已跳过：%@";
 
 /* Shared */
 "common.cancel" = "取消";
@@ -626,6 +828,7 @@
 /* EnvironmentView */
 "env.title" = "环境检查";
 "env.subtitle" = "%d / %d 项命令行工具已就绪";
+"env.checking" = "正在检测命令行工具…";
 "env.installStatus" = "安装状态";
 "env.builtInNote" = "内置 Class Dump 无需外部依赖。class-dump / dsdump 只用于内置解析无法覆盖的现代 Mach-O 格式，且不会自动下载未知二进制。";
 "env.refresh" = "重新检测";
@@ -648,21 +851,36 @@
 "env.missing.formula" = "缺失 · Homebrew Core 公式：%@";
 "env.missing.hint" = "缺失 · %@";
 "env.tool.accessibility" = "%@，%@";
-"env.language.title" = "界面语言";
-"env.language.detail" = "默认跟随系统语言，切换后立即生效。";
 
 /* AboutView */
 "about.icon.accessibility" = "Mac 小助手心形图标";
 "about.tagline" = "原生 macOS 效率与逆向工具箱";
-"about.version" = "版本 %@ · MIT License";
+"about.version" = "版本 %@ · GPL-3.0";
 "about.github.accessibility" = "打开 GitHub 开源账号 iosrxwy";
 "about.channel" = "发布频道 · @iosrxwy";
 "about.channel.accessibility" = "打开 Telegram 发布频道 iosrxwy";
-"about.license" = "项目以 MIT 许可证开源。仅对你拥有或已获授权的文件使用逆向、修改与重打包功能。";
-"about.thirdParty" = "第三方许可证";
-"about.thirdParty.detail" = "本应用不捆绑 class-dump（GPL-3.0）或许可证不明确的 dsdump 二进制，也不会自动下载。Homebrew 公式由 Homebrew Core 提供并显示来源。";
+"about.license" = "项目以 GNU GPL-3.0 开源。对外分发修改版时必须同样以 GPL-3.0 提供完整对应源代码。仅对你拥有或已获授权的文件使用逆向、修改与重打包功能。";
+"about.thirdParty" = "开源致谢与第三方许可证";
+"about.thirdParty.detail" = "本应用以 GPL-3.0 发布。Apple ID 签名协议参考 AltSign / AltStore（Riley Testut）与 xtool / XKit，设备通信参考 libimobiledevice。这些项目以及 class-dump、许可证不明确的 dsdump 均未打进本应用，也不会自动下载。class-dump 同为 GPL-3.0，若日后捆绑必须一并提供其对应源代码；dsdump 许可证不明，仍不可再分发。AltStore 为 AGPL-3.0，本应用只参考公开协议、不捆绑其代码。Homebrew 公式由 Homebrew Core 提供并显示来源。";
+"about.thirdParty.altSign" = "AltSign（Riley Testut）";
+"about.thirdParty.altStore" = "AltStore";
+"about.thirdParty.xtool" = "xtool / XKit";
+"about.thirdParty.libimobiledevice" = "libimobiledevice";
+"about.thirdParty.theos" = "Theos";
+"about.thirdParty.zsign" = "zsign";
 "about.thirdParty.classDump" = "class-dump 项目";
 "about.thirdParty.dsdump" = "dsdump 项目";
 "about.privacy" = "隐私与安全声明";
 "about.privacy.detail" = "文件处理在本机完成；管理员密码由 macOS 系统授权框处理。应用不会全局关闭 Gatekeeper，不自动执行 curl | bash，不保证逆向或签名产物可在真实设备运行。";
 "about.privacy.apple" = "Apple 平台安全";
+"about.developer" = "开发者 iosrxwy";
+"about.language.title" = "界面语言";
+"about.language.detail" = "默认跟随系统语言，切换后立即生效。";
+"about.checkForUpdates" = "检查更新";
+"about.checkForUpdates.accessibility" = "检查是否有新版本";
+"about.automaticUpdateCheck" = "自动检查更新";
+"about.automaticUpdateCheck.hint" = "开启后每天最多自动检查一次";
+"about.updatePrivacy" = "仅向 GitHub 查询版本号，不上传任何信息；不会自动下载或安装。";
+"about.buildKind.notarized" = "已公证发行版（Developer ID）";
+"about.buildKind.development" = "开发构建（ad-hoc，未公证）";
+"about.buildKind.development.hint" = "这是未经 Apple 公证的 ad-hoc 构建，首次打开时 macOS 可能会拦截。若被拦截，请前往「系统设置 → 隐私与安全性」，找到对应提示后点「仍要打开」。";

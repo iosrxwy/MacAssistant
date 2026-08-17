@@ -183,6 +183,34 @@ struct FilePickerButton: View {
     }
 }
 
+struct MultiFilePickerButton: View {
+    var title: String
+    var systemImage: String = "folder"
+    var types: [UTType] = [.item]
+    var chooseDirectory: Bool = false
+    let onPick: ([URL]) -> Void
+
+    @State private var presented = false
+
+    var body: some View {
+        Button {
+            presented = true
+        } label: {
+            Label(title, systemImage: systemImage)
+        }
+        .fileImporter(
+            isPresented: $presented,
+            allowedContentTypes: chooseDirectory ? [.folder] : types,
+            allowsMultipleSelection: true
+        ) { result in
+            guard case let .success(urls) = result, !urls.isEmpty else { return }
+            FileSystemHelper.withSecurityScopedAccess(to: urls) {
+                onPick(urls)
+            }
+        }
+    }
+}
+
 // MARK: - 复制按钮
 
 struct CopyButton: View {
@@ -249,14 +277,17 @@ struct StatusBadge: View {
 struct PathBadge: View {
     let url: URL?
     var placeholder = L("theme.noSelection")
+    /// 与 IPA 工作台拖放区一致:悬停时加粗虚线+强调色。
+    var isDropTargeted = false
+    var showsDropChrome = false
 
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "doc")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(isDropTargeted ? Color.accentColor : .secondary)
             Text(url?.path ?? placeholder)
                 .font(.footnote)
-                .foregroundStyle(url == nil ? .secondary : .primary)
+                .foregroundStyle(url == nil && !isDropTargeted ? .secondary : (isDropTargeted ? Color.accentColor : .primary))
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
@@ -266,7 +297,138 @@ struct PathBadge: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .insetSurfaceBackground(
             RoundedRectangle(cornerRadius: 8),
-            legacyFill: Color.primary.opacity(0.05)
+            legacyFill: Color.primary.opacity(isDropTargeted ? 0.10 : 0.05)
         )
+        .overlay {
+            if showsDropChrome || isDropTargeted {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.35),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [7])
+                    )
+            }
+        }
     }
+}
+
+// MARK: - 文件拖放
+
+private let droppedFileTypes: [UTType] = [
+    .fileURL, .item, .content, .data, .package, .directory, .folder,
+    .application, .applicationBundle, .debPackage, .ipaPackage, .dylibFile, .unixExecutable, .executable
+]
+
+extension View {
+    /// 接收 Finder 拖入的文件 URL,样式与命中态由调用方自己画(工作台虚线框 / PathBadge)。
+    func fileURLDropTarget(isTargeted: Binding<Bool>, onDrop handle: @escaping (URL) -> Void) -> some View {
+        fileURLsDropTarget(isTargeted: isTargeted) { urls in
+            urls.forEach(handle)
+        }
+    }
+
+    func fileURLsDropTarget(isTargeted: Binding<Bool>, onDrop handle: @escaping ([URL]) -> Void) -> some View {
+        contentShape(Rectangle())
+            .onDrop(of: droppedFileTypes, isTargeted: isTargeted) { providers in
+                ingestDroppedFileURLs(providers, onDrop: handle)
+            }
+    }
+}
+
+/// 从 `NSItemProvider` 解出文件 URL。Finder 对 .deb 等自定义后缀经常不给 `public.file-url` 的 Data,
+/// 所以 fileURL / url / item 都试一遍,凑齐一批后再回主线程,才能一次处理多个拖入。
+@discardableResult
+func ingestDroppedFileURLs(_ providers: [NSItemProvider], onDrop handle: @escaping ([URL]) -> Void) -> Bool {
+    let loaders = providers.filter { provider in
+        droppedFileTypes.contains { provider.hasItemConformingToTypeIdentifier($0.identifier) }
+            || provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
+    }
+    guard !loaders.isEmpty else { return false }
+    Task {
+        var urls: [URL] = []
+        for provider in loaders {
+            if let url = await loadDroppedFileURL(from: provider) {
+                urls.append(url)
+            }
+        }
+        let unique = uniquedDroppedURLs(urls)
+        guard !unique.isEmpty else { return }
+        await MainActor.run { handle(unique) }
+    }
+    return true
+}
+
+@discardableResult
+func ingestDroppedFileURLs(_ providers: [NSItemProvider], onDrop handle: @escaping (URL) -> Void) -> Bool {
+    ingestDroppedFileURLs(providers) { urls in
+        urls.forEach(handle)
+    }
+}
+
+private func loadDroppedFileURL(from provider: NSItemProvider) async -> URL? {
+    let identifiers = [
+        UTType.fileURL.identifier,
+        UTType.url.identifier,
+        UTType.item.identifier
+    ]
+    for identifier in identifiers where provider.hasItemConformingToTypeIdentifier(identifier) {
+        if let url = await loadDropItem(provider, typeIdentifier: identifier) { return url }
+        if identifier == UTType.fileURL.identifier,
+           let url = await loadFileURLData(provider) {
+            return url
+        }
+    }
+    return nil
+}
+
+private func loadDropItem(_ provider: NSItemProvider, typeIdentifier: String) async -> URL? {
+    await withCheckedContinuation { continuation in
+        provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { item, _ in
+            continuation.resume(returning: urlFromDropItem(item))
+        }
+    }
+}
+
+private func loadFileURLData(_ provider: NSItemProvider) async -> URL? {
+    await withCheckedContinuation { continuation in
+        provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
+            continuation.resume(returning: data.flatMap { URL(dataRepresentation: $0, relativeTo: nil) })
+        }
+    }
+}
+
+private func urlFromDropItem(_ item: NSSecureCoding?) -> URL? {
+    if let url = item as? URL { return url }
+    if let data = item as? Data {
+        if let url = URL(dataRepresentation: data, relativeTo: nil) { return url }
+        if let text = String(data: data, encoding: .utf8) {
+            return urlFromDropString(text)
+        }
+    }
+    if let text = item as? String {
+        return urlFromDropString(text)
+    }
+    return nil
+}
+
+private func urlFromDropString(_ text: String) -> URL? {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let data = trimmed.data(using: .utf8),
+       let url = URL(dataRepresentation: data, relativeTo: nil),
+       url.isFileURL {
+        return url
+    }
+    if trimmed.hasPrefix("file:") {
+        if let url = URL(string: trimmed), url.isFileURL { return url }
+        var path = trimmed
+        if path.hasPrefix("file://") { path = String(path.dropFirst("file://".count)) }
+        if let decoded = path.removingPercentEncoding { path = decoded }
+        if path.hasPrefix("/") { return URL(fileURLWithPath: path) }
+    }
+    if trimmed.hasPrefix("/") { return URL(fileURLWithPath: trimmed) }
+    return nil
+}
+
+private func uniquedDroppedURLs(_ urls: [URL]) -> [URL] {
+    var seen = Set<String>()
+    return urls.filter { seen.insert($0.standardizedFileURL.path).inserted }
 }

@@ -31,6 +31,17 @@
 
 最新版は [Releases](https://github.com/iosrxwy/MacAssistant/releases) から入手できます。macOS 13 以降が必要です。
 
+### 初回起動でブロックされる場合
+
+この公開ベータは **ad-hoc の開発ビルドで、Apple の公証を受けていません。** 初回起動時に「開発元を確認できない」と出たり、起動が拒否されたりします。破損ではありません。
+
+1. いったんアプリを開く（ブロックされるのが正常です）。
+2. **システム設定 → プライバシーとセキュリティ** を開く。
+3. このアプリに関する表示までスクロールし、**このまま開く** を押す。
+4. もう一度アプリを開く。
+
+Gatekeeper を全体でオフにしないでください。「このまま開く」が見当たらないときは、初回ブロックのあと少し待ってから同じ画面を確認してください。
+
 ## ビルド
 
 ```bash
@@ -41,4 +52,4 @@ cd MacAssistant
 
 **Codex が開発・保守** · [iosrxwy](https://github.com/iosrxwy) が公開しています。
 
-Thanks: [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign)
+Thanks: [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign). These projects’ binaries are not bundled.

@@ -9,9 +9,20 @@ private enum AboutLayout {
 
 struct AboutView: View {
     @ObservedObject var updates: UpdateCoordinator
+    @AppStorage(LocalizationSettings.defaultsKey) private var language = AppLanguage.system.rawValue
 
     /// 与检查更新用的是同一个版本号来源,避免页面显示和比较结果对不上。
     private var version: String { updates.currentVersion }
+
+    /// 只有 Info.plist 里 MacAssistantBuildKind 明确带 Developer ID 且不含 ad-hoc 标记才算已公证发行版。
+    /// 缺失、未知或含 ad-hoc 的一律按开发构建处理:宁可多给一次拦截提示,也绝不把未公证产物显示成已公证。
+    private var isNotarizedRelease: Bool {
+        guard let kind = Bundle.main.object(forInfoDictionaryKey: "MacAssistantBuildKind") as? String else {
+            return false
+        }
+        let lower = kind.lowercased()
+        return lower.contains("developer id") && !lower.contains("ad-hoc")
+    }
 
     var body: some View {
         ScrollView {
@@ -31,11 +42,13 @@ struct AboutView: View {
                 Text(L("about.version", version))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("开发者 iosrxwy")
+                Text(L("about.developer"))
                     .font(.caption2)
                     .foregroundStyle(.orange)
             }
             .accessibilityElement(children: .combine)
+
+            buildKindSection
 
             HStack(spacing: 10) {
                 Button {
@@ -59,6 +72,7 @@ struct AboutView: View {
             .buttonStyle(.bordered)
             .controlSize(.large)
 
+            languageSection
             updateSection
 
             Text(L("about.license"))
@@ -75,6 +89,24 @@ struct AboutView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(L("about.thirdParty.detail"))
                             VStack(alignment: .leading, spacing: 6) {
+                                Button(L("about.thirdParty.altSign")) {
+                                    NSWorkspace.shared.open(ProductLinks.altSignProject)
+                                }
+                                Button(L("about.thirdParty.altStore")) {
+                                    NSWorkspace.shared.open(ProductLinks.altStoreGitHub)
+                                }
+                                Button(L("about.thirdParty.xtool")) {
+                                    NSWorkspace.shared.open(ProductLinks.xtoolProject)
+                                }
+                                Button(L("about.thirdParty.libimobiledevice")) {
+                                    NSWorkspace.shared.open(ProductLinks.libimobiledevice)
+                                }
+                                Button(L("about.thirdParty.theos")) {
+                                    NSWorkspace.shared.open(ProductLinks.theosProject)
+                                }
+                                Button(L("about.thirdParty.zsign")) {
+                                    NSWorkspace.shared.open(ProductLinks.zsignProject)
+                                }
                                 Button(L("about.thirdParty.classDump")) {
                                     NSWorkspace.shared.open(ProductLinks.classDumpProject)
                                 }
@@ -114,6 +146,29 @@ struct AboutView: View {
         .navigationTitle(SidebarItem.about.title)
     }
 
+    private var languageSection: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 14) {
+                Label(L("about.language.title"), systemImage: "globe")
+                Picker("", selection: $language) {
+                    ForEach(AppLanguage.allCases) { option in
+                        Text(option.displayName).tag(option.rawValue)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 200)
+                .accessibilityLabel(L("about.language.title"))
+                .accessibilityIdentifier("about.language")
+            }
+            Text(L("about.language.detail"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: AboutLayout.contentWidth)
+    }
+
     private var updateSection: some View {
         VStack(spacing: 8) {
             HStack(spacing: 14) {
@@ -123,19 +178,19 @@ struct AboutView: View {
                     if updates.isChecking {
                         ProgressView().controlSize(.small)
                     } else {
-                        Label("检查更新", systemImage: "arrow.triangle.2.circlepath")
+                        Label(L("about.checkForUpdates"), systemImage: "arrow.triangle.2.circlepath")
                     }
                 }
                 .buttonStyle(.bordered)
                 .disabled(updates.isChecking)
-                .accessibilityLabel("检查是否有新版本")
+                .accessibilityLabel(L("about.checkForUpdates.accessibility"))
                 .accessibilityIdentifier("about.checkForUpdates")
 
-                Toggle("自动检查更新", isOn: $updates.automaticCheckEnabled)
+                Toggle(L("about.automaticUpdateCheck"), isOn: $updates.automaticCheckEnabled)
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .fixedSize()
-                    .accessibilityHint("开启后每天最多自动检查一次")
+                    .accessibilityHint(L("about.automaticUpdateCheck.hint"))
                     .accessibilityIdentifier("about.automaticUpdateCheck")
             }
 
@@ -145,10 +200,35 @@ struct AboutView: View {
                 .multilineTextAlignment(.center)
                 .accessibilityIdentifier("about.updateStatus")
 
-            Text("仅向 GitHub 查询版本号，不上传任何信息；不会自动下载或安装。")
+            Text(L("about.updatePrivacy"))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: AboutLayout.contentWidth)
+    }
+
+    /// 如实区分构建种类:已公证发行版给出中性提示;开发构建（ad-hoc、未公证）明确警告
+    /// macOS 可能拦截,并指引用户到「系统设置 → 隐私与安全性 → 仍要打开」。
+    @ViewBuilder
+    private var buildKindSection: some View {
+        if isNotarizedRelease {
+            Label(L("about.buildKind.notarized"), systemImage: "checkmark.seal")
+                .font(.caption)
+                .foregroundStyle(.green)
+                .accessibilityIdentifier("about.buildKind")
+        } else {
+            VStack(spacing: 4) {
+                Label(L("about.buildKind.development"), systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Text(L("about.buildKind.development.hint"))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: AboutLayout.contentWidth)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("about.buildKind")
+        }
     }
 }

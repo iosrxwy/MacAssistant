@@ -6,23 +6,26 @@ import MacAssistantKit
 struct DebView: View {
     @ObservedObject private var workspace: WorkspaceStore
     private enum Mode: String, CaseIterable {
-        case make = "制作"
+        case theos = "Theos 插件"
+        case quick = "快速封装"
         case convert = "转换"
         case inspect = "查看 / 解包"
 
         var icon: String {
             switch self {
-            case .make: return "hammer"
+            case .theos: return "hammer"
+            case .quick: return "shippingbox"
             case .convert: return "arrow.triangle.2.circlepath"
             case .inspect: return "doc.text.magnifyingglass"
             }
         }
     }
 
-    @State private var mode: Mode = .make
+    @State private var mode: Mode = .theos
 
     init(workspace: WorkspaceStore) {
         self.workspace = workspace
+        _mode = State(initialValue: workspace.pendingDebDraft == nil ? .theos : .quick)
     }
 
     var body: some View {
@@ -37,11 +40,12 @@ struct DebView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(maxWidth: 320)
+            .frame(maxWidth: 520)
             .accessibilityLabel("模式")
 
             switch mode {
-            case .make: DebMaker(workspace: workspace)
+            case .theos: TheosProjectMaker()
+            case .quick: DebPackageWizard(workspace: workspace)
             case .convert: DebConverter()
             case .inspect: DebInspector(workspace: workspace)
             }
@@ -49,31 +53,7 @@ struct DebView: View {
     }
 }
 
-// MARK: - 制作
-
-private struct DebMaker: View {
-    @ObservedObject var workspace: WorkspaceStore
-    private enum Mode: String, CaseIterable {
-        case theos = "Theos 插件"
-        case quick = "快速封装"
-    }
-    @State private var mode: Mode = .theos
-
-    var body: some View {
-        Picker("制作方式", selection: $mode) {
-            ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-        }
-        .pickerStyle(.segmented)
-        .frame(maxWidth: 320)
-        .labelsHidden()
-
-        if mode == .theos {
-            TheosProjectMaker()
-        } else {
-            DebPackageWizard(workspace: workspace)
-        }
-    }
-}
+// MARK: - Theos 插件
 
 private struct TheosProjectMaker: View {
     @State private var projectURL: URL?
@@ -2035,31 +2015,5 @@ private struct BoxedTextEditor: View {
                 legacyFill: Color(nsColor: .textBackgroundColor),
                 stroke: Color.primary.opacity(0.12)
             )
-    }
-}
-
-private struct MultiFilePickerButton: View {
-    let title: String
-    let systemImage: String
-    let types: [UTType]
-    let onPick: ([URL]) -> Void
-    @State private var presented = false
-
-    var body: some View {
-        Button {
-            presented = true
-        } label: {
-            Label(title, systemImage: systemImage)
-        }
-        .fileImporter(
-            isPresented: $presented,
-            allowedContentTypes: types,
-            allowsMultipleSelection: true
-        ) { result in
-            guard case let .success(urls) = result else { return }
-            FileSystemHelper.withSecurityScopedAccess(to: urls) {
-                onPick(urls)
-            }
-        }
     }
 }

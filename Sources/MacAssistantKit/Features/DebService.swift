@@ -21,6 +21,23 @@ public struct DebEntry: Identifiable, Sendable {
     public let size: Int64?
     public let isDirectory: Bool
     public let link: String?
+    /// 原始权限串(如 `-rwsr-xr-x`)。setuid/setgid 与可执行位的判定依赖它,不解析就丢会让
+    /// 后续无法识别设备级二进制,故予以保留。来源工具不提供时为 nil。
+    public let mode: String?
+
+    public init(
+        path: String,
+        size: Int64?,
+        isDirectory: Bool,
+        link: String?,
+        mode: String? = nil
+    ) {
+        self.path = path
+        self.size = size
+        self.isDirectory = isDirectory
+        self.link = link
+        self.mode = mode
+    }
 }
 
 /// .deb 检查结果。
@@ -537,10 +554,7 @@ public enum DebService {
         if relative.hasPrefix("Library/") { return true }
         guard relative.hasPrefix("usr/lib/") else { return false }
         let name = relative.lowercased()
-        return [
-            "substrate", "substitute", "hooker", "ellekit", "rocketbootstrap",
-            "preferenceloader", "libhooker", "cephei", "colorpicker"
-        ].contains(where: name.contains)
+        return DependencyClassifier.jailbreakRuntimeKeywords.contains(where: name.contains)
     }
 
     public static func build(_ request: DebPackageRequest, to output: URL) throws -> DebBuildResult {
@@ -816,6 +830,21 @@ public enum DebService {
         return (dir, files)
     }
 
+    /// 返回包内实际存在的维护脚本清单。只检测**存在性**,绝不读取或执行脚本内容——
+    /// 「不执行维护脚本」是本应用的既有安全边界。
+    public static func presentMaintainerScripts(debAt url: URL) throws -> [DebMaintainerScript] {
+        let dir = try FileSystemHelper.makeTemporaryDirectory(prefix: "deb-ctrl")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let extracted = dir.appendingPathComponent("payload", isDirectory: true)
+        try extract(debAt: url, to: extracted, dataOnly: false)
+        let debian = extracted.appendingPathComponent("DEBIAN", isDirectory: true)
+        return DebMaintainerScript.allCases.filter {
+            FileManager.default.fileExists(
+                atPath: debian.appendingPathComponent($0.rawValue).path
+            )
+        }
+    }
+
     // MARK: - 内部实现
 
     private static func renderControlForLayout(
@@ -1024,7 +1053,7 @@ public enum DebService {
                 path = String(pathParts[..<range.lowerBound])
                 link = String(pathParts[range.upperBound...])
             }
-            return DebEntry(path: path, size: size, isDirectory: mode.first == "d", link: link)
+            return DebEntry(path: path, size: size, isDirectory: mode.first == "d", link: link, mode: mode)
         }
     }
 
@@ -1046,7 +1075,7 @@ public enum DebService {
                 path = String(pathParts[..<range.lowerBound])
                 link = String(pathParts[range.upperBound...])
             }
-            return DebEntry(path: path, size: size, isDirectory: mode.first == "d", link: link)
+            return DebEntry(path: path, size: size, isDirectory: mode.first == "d", link: link, mode: mode)
         }
     }
 }

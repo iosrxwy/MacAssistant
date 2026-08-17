@@ -116,6 +116,10 @@ public enum ExternalTool: String, CaseIterable, Sendable {
     case classDump   // class-dump           导出 ObjC 头文件(需安装)
     case dsdump      // dsdump               ObjC/Swift 符号与类型(需安装)
     case zsign       // zsign                一步注入+重签(可选)
+    case ideviceID   // idevice_id           列出 USB / 网络 iOS 设备
+    case ideviceInfo // ideviceinfo          读 UDID / 名称 / 系统版本
+    case ideviceInstaller // ideviceinstaller 把已签名 IPA 装到已连接设备
+    case xtool       // xtool                Apple ID 开发者服务(可选)
 
     /// 命令名(用于 which 查找)。
     public var commandName: String {
@@ -125,6 +129,9 @@ public enum ExternalTool: String, CaseIterable, Sendable {
         case .installNameTool: return "install_name_tool"
         case .plistBuddy: return "PlistBuddy"
         case .classDump: return "class-dump"
+        case .ideviceID: return "idevice_id"
+        case .ideviceInfo: return "ideviceinfo"
+        case .ideviceInstaller: return "ideviceinstaller"
         default: return rawValue
         }
     }
@@ -155,6 +162,12 @@ public enum ExternalTool: String, CaseIterable, Sendable {
         case .classDump: return HostArchitecture.homebrewBinaryPaths("class-dump")
         case .dsdump: return HostArchitecture.homebrewBinaryPaths("dsdump")
         case .zsign: return HostArchitecture.homebrewBinaryPaths("zsign")
+        case .ideviceID: return HostArchitecture.homebrewBinaryPaths("idevice_id")
+        case .ideviceInfo: return HostArchitecture.homebrewBinaryPaths("ideviceinfo")
+        case .ideviceInstaller: return HostArchitecture.homebrewBinaryPaths("ideviceinstaller")
+        case .xtool:
+            return HostArchitecture.homebrewBinaryPaths("xtool")
+                + [NSHomeDirectory() + "/.local/bin/xtool", "/usr/local/bin/xtool"]
         }
     }
 
@@ -178,6 +191,10 @@ public enum ExternalTool: String, CaseIterable, Sendable {
             return .homebrewFormula("ldid")
         case .zsign:
             return .homebrewFormula("zsign")
+        case .ideviceID, .ideviceInfo, .ideviceInstaller:
+            return .openProjectPage(ProductLinks.libimobiledevice)
+        case .xtool:
+            return .openProjectPage(ProductLinks.xtoolProject)
         case .classDump:
             return .builtInFallback(
                 description: L("tool.classDump.builtInFallback"),

@@ -31,6 +31,17 @@
 
 [Releases](https://github.com/iosrxwy/MacAssistant/releases)에서 최신 버전을 받을 수 있습니다. macOS 13 이상이 필요합니다.
 
+### 처음 열 때 macOS가 막는 경우
+
+이 공개 베타는 **ad-hoc 개발 빌드이며 Apple 공증을 받지 않았습니다.** 처음 열면 “확인된 개발자가 아님”이 뜨거나 실행이 차단될 수 있습니다. 파일이 깨진 것이 아닙니다.
+
+1. 앱을 한 번 열어 봅니다(차단되는 것이 정상입니다).
+2. **시스템 설정 → 개인정보 보호 및 보안**을 엽니다.
+3. 이 앱에 대한 안내까지 스크롤한 뒤 **그래도 열기**를 누릅니다.
+4. 앱을 다시 엽니다.
+
+Gatekeeper를 전역으로 끄지 마세요. **그래도 열기**가 안 보이면 잠시 기다린 뒤 같은 화면을 다시 확인하세요. 보통 처음 차단된 뒤에 나타납니다.
+
 ## 빌드
 
 ```bash
@@ -41,4 +52,4 @@ cd MacAssistant
 
 **Codex가 개발·유지 관리** · [iosrxwy](https://github.com/iosrxwy)가 배포합니다.
 
-Thanks: [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign)
+Thanks: [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign). These projects’ binaries are not bundled.

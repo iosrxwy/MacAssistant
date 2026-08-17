@@ -37,13 +37,65 @@ public struct TweakInjectResult: Sendable {
     public var log: [String]
 }
 
+/// 一个 tweak filter 的 Mode。用 RawRepresentable 保留原始写法,未知值不丢失也能报告。
+public struct TweakFilterMode: RawRepresentable, Codable, Hashable, Sendable {
+    public let rawValue: String
+    public init(rawValue: String) { self.rawValue = rawValue }
+    public static let all = TweakFilterMode(rawValue: "All")
+    public static let any = TweakFilterMode(rawValue: "Any")
+
+    public var isAny: Bool { rawValue.caseInsensitiveCompare("Any") == .orderedSame }
+    public var isAll: Bool { rawValue.caseInsensitiveCompare("All") == .orderedSame }
+    /// 既非 Any 也非 All:无法用已知语义判定,需报告。
+    public var isRecognized: Bool { isAny || isAll }
+}
+
+/// 从既有 tweak 的 filter plist「读进来」的解析结果。
+///
+/// 与 `DebService.TweakFilter` 是相反方向的两个类型:后者是 DEB 打包侧「写出去」的
+/// 生成模型(只承载能有意义地生成的字段);本类型是解析真实世界任意 plist 的模型,
+/// 因此额外建模了 `Mode` 并保留未知字段。两者刻意不合并——把「保留未知字段/Mode」
+/// 强塞进生成模型会让它承载无法生成的信息,而让生成模型丢弃未知字段又会破坏本类型的
+/// 诚实性。二者共享的是同一组条件语义(bundles/executables/classes/cfVersion)。
 public struct TweakFilterTargets: Codable, Hashable, Sendable {
     public let bundles: [String]
     public let executables: [String]
+    public let classes: [String]
+    public let coreFoundationVersion: [Double]
+    /// nil 表示 plist 未写 Mode;MobileSubstrate 默认按「所有给定条件都需满足」(All)处理。
+    public let mode: TweakFilterMode?
+    /// Filter 字典内未建模的键,不静默丢弃,保留以便报告。
+    public let unknownFilterKeys: [String]
+    /// plist 顶层除 Filter/Mode 之外的键。
+    public let unknownTopLevelKeys: [String]
 
-    public init(bundles: [String] = [], executables: [String] = []) {
+    public init(
+        bundles: [String] = [],
+        executables: [String] = [],
+        classes: [String] = [],
+        coreFoundationVersion: [Double] = [],
+        mode: TweakFilterMode? = nil,
+        unknownFilterKeys: [String] = [],
+        unknownTopLevelKeys: [String] = []
+    ) {
         self.bundles = bundles
         self.executables = executables
+        self.classes = classes
+        self.coreFoundationVersion = coreFoundationVersion
+        self.mode = mode
+        self.unknownFilterKeys = unknownFilterKeys
+        self.unknownTopLevelKeys = unknownTopLevelKeys
+    }
+
+    public var isEmpty: Bool {
+        bundles.isEmpty && executables.isEmpty && classes.isEmpty && coreFoundationVersion.isEmpty
+    }
+
+    /// 生效 Mode:缺省按 All。
+    public var effectiveMode: TweakFilterMode { mode ?? .all }
+
+    public var hasUnknownFields: Bool {
+        !unknownFilterKeys.isEmpty || !unknownTopLevelKeys.isEmpty
     }
 }
 
@@ -58,10 +110,18 @@ public struct DebTweakCandidate: Identifiable, Sendable {
 
 public final class DebTweakCandidateSession: @unchecked Sendable {
     public let candidates: [DebTweakCandidate]
+    /// 该 .deb 作为 IPA 内插件的适用性。不适用时 candidates 仍会列出,由调用方决定是否阻止,
+    /// 从而既能复用分类结果,又不影响它在 DEB 打包页面作为合法输入。
+    public let pluginEligibility: DebPluginEligibility
     fileprivate let scanSession: DebScanSession
 
-    fileprivate init(candidates: [DebTweakCandidate], scanSession: DebScanSession) {
+    fileprivate init(
+        candidates: [DebTweakCandidate],
+        pluginEligibility: DebPluginEligibility,
+        scanSession: DebScanSession
+    ) {
         self.candidates = candidates
+        self.pluginEligibility = pluginEligibility
         self.scanSession = scanSession
     }
 }
@@ -72,6 +132,7 @@ public enum TweakInjectError: LocalizedError {
     case architectureMismatch(String)
     case unresolvedDependency(String)
     case outputExists(String)
+    case deviceLevelPackage(String)
     public var errorDescription: String? {
         switch self {
         case .noTweakFound: return L("tweak.error.noTweakFound")
@@ -79,6 +140,7 @@ public enum TweakInjectError: LocalizedError {
         case let .architectureMismatch(message): return L("tweak.error.architectureMismatch", message)
         case let .unresolvedDependency(message): return L("tweak.error.unresolvedDependency", message)
         case let .outputExists(path): return L("tweak.error.outputExists", path)
+        case let .deviceLevelPackage(message): return message
         }
     }
 }
@@ -86,11 +148,8 @@ public enum TweakInjectError: LocalizedError {
 /// 插件 / tweak 注入:DEB → 提取 tweak → @rpath 改写 → 原生注入 → 补 rpath → 重签 → 重打包。
 public enum TweakInjectService {
 
-    /// 已知需重定向到 ElleKit 的依赖关键字。
-    private static let tweakLibKeywords = [
-        "substrate", "substitute", "hooker", "ellekit", "cephei",
-        "colorpicker", "rocketbootstrap", "preferenceloader", "libhooker"
-    ]
+    /// 已知需重定向到 ElleKit 的依赖关键字,复用全项目唯一的关键字表。
+    private static var tweakLibKeywords: [String] { DependencyClassifier.jailbreakRuntimeKeywords }
 
     // MARK: 纯逻辑:@rpath 改写规划
 
@@ -176,20 +235,77 @@ public enum TweakInjectService {
                 analysis: $0.analysis
             )
         }
-        return DebTweakCandidateSession(candidates: candidates, scanSession: session)
+        let scripts = (try? DebService.presentMaintainerScripts(debAt: url)) ?? []
+        let eligibility = DebPluginEligibilityClassifier.classify(
+            entries: session.result.info.entries,
+            maintainerScripts: scripts
+        )
+        return DebTweakCandidateSession(
+            candidates: candidates,
+            pluginEligibility: eligibility,
+            scanSession: session
+        )
     }
 
     static func parseFilterTargets(at url: URL?) -> TweakFilterTargets {
         guard let url,
               let data = try? Data(contentsOf: url),
               let root = try? PropertyListSerialization.propertyList(from: data, format: nil),
-              let dictionary = root as? [String: Any],
-              let filter = dictionary["Filter"] as? [String: Any] else {
+              let dictionary = root as? [String: Any] else {
             return TweakFilterTargets()
         }
+        return parseFilter(from: dictionary)
+    }
+
+    /// 从 plist 顶层字典解析 filter。抽成独立函数便于直接测试(无需落盘)。
+    ///
+    /// 未知字段一律收集而非丢弃:Filter 内除已建模的四键 + Mode 之外的键进 unknownFilterKeys,
+    /// 顶层除 Filter/Mode 之外的键进 unknownTopLevelKeys。CoreFoundationVersion 只取能转成
+    /// 数值的项;若该键存在却全非数值,视为未知字段以免假装读懂。
+    static func parseFilter(from dictionary: [String: Any]) -> TweakFilterTargets {
+        let filter = dictionary["Filter"] as? [String: Any] ?? [:]
+
+        let bundles = filter["Bundles"] as? [String] ?? []
+        let executables = filter["Executables"] as? [String] ?? []
+        let classes = filter["Classes"] as? [String] ?? []
+
+        var cfVersions: [Double] = []
+        var cfVersionUnreadable = false
+        if let raw = filter["CoreFoundationVersion"] {
+            if let numbers = raw as? [NSNumber] {
+                cfVersions = numbers.map(\.doubleValue)
+            } else if let single = raw as? NSNumber {
+                cfVersions = [single.doubleValue]
+            } else {
+                cfVersionUnreadable = true
+            }
+        }
+
+        // Mode 真实位置在 Filter 内,但也兼容有人写到顶层;两处都缺则 mode 为 nil。
+        var mode: TweakFilterMode?
+        if let raw = filter["Mode"] as? String {
+            mode = TweakFilterMode(rawValue: raw)
+        } else if let raw = dictionary["Mode"] as? String {
+            mode = TweakFilterMode(rawValue: raw)
+        }
+
+        let knownFilterKeys: Set<String> = [
+            "Bundles", "Executables", "Classes", "CoreFoundationVersion", "Mode"
+        ]
+        var unknownFilterKeys = filter.keys.filter { !knownFilterKeys.contains($0) }.sorted()
+        if cfVersionUnreadable { unknownFilterKeys.append("CoreFoundationVersion") }
+
+        let knownTopLevelKeys: Set<String> = ["Filter", "Mode"]
+        let unknownTopLevelKeys = dictionary.keys.filter { !knownTopLevelKeys.contains($0) }.sorted()
+
         return TweakFilterTargets(
-            bundles: filter["Bundles"] as? [String] ?? [],
-            executables: filter["Executables"] as? [String] ?? []
+            bundles: bundles,
+            executables: executables,
+            classes: classes,
+            coreFoundationVersion: cfVersions,
+            mode: mode,
+            unknownFilterKeys: unknownFilterKeys,
+            unknownTopLevelKeys: unknownTopLevelKeys
         )
     }
 
@@ -217,6 +333,16 @@ public enum TweakInjectService {
             if tweak.pathExtension.lowercased() == "deb" {
                 let session = try candidateSession(inDebAt: tweak)
                 candidateSessions.append(session)
+                // 设备级包(LaunchDaemons / 命令行工具 / setuid / .kext 等)不该当 IPA 内插件:
+                // 抽个 dylib 塞进去既不符合作者意图,又会把设备级行为带进 App。默认阻止。
+                guard session.pluginEligibility.isEligibleAsIpaPlugin else {
+                    let reasons = session.pluginEligibility.factors
+                        .map { "• \($0.explanation)" }
+                        .joined(separator: "\n")
+                    throw TweakInjectError.deviceLevelPackage(
+                        L("tweak.error.deviceLevelPackage", tweak.lastPathComponent, reasons)
+                    )
+                }
                 let found = session.candidates.map(\.dylibURL)
                 if found.isEmpty { warnings.append(L("tweak.warning.noDylibInDeb", tweak.lastPathComponent)) }
                 dylibs.append(contentsOf: found)

@@ -31,6 +31,17 @@
 
 Последняя версия доступна в [Releases](https://github.com/iosrxwy/MacAssistant/releases). Требуется macOS 13 или новее.
 
+### macOS блокирует первый запуск?
+
+Этот публичный бета-билд подписан **ad-hoc и не нотаризован Apple**. При первом открытии может появиться «не удаётся проверить разработчика» или запуск будет заблокирован. Это ожидаемо, архив не повреждён.
+
+1. Попробуйте открыть приложение один раз (блокировка — нормально).
+2. Откройте **Системные настройки → Конфиденциальность и безопасность**.
+3. Прокрутите до сообщения об этом приложении и нажмите **Всё равно открыть**.
+4. Откройте приложение ещё раз.
+
+Не отключайте Gatekeeper глобально. Если кнопки нет, подождите минуту и снова откройте этот раздел — она обычно появляется после первой блокировки.
+
 ## Сборка
 
 ```bash
@@ -41,4 +52,4 @@ cd MacAssistant
 
 **Разработка и сопровождение: Codex** · Публикация: [iosrxwy](https://github.com/iosrxwy).
 
-Thanks: [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign)
+Thanks: [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign). These projects’ binaries are not bundled.

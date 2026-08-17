@@ -343,27 +343,3 @@ struct TweakInjectTab: View {
         }
     }
 }
-
-private struct MultiFilePickerButton: View {
-    let title: String
-    let systemImage: String
-    let types: [UTType]
-    let onPick: ([URL]) -> Void
-    @State private var presented = false
-
-    var body: some View {
-        Button { presented = true } label: {
-            Label(title, systemImage: systemImage)
-        }
-        .fileImporter(
-            isPresented: $presented,
-            allowedContentTypes: types,
-            allowsMultipleSelection: true
-        ) { result in
-            guard case let .success(urls) = result else { return }
-            FileSystemHelper.withSecurityScopedAccess(to: urls) {
-                onPick(urls)
-            }
-        }
-    }
-}

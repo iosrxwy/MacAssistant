@@ -65,8 +65,7 @@ public enum DebDependencyAdvisor {
         if path.hasPrefix("/System/Library/") { return true }
         if path.hasPrefix("/usr/lib/") {
             let lower = path.lowercased()
-            return !["substrate", "substitute", "hooker", "ellekit", "cephei", "rocketbootstrap"]
-                .contains(where: { lower.contains($0) })
+            return !DependencyClassifier.jailbreakRuntimeKeywords.contains(where: { lower.contains($0) })
         }
         return false
     }

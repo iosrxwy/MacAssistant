@@ -56,21 +56,199 @@ public struct IpaArtifactAuditEntry: Codable, Hashable, Sendable {
     public let loadKind: InjectionLoadKind
 }
 
+/// 一条「本机无法确认」的依赖。
+///
+/// 与「确认缺失」是两回事:本机静态分析既无法在越狱环境里核对 `deviceProvided`,
+/// 也无法为 `unknown` 找到可靠依据,所以只能如实说「不确定」,交由设备验证——
+/// 绝不因为不确定就当成已解析(假阴性),也不因为不确定就当成失败(假阳性)。
+public struct IpaUnconfirmedDependency: Codable, Hashable, Sendable {
+    /// 引用该依赖的 Mach-O 在 App 内的相对路径。
+    public let referencedBy: String
+    public let installPath: String
+    public let fileName: String
+    /// 只会是 .deviceProvided 或 .unknown;systemLibrary/appEmbedded/pluginProvided 属于已解析,不进此列。
+    public let classification: DependencyClassification
+    /// 结论依据(来自 DependencyClassifier),可直接展示给用户。
+    public let evidence: String
+
+    public init(
+        referencedBy: String,
+        installPath: String,
+        fileName: String,
+        classification: DependencyClassification,
+        evidence: String
+    ) {
+        self.referencedBy = referencedBy
+        self.installPath = installPath
+        self.fileName = fileName
+        self.classification = classification
+        self.evidence = evidence
+    }
+}
+
 public struct IpaArtifactAuditReport: Codable, Hashable, Sendable {
     public let payloadStructureValid: Bool
     public let entries: [IpaArtifactAuditEntry]
+    /// 「确认缺失」的依赖:本机能明确判定其无法解析。本机静态分析通常无法证明设备上的缺失,
+    /// 因此此列表多为空;保留它以承载真正可判定的硬缺失,并作为 passed 的失败依据。
     public let unresolvedDependencies: [String]
+    /// 「本机无法确认」的依赖(deviceProvided / unknown)。这些不计入已解析,产出 warning,
+    /// 但**不**使 passed 变 false——不确定不等于失败。UI 应据此提示「需在设备上验证」。
+    public let unconfirmedDependencies: [IpaUnconfirmedDependency]
     public let signatureVerified: Bool?
 
-    public var passed: Bool {
-        payloadStructureValid && !entries.isEmpty && signatureVerified != false
+    public init(
+        payloadStructureValid: Bool,
+        entries: [IpaArtifactAuditEntry],
+        unresolvedDependencies: [String],
+        unconfirmedDependencies: [IpaUnconfirmedDependency] = [],
+        signatureVerified: Bool?
+    ) {
+        self.payloadStructureValid = payloadStructureValid
+        self.entries = entries
+        self.unresolvedDependencies = unresolvedDependencies
+        self.unconfirmedDependencies = unconfirmedDependencies
+        self.signatureVerified = signatureVerified
     }
+
+    public var passed: Bool {
+        payloadStructureValid && !entries.isEmpty
+            && unresolvedDependencies.isEmpty && signatureVerified != false
+    }
+}
+
+public struct MachOLoadCommandSnapshot: Codable, Hashable, Sendable {
+    public let path: String
+    public let weak: Bool
+
+    public init(path: String, weak: Bool) {
+        self.path = path
+        self.weak = weak
+    }
+
+    /// 用于集合比对的稳定标识:弱引用与强引用视为不同的加载命令。
+    public var identity: String { (weak ? "weak " : "") + path }
+}
+
+public struct MachOSliceSnapshot: Codable, Hashable, Sendable {
+    public let index: Int
+    public let loadCommands: [MachOLoadCommandSnapshot]
+
+    public init(index: Int, loadCommands: [MachOLoadCommandSnapshot]) {
+        self.index = index
+        self.loadCommands = loadCommands
+    }
+}
+
+/// 对单个 Mach-O 产物的一次「重新读取」快照。字段全部来自实际读盘,不含任何计划值。
+public struct MachOArtifactSnapshot: Codable, Hashable, Sendable {
+    public let relativePath: String
+    public let sha256: String
+    public let architectures: [String]
+    public let slices: [MachOSliceSnapshot]
+    public let dependencies: [String]
+    public let rpaths: [String]
+    public let signature: DylibSignatureState
+
+    public init(
+        relativePath: String,
+        sha256: String,
+        architectures: [String],
+        slices: [MachOSliceSnapshot],
+        dependencies: [String],
+        rpaths: [String],
+        signature: DylibSignatureState
+    ) {
+        self.relativePath = relativePath
+        self.sha256 = sha256
+        self.architectures = architectures
+        self.slices = slices
+        self.dependencies = dependencies
+        self.rpaths = rpaths
+        self.signature = signature
+    }
+
+    /// 全切片去重后的加载命令标识集合(弱/强区分)。
+    public var loadCommandIdentities: Set<String> {
+        Set(slices.flatMap { $0.loadCommands.map(\.identity) })
+    }
+}
+
+public enum MachOArtifactChangeKind: String, Codable, Hashable, Sendable {
+    case added
+    case removed
+    case modified
+    case unchanged
+}
+
+/// 单个产物的前后对照。所有布尔/增删项都由 before 与 after 两次独立读取比对得出。
+public struct MachOArtifactDiff: Codable, Hashable, Sendable {
+    public let relativePath: String
+    public let change: MachOArtifactChangeKind
+    public let before: MachOArtifactSnapshot?
+    public let after: MachOArtifactSnapshot?
+    public let addedLoadCommands: [String]
+    public let removedLoadCommands: [String]
+    public let addedRPaths: [String]
+    public let removedRPaths: [String]
+    public let sha256Changed: Bool
+    public let signatureChanged: Bool
+
+    public init(
+        relativePath: String,
+        change: MachOArtifactChangeKind,
+        before: MachOArtifactSnapshot?,
+        after: MachOArtifactSnapshot?,
+        addedLoadCommands: [String],
+        removedLoadCommands: [String],
+        addedRPaths: [String],
+        removedRPaths: [String],
+        sha256Changed: Bool,
+        signatureChanged: Bool
+    ) {
+        self.relativePath = relativePath
+        self.change = change
+        self.before = before
+        self.after = after
+        self.addedLoadCommands = addedLoadCommands
+        self.removedLoadCommands = removedLoadCommands
+        self.addedRPaths = addedRPaths
+        self.removedRPaths = removedRPaths
+        self.sha256Changed = sha256Changed
+        self.signatureChanged = signatureChanged
+    }
+}
+
+/// 注入前后的独立复核报告。`before`/`after` 都是重新读盘的快照,`diffs` 是逐产物对照。
+public struct IpaArtifactDiffReport: Codable, Hashable, Sendable {
+    public let before: [MachOArtifactSnapshot]
+    public let after: [MachOArtifactSnapshot]
+    public let diffs: [MachOArtifactDiff]
+
+    public init(
+        before: [MachOArtifactSnapshot],
+        after: [MachOArtifactSnapshot],
+        diffs: [MachOArtifactDiff]
+    ) {
+        self.before = before
+        self.after = after
+        self.diffs = diffs
+    }
+
+    public var changedPaths: [String] {
+        diffs.filter { $0.change != .unchanged }.map(\.relativePath)
+    }
+
+    public var hasChanges: Bool { diffs.contains { $0.change != .unchanged } }
 }
 
 public struct IpaInjectionExecutionResult: Sendable {
     public let outputURL: URL
     public let preflight: IpaPreflightReport
     public let audit: IpaArtifactAuditReport
+    /// 注入前后独立重读产物得到的对照报告。用于向用户呈现「实际改了什么」,
+    /// 而不是复述注入器自报的结果。
+    public let diff: IpaArtifactDiffReport
     public let log: [String]
 }
 
@@ -182,11 +360,20 @@ public enum IpaInjectionWorkflow {
         log.append(L("ipaflow.log.preflightPassed", preflight.targets.count))
         flushLog()
 
+        // 在任何改动之前先独立读一遍,作为 diff 的 before;after 稍后从产物再读一遍得出。
+        let beforeSnapshot = try snapshotMachO(in: app)
+
+        let currentBundleID = ((try? IpaService.infoPlist(appBundle: app))?["CFBundleIdentifier"] as? String) ?? ""
+        let metadata = plan.metadata.resolvingBundleID(current: currentBundleID)
+        if metadata.randomizeBundleIDForPPQ, let rewritten = metadata.bundleID {
+            log.append(L("ipaflow.log.ppqBundleID", rewritten))
+        }
+
         try applyComponentPolicy(plan.components, to: app, log: &log)
         flushLog()
         try applyResources(plan.resources, to: app, log: &log)
         flushLog()
-        try applyMetadata(plan.metadata, to: app, log: &log)
+        try applyMetadata(metadata, to: app, log: &log)
         flushLog()
 
         let mainExecutable = try mainExecutable(in: app)
@@ -220,7 +407,14 @@ public enum IpaInjectionWorkflow {
                 app: app,
                 identity: SigningIdentity(id: recipe.identityID, name: recipe.identityName),
                 profilesByBundleID: recipe.profilesByBundleID,
-                overrideBundleID: plan.metadata.bundleID,
+                overrideBundleID: metadata.bundleID,
+                log: &log
+            )
+        case let .appleID(recipe):
+            _ = try AppleIDSigningService.applyToApp(
+                app,
+                recipe: recipe,
+                overrideBundleID: metadata.bundleID,
                 log: &log
             )
         }
@@ -243,6 +437,7 @@ public enum IpaInjectionWorkflow {
         )
 
         let finalAudit: IpaArtifactAuditReport
+        var afterSnapshot: [MachOArtifactSnapshot] = []
         switch plan.input {
         case .ipa:
             guard let archiveRoot else {
@@ -271,6 +466,8 @@ public enum IpaInjectionWorkflow {
             guard finalAudit.passed else {
                 throw IpaInjectionWorkflowError.auditFailed(finalAudit.unresolvedDependencies.joined(separator: "\n"))
             }
+            // after 快照来自重新解包的产物,不是注入前的计划值。
+            afterSnapshot = try snapshotMachO(in: verifyApp)
             try FileManager.default.moveItem(at: temporary, to: output)
         case .app:
             let temporary = output.deletingLastPathComponent()
@@ -283,11 +480,18 @@ public enum IpaInjectionWorkflow {
             guard finalAudit.passed else {
                 throw IpaInjectionWorkflowError.auditFailed(finalAudit.unresolvedDependencies.joined(separator: "\n"))
             }
+            afterSnapshot = try snapshotMachO(in: temporary)
             try FileManager.default.moveItem(at: temporary, to: output)
         }
         log.append(L("ipaflow.log.finalAuditPassed"))
         flushLog()
-        return IpaInjectionExecutionResult(outputURL: output, preflight: preflight, audit: finalAudit, log: log)
+        return IpaInjectionExecutionResult(
+            outputURL: output,
+            preflight: preflight,
+            audit: finalAudit,
+            diff: diff(before: beforeSnapshot, after: afterSnapshot),
+            log: log
+        )
     }
 
     private static func preflight(
@@ -315,6 +519,7 @@ public enum IpaInjectionWorkflow {
         var contentHashes: [String: String] = [:]
         var installNames: [String: String] = [:]
         let providedNames = Set(plan.items.map { $0.dylibURL.lastPathComponent.lowercased() })
+        let context = dependencyContext(providedNames: providedNames, appFileNames: appFileNames)
         for entry in resolved {
             guard FileManager.default.fileExists(atPath: entry.item.dylibURL.path) else {
                 findings.append(.init(
@@ -433,18 +638,15 @@ public enum IpaInjectionWorkflow {
                     installNames[installName] = dylib.sha256
                 }
             }
-            for dependency in unresolvedDependencies(
-                of: dylib,
-                providedNames: providedNames,
-                appFileNames: appFileNames
-            ) {
+            for dependency in unconfirmedDependencies(of: dylib, context: context) {
                 findings.append(.init(
                     severity: .warning,
                     code: "dependency.unresolved",
                     message: L(
-                        "ipaflow.finding.dependencyUnresolved",
+                        "ipaflow.finding.dependencyUnconfirmed",
                         entry.item.dylibURL.lastPathComponent,
-                        dependency
+                        dependency.installPath,
+                        dependency.evidence
                     )
                 ))
             }
@@ -478,18 +680,15 @@ public enum IpaInjectionWorkflow {
                 : [resource.sourceURL]
             for file in sourceFiles where MachOIdentifier.isMachO(fileAt: file) {
                 let analysis = try DylibService.analyze(fileAt: file)
-                for dependency in unresolvedDependencies(
-                    of: analysis,
-                    providedNames: providedNames,
-                    appFileNames: appFileNames
-                ) {
+                for dependency in unconfirmedDependencies(of: analysis, context: context) {
                     findings.append(.init(
                         severity: .warning,
                         code: "resource.dependency.unresolved",
                         message: L(
-                            "ipaflow.finding.dependencyUnresolved",
+                            "ipaflow.finding.dependencyUnconfirmed",
                             file.lastPathComponent,
-                            dependency
+                            dependency.installPath,
+                            dependency.evidence
                         )
                     ))
                 }
@@ -802,19 +1001,21 @@ public enum IpaInjectionWorkflow {
         ) as? [String: Any] else {
             throw IpaError.invalidPayload(L("ipaflow.error.infoPlistRootNotDictionary"))
         }
-        if let displayName = changes.displayName {
-            plist["CFBundleDisplayName"] = displayName
-            plist["CFBundleName"] = displayName
-            log.append(L("ipaflow.log.displayNameUpdated"))
-        }
         if let bundleID = changes.bundleID {
             let changed = try SigningService.rewriteBundleIDGraph(in: app, rootBundleID: bundleID)
-            plist["CFBundleIdentifier"] = bundleID
             log.append(L("ipaflow.log.bundleIDUpdated"))
             if !changed.isEmpty {
                 log.append(L("ipaflow.log.componentBundleIDsUpdated", changed.count))
             }
         }
+        let applied = InfoPlistMetadataApplier.apply(changes, to: &plist)
+        if applied.contains("displayName") { log.append(L("ipaflow.log.displayNameUpdated")) }
+        if applied.contains("shortVersion") { log.append(L("ipaflow.log.shortVersionUpdated")) }
+        if applied.contains("buildVersion") { log.append(L("ipaflow.log.buildVersionUpdated")) }
+        if applied.contains("minimumOSVersion") { log.append(L("ipaflow.log.minimumOSUpdated")) }
+        if applied.contains("fileSharing") { log.append(L("ipaflow.log.fileSharingEnabled")) }
+        if applied.contains("voip") { log.append(L("ipaflow.log.voipRemoved")) }
+        if applied.contains("urlSchemes") { log.append(L("ipaflow.log.urlSchemesRemoved")) }
         if !changes.iconFiles.isEmpty {
             var names: [String] = []
             for icon in changes.iconFiles {
@@ -831,29 +1032,9 @@ public enum IpaInjectionWorkflow {
             registerLooseIcons(names, in: &plist)
             log.append(L("ipaflow.log.iconsCopied", names.count))
         }
-        if changes.enableFileSharing {
-            plist["UIFileSharingEnabled"] = true
-            plist["LSSupportsOpeningDocumentsInPlace"] = true
-            log.append(L("ipaflow.log.fileSharingEnabled"))
-        }
         if changes.repairWhiteIcon {
             repairIconMetadata(&plist)
             log.append(L("ipaflow.log.whiteIconRepaired"))
-        }
-        if changes.removeVOIPBackgroundMode,
-           let modes = plist["UIBackgroundModes"] as? [String] {
-            let remaining = modes.filter { $0.caseInsensitiveCompare("voip") != .orderedSame }
-            if remaining.isEmpty {
-                plist.removeValue(forKey: "UIBackgroundModes")
-            } else {
-                plist["UIBackgroundModes"] = remaining
-            }
-            log.append(L("ipaflow.log.voipRemoved"))
-        }
-        if changes.removeURLSchemes {
-            plist.keys.filter { $0 == "CFBundleURLTypes" || $0.hasPrefix("CFBundleURLTypes~") }
-                .forEach { plist.removeValue(forKey: $0) }
-            log.append(L("ipaflow.log.urlSchemesRemoved"))
         }
         try PropertyListSerialization.data(
             fromPropertyList: plist,
@@ -920,12 +1101,13 @@ public enum IpaInjectionWorkflow {
         let main = try mainExecutable(in: app)
         let resolved = try plan.items.map { try resolve($0, app: app, mainExecutable: main) }
         var entries: [IpaArtifactAuditEntry] = []
-        var unresolved: [String] = []
+        var unconfirmed: [IpaUnconfirmedDependency] = []
         let appFileNames = Set(
             FileSystemHelper.allFiles(in: app, where: { !FileSystemHelper.isDirectory($0) })
                 .map { $0.lastPathComponent.lowercased() }
         )
         let providedNames = Set(resolved.map { $0.embeddedURL.lastPathComponent.lowercased() })
+        let context = dependencyContext(providedNames: providedNames, appFileNames: appFileNames)
         for entry in resolved {
             guard FileManager.default.fileExists(atPath: entry.embeddedURL.path) else {
                 throw IpaInjectionWorkflowError.auditFailed(
@@ -951,11 +1133,15 @@ public enum IpaInjectionWorkflow {
                 }
             }
             let analysis = try DylibService.analyze(fileAt: entry.embeddedURL)
-            unresolved.append(contentsOf: unresolvedDependencies(
-                of: analysis,
-                providedNames: providedNames,
-                appFileNames: appFileNames
-            ).map { "\(entry.embeddedRelativePath): \($0)" })
+            unconfirmed.append(contentsOf: unconfirmedDependencies(of: analysis, context: context).map {
+                IpaUnconfirmedDependency(
+                    referencedBy: entry.embeddedRelativePath,
+                    installPath: $0.installPath,
+                    fileName: $0.fileName,
+                    classification: $0.classification,
+                    evidence: $0.evidence
+                )
+            })
             entries.append(
                 IpaArtifactAuditEntry(
                     itemID: entry.item.id,
@@ -973,59 +1159,162 @@ public enum IpaInjectionWorkflow {
                 : [destination]
             for file in files where MachOIdentifier.isMachO(fileAt: file) {
                 let analysis = try DylibService.analyze(fileAt: file)
-                unresolved.append(contentsOf: unresolvedDependencies(
-                    of: analysis,
-                    providedNames: providedNames,
-                    appFileNames: appFileNames
-                ).map { "\(relativePath(file, under: app) ?? file.lastPathComponent): \($0)" })
+                let referencedBy = relativePath(file, under: app) ?? file.lastPathComponent
+                unconfirmed.append(contentsOf: unconfirmedDependencies(of: analysis, context: context).map {
+                    IpaUnconfirmedDependency(
+                        referencedBy: referencedBy,
+                        installPath: $0.installPath,
+                        fileName: $0.fileName,
+                        classification: $0.classification,
+                        evidence: $0.evidence
+                    )
+                })
             }
         }
         let signatureVerified: Bool?
         switch plan.signing {
         case .none, .ldid:
             signatureVerified = nil
-        case .adHoc, .realDevice:
+        case .adHoc, .realDevice, .appleID:
             let verify = try ExternalTool.codesign.run(["--verify", "--strict", "--verbose=4", app.path])
             signatureVerified = verify.succeeded
         }
+        // 本机静态分析无法「确认缺失」,因此 unresolvedDependencies 留空;不确定的一律进
+        // unconfirmedDependencies,不冒充已解析,也不当作失败。
+        let dedupedUnconfirmed = Array(
+            Dictionary(unconfirmed.map { ("\($0.referencedBy)|\($0.installPath)", $0) }) { first, _ in first }
+                .values
+        ).sorted { ($0.referencedBy, $0.installPath) < ($1.referencedBy, $1.installPath) }
         return IpaArtifactAuditReport(
             payloadStructureValid: true,
             entries: entries,
-            unresolvedDependencies: Array(Set(unresolved)).sorted(),
+            unresolvedDependencies: [],
+            unconfirmedDependencies: dedupedUnconfirmed,
             signatureVerified: signatureVerified
         )
     }
 
-    private static func unresolvedDependencies(
-        of analysis: DylibAnalysisSnapshot,
-        providedNames: Set<String>,
-        appFileNames: Set<String>
-    ) -> [String] {
-        analysis.dependencies.compactMap { dependency in
-            let path = dependency.path
-            if isSystemDependency(path) { return nil }
-            let name = (path as NSString).lastPathComponent.lowercased()
-            if providedNames.contains(name) || appFileNames.contains(name) { return nil }
-            return path
+    // MARK: 注入后独立复核(WI3)
+
+    /// 独立重新读取一个 IPA/App 内全部 Mach-O 的状态。所有字段都来自实际读盘。
+    public static func snapshot(_ input: InjectionInput) throws -> [MachOArtifactSnapshot] {
+        let work = try FileSystemHelper.makeTemporaryDirectory(prefix: "artifact-snapshot")
+        defer { try? FileManager.default.removeItem(at: work) }
+        let app: URL
+        switch input {
+        case let .ipa(url):
+            let extraction = work.appendingPathComponent("extract", isDirectory: true)
+            try IpaService.unzip(url, to: extraction)
+            try IpaService.validatePayloadStructure(in: extraction)
+            app = try IpaService.locateApp(in: extraction)
+        case let .app(url):
+            try validateAppDirectory(url)
+            app = url
         }
+        return try snapshotMachO(in: app)
     }
 
-    private static func isSystemDependency(_ path: String) -> Bool {
-        if path.hasPrefix("/System/Library/") { return true }
-        if path.hasPrefix("/usr/lib/") {
-            let lower = path.lowercased()
-            let jailbreakKeywords = [
-                "substrate", "substitute", "hooker", "ellekit", "cephei",
-                "rocketbootstrap", "preferenceloader"
-            ]
-            return !jailbreakKeywords.contains(where: { lower.contains($0) })
+    /// 对原始输入与产物各做一次独立读取,给出前后对照。diff 完全由两次读取比对得出。
+    public static func auditDiff(
+        original: InjectionInput,
+        produced: InjectionInput
+    ) throws -> IpaArtifactDiffReport {
+        let before = try snapshot(original)
+        let after = try snapshot(produced)
+        return diff(before: before, after: after)
+    }
+
+    /// 逐产物比对两份快照。added/removed/modified 由 relativePath 对齐后逐字段比较得出。
+    public static func diff(
+        before: [MachOArtifactSnapshot],
+        after: [MachOArtifactSnapshot]
+    ) -> IpaArtifactDiffReport {
+        let beforeByPath = Dictionary(before.map { ($0.relativePath, $0) }) { first, _ in first }
+        let afterByPath = Dictionary(after.map { ($0.relativePath, $0) }) { first, _ in first }
+        let paths = Set(beforeByPath.keys).union(afterByPath.keys).sorted()
+        let diffs = paths.map { path -> MachOArtifactDiff in
+            let old = beforeByPath[path]
+            let new = afterByPath[path]
+            let oldLoads = old?.loadCommandIdentities ?? []
+            let newLoads = new?.loadCommandIdentities ?? []
+            let oldRPaths = Set(old?.rpaths ?? [])
+            let newRPaths = Set(new?.rpaths ?? [])
+            let sha256Changed = (old?.sha256 != new?.sha256)
+            let signatureChanged = (old?.signature != new?.signature)
+
+            let change: MachOArtifactChangeKind
+            if old == nil {
+                change = .added
+            } else if new == nil {
+                change = .removed
+            } else if old == new {
+                change = .unchanged
+            } else {
+                change = .modified
+            }
+
+            return MachOArtifactDiff(
+                relativePath: path,
+                change: change,
+                before: old,
+                after: new,
+                addedLoadCommands: newLoads.subtracting(oldLoads).sorted(),
+                removedLoadCommands: oldLoads.subtracting(newLoads).sorted(),
+                addedRPaths: newRPaths.subtracting(oldRPaths).sorted(),
+                removedRPaths: oldRPaths.subtracting(newRPaths).sorted(),
+                sha256Changed: sha256Changed && old != nil && new != nil,
+                signatureChanged: signatureChanged && old != nil && new != nil
+            )
         }
-        let name = (path as NSString).lastPathComponent.lowercased()
-        return [
-            "libobjc.a.dylib", "libc++.1.dylib", "libc++abi.dylib", "libsystem.b.dylib",
-            "libsqlite3.dylib", "libsqlite3.0.dylib", "libz.1.dylib", "libcompression.dylib",
-            "libiconv.2.dylib", "libnetwork.dylib", "libresolv.9.dylib", "libxml2.2.dylib"
-        ].contains(name) || name.hasPrefix("libswift")
+        return IpaArtifactDiffReport(before: before, after: after, diffs: diffs)
+    }
+
+    private static func snapshotMachO(in app: URL) throws -> [MachOArtifactSnapshot] {
+        let files = FileSystemHelper.allFiles(in: app) { MachOIdentifier.isMachO(fileAt: $0) }
+        let snapshots = try files.compactMap { file -> MachOArtifactSnapshot? in
+            guard let relative = relativePath(file, under: app) else { return nil }
+            let analysis = try DylibService.analyze(fileAt: file)
+            let slices = try DylibInjector.inspectLoadCommands(fileAt: file).map { slice in
+                MachOSliceSnapshot(
+                    index: slice.index,
+                    loadCommands: slice.commands.map {
+                        MachOLoadCommandSnapshot(path: $0.path, weak: $0.weak)
+                    }
+                )
+            }
+            return MachOArtifactSnapshot(
+                relativePath: relative,
+                sha256: analysis.sha256,
+                architectures: analysis.architectures,
+                slices: slices,
+                dependencies: analysis.dependencies.map(\.path).sorted(),
+                rpaths: analysis.rpaths.sorted(),
+                signature: analysis.signature
+            )
+        }
+        return snapshots.sorted { $0.relativePath < $1.relativePath }
+    }
+
+    private static func dependencyContext(
+        providedNames: Set<String>,
+        appFileNames: Set<String>
+    ) -> DependencyClassificationContext {
+        DependencyClassificationContext(
+            appEmbeddedNames: appFileNames,
+            pluginProvidedNames: providedNames
+        )
+    }
+
+    /// 本机无法确认的依赖(deviceProvided / unknown)。判定完全委托给 DependencyClassifier,
+    /// 不再保留第二套「/usr/lib 一律当系统库」的乐观逻辑。systemLibrary/appEmbedded/pluginProvided
+    /// 属于已解析,不在返回值内。
+    private static func unconfirmedDependencies(
+        of analysis: DylibAnalysisSnapshot,
+        context: DependencyClassificationContext
+    ) -> [DependencyClassificationResult] {
+        DependencyClassifier
+            .classify(paths: analysis.dependencies.map(\.path), context: context)
+            .filter { !$0.isResolvedLocally }
     }
 
     private static func validateAppDirectory(_ app: URL) throws {

@@ -19,7 +19,6 @@ struct EnvironmentView: View {
     @State private var theosInstalling = false
     @State private var theosInstallLog = ""
     @State private var managedTheosCommands: [InstallCommand] = []
-    @AppStorage(LocalizationSettings.defaultsKey) private var language = AppLanguage.system.rawValue
 
     private var availableCount: Int {
         tools.filter(\.isAvailable).count
@@ -37,7 +36,6 @@ struct EnvironmentView: View {
                 ? L("env.checking")
                 : L("env.subtitle", availableCount, tools.count)
         ) {
-            languageCard
             theosCard
 
             Card {
@@ -119,35 +117,6 @@ struct EnvironmentView: View {
             }
         } message: {
             Text(confirmationMessage)
-        }
-    }
-
-    private var languageCard: some View {
-        Card {
-            HStack(spacing: 12) {
-                Image(systemName: "globe")
-                    .foregroundStyle(.tint)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L("env.language.title")).font(.callout.weight(.medium))
-                    Text(L("env.language.detail"))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 10)
-                Picker("", selection: $language) {
-                    ForEach(AppLanguage.allCases) { option in
-                        Text(option.displayName).tag(option.rawValue)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .frame(width: 150)
-                .accessibilityLabel(L("env.language.title"))
-                .accessibilityIdentifier("environment.language")
-            }
-            .padding(.vertical, 2)
         }
     }
 

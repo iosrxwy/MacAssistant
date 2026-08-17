@@ -6,7 +6,12 @@ import Security
 public struct SigningIdentity: Identifiable, Sendable, Hashable {
     public let id: String     // 证书 SHA-1
     public let name: String   // 如 "Apple Development: Name (TEAMID)"
-    public init(id: String, name: String) { self.id = id; self.name = name }
+    public let expiration: Date?
+    public init(id: String, name: String, expiration: Date? = nil) {
+        self.id = id
+        self.name = name
+        self.expiration = expiration
+    }
 }
 
 /// 从 .mobileprovision 解析出的描述文件信息。
@@ -23,6 +28,15 @@ public struct ProfileInfo: Sendable {
     }
 }
 
+/// 真机重签时 entitlements 的来源。
+///
+/// Apple ID / 免费 7 天签必须用描述文件里的 entitlements：原 App 常带推送、iCloud
+/// 等免费账号没有的能力，若仍要求「原 entitlements ⊆ profile」会把几乎所有 IPA 误判失败。
+public enum SigningEntitlementsPolicy: String, Sendable, Codable {
+    case requireAppSubsetOfProfile
+    case replaceWithProfile
+}
+
 public enum SigningError: LocalizedError {
     case commandFailed(String)
     case noIdentitySelected
@@ -34,6 +48,8 @@ public enum SigningError: LocalizedError {
     case entitlementNotAllowed(String)
     case unsupportedExtensions([String])
     case missingProfileMappings([String])
+    case missingEmbeddedProfile
+    case emptyExportPassword
 
     public var errorDescription: String? {
         switch self {
@@ -50,6 +66,10 @@ public enum SigningError: LocalizedError {
             return L("signing.error.unsupportedExtensions", items.joined(separator: "、"))
         case let .missingProfileMappings(bundleIDs):
             return L("signing.error.missingProfileMappings", bundleIDs.joined(separator: "、"))
+        case .missingEmbeddedProfile:
+            return L("signing.error.missingEmbeddedProfile")
+        case .emptyExportPassword:
+            return L("signing.error.emptyExportPassword")
         }
     }
 }
@@ -61,7 +81,13 @@ public enum SigningService {
 
     public static func identities() -> [SigningIdentity] {
         guard let r = try? ExternalTool.security.run(["find-identity", "-v", "-p", "codesigning"]) else { return [] }
-        return parseIdentities(r.stdout)
+        let stored = SigningCertificateLibrary.load()
+        return parseIdentities(r.stdout).map { identity in
+            let expiration = stored.first {
+                $0.identityID.caseInsensitiveCompare(identity.id) == .orderedSame
+            }?.expiration ?? certificateExpiration(for: identity.id)
+            return SigningIdentity(id: identity.id, name: identity.name, expiration: expiration)
+        }
     }
 
     public static func storedDeveloperCertificateURL() -> URL? {
@@ -113,7 +139,13 @@ public enum SigningService {
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: stored.path)
         try saveKeychainValue(Data(password.utf8), for: passwordService)
         try saveKeychainValue(Data(imported.id.utf8), for: identityService)
-        return imported
+        let enriched = SigningIdentity(
+            id: imported.id,
+            name: imported.name,
+            expiration: certificateExpiration(for: imported.id)
+        )
+        _ = try? SigningCertificateLibrary.remember(identity: enriched, p12At: url, password: password)
+        return enriched
     }
 
     public static func exportDeveloperCertificate(
@@ -121,13 +153,15 @@ public enum SigningService {
         to url: URL,
         password: String
     ) throws {
+        let trimmed = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw SigningError.emptyExportPassword }
         guard let reference = try keychainIdentity(for: identity.id) else {
             throw SigningError.noIdentitySelected
         }
         var parameters = SecItemImportExportKeyParameters(
             version: 0,
             flags: [],
-            passphrase: Unmanaged.passUnretained(password as CFString),
+            passphrase: Unmanaged.passUnretained(trimmed as CFString),
             alertTitle: nil,
             alertPrompt: nil,
             accessRef: nil,
@@ -172,6 +206,131 @@ public enum SigningService {
 
     private static let passwordService = "com.opensource.macassistant.signing.p12.password"
     private static let identityService = "com.opensource.macassistant.signing.p12.identity"
+    private static let libraryPasswordService = "com.opensource.macassistant.signing.p12.library"
+
+    public static func certificateDetails(for identity: SigningIdentity) -> SigningCertificateDetails {
+        if let fromKeychain = certificateDetailsFromKeychain(for: identity.id) {
+            let team = fromKeychain.teamID ?? teamID(fromIdentityName: identity.name)
+            return SigningCertificateDetails(
+                subject: fromKeychain.subject.isEmpty ? identity.name : fromKeychain.subject,
+                teamID: team,
+                serial: fromKeychain.serial
+            )
+        }
+        return SigningCertificateDetails(
+            subject: identity.name,
+            teamID: teamID(fromIdentityName: identity.name),
+            serial: nil
+        )
+    }
+
+    /// `Apple Development: Name (TEAMID)` 末尾括号。
+    public static func teamID(fromIdentityName name: String) -> String? {
+        guard let open = name.lastIndex(of: "("),
+              let close = name.lastIndex(of: ")"),
+              open < close
+        else { return nil }
+        let team = String(name[name.index(after: open)..<close])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return team.isEmpty ? nil : team
+    }
+
+    static func certificateDetailsFromKeychain(for identityID: String) -> SigningCertificateDetails? {
+        guard let identity = try? keychainIdentity(for: identityID) else { return nil }
+        var certificate: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess,
+              let certificate
+        else { return nil }
+        let subject = (SecCertificateCopySubjectSummary(certificate) as String?) ?? ""
+        return SigningCertificateDetails(
+            subject: subject,
+            teamID: organizationalUnit(of: certificate),
+            serial: serialNumber(of: certificate)
+        )
+    }
+
+    static func serialNumber(of certificate: SecCertificate) -> String? {
+        var error: Unmanaged<CFError>?
+        guard let values = SecCertificateCopyValues(
+            certificate,
+            [kSecOIDX509V1SerialNumber] as CFArray,
+            &error
+        ) as? [CFString: Any],
+              let entry = values[kSecOIDX509V1SerialNumber] as? [CFString: Any]
+        else { return nil }
+        if let text = entry[kSecPropertyKeyValue] as? String {
+            let compact = text.replacingOccurrences(of: " ", with: "")
+            return compact.isEmpty ? nil : compact
+        }
+        if let data = entry[kSecPropertyKeyValue] as? Data {
+            return data.map { String(format: "%02X", $0) }.joined()
+        }
+        return nil
+    }
+
+    static func organizationalUnit(of certificate: SecCertificate) -> String? {
+        var error: Unmanaged<CFError>?
+        guard let values = SecCertificateCopyValues(
+            certificate,
+            [kSecOIDX509V1SubjectName] as CFArray,
+            &error
+        ) as? [CFString: Any],
+              let entry = values[kSecOIDX509V1SubjectName] as? [CFString: Any],
+              let parts = entry[kSecPropertyKeyValue] as? [[CFString: Any]]
+        else { return nil }
+        for part in parts {
+            let label = part[kSecPropertyKeyLabel]
+            let isOU = (label as? String) == "OU"
+                || (label as? NSString) == (kSecOIDOrganizationalUnitName as NSString)
+            guard isOU, let value = part[kSecPropertyKeyValue] as? String, !value.isEmpty else {
+                continue
+            }
+            return value
+        }
+        return nil
+    }
+
+    public static func certificateExpiration(for identityID: String) -> Date? {
+        guard let identity = try? keychainIdentity(for: identityID) else { return nil }
+        var certificate: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess,
+              let certificate
+        else { return nil }
+        return notAfter(of: certificate)
+    }
+
+    static func notAfter(of certificate: SecCertificate) -> Date? {
+        var error: Unmanaged<CFError>?
+        guard let values = SecCertificateCopyValues(
+            certificate,
+            [kSecOIDX509V1ValidityNotAfter] as CFArray,
+            &error
+        ) as? [CFString: Any],
+              let entry = values[kSecOIDX509V1ValidityNotAfter] as? [CFString: Any]
+        else { return nil }
+        if let date = entry[kSecPropertyKeyValue] as? Date { return date }
+        if let number = entry[kSecPropertyKeyValue] as? NSNumber {
+            return Date(timeIntervalSinceReferenceDate: number.doubleValue)
+        }
+        return nil
+    }
+
+    static func rememberSelectedIdentity(_ identityID: String) {
+        try? saveKeychainValue(Data(identityID.utf8), for: identityService)
+    }
+
+    static func saveCertificatePassword(_ password: String, for id: UUID) throws {
+        try saveKeychainValue(Data(password.utf8), account: id.uuidString, service: libraryPasswordService)
+    }
+
+    static func certificatePassword(for id: UUID) -> String? {
+        guard let data = try? keychainValue(account: id.uuidString, service: libraryPasswordService) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func deleteCertificatePassword(for id: UUID) {
+        SecItemDelete(keychainQuery(account: id.uuidString, service: libraryPasswordService) as CFDictionary)
+    }
 
     private static func certificateStorageURL() -> URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -179,15 +338,23 @@ public enum SigningService {
     }
 
     private static func keychainQuery(for service: String) -> [String: Any] {
+        keychainQuery(account: NSUserName(), service: service)
+    }
+
+    private static func keychainQuery(account: String, service: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: NSUserName()
+            kSecAttrAccount as String: account
         ]
     }
 
     private static func keychainValue(for service: String) throws -> Data {
-        var query = keychainQuery(for: service)
+        try keychainValue(account: NSUserName(), service: service)
+    }
+
+    private static func keychainValue(account: String, service: String) throws -> Data {
+        var query = keychainQuery(account: account, service: service)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
@@ -199,7 +366,11 @@ public enum SigningService {
     }
 
     private static func saveKeychainValue(_ data: Data, for service: String) throws {
-        let query = keychainQuery(for: service)
+        try saveKeychainValue(data, account: NSUserName(), service: service)
+    }
+
+    private static func saveKeychainValue(_ data: Data, account: String, service: String) throws {
+        let query = keychainQuery(account: account, service: service)
         SecItemDelete(query as CFDictionary)
         var add = query
         add[kSecValueData as String] = data
@@ -235,6 +406,14 @@ public enum SigningService {
     }
 
     // MARK: 描述文件
+
+    public static func embeddedProfile(inApp app: URL) throws -> ProfileInfo {
+        let url = app.appendingPathComponent("embedded.mobileprovision")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw SigningError.missingEmbeddedProfile
+        }
+        return try readProfile(at: url)
+    }
 
     public static func readProfile(at url: URL) throws -> ProfileInfo {
         guard ExternalTool.security.isAvailable else { throw SigningError.toolMissing("security") }
@@ -524,6 +703,7 @@ public enum SigningService {
         identity: SigningIdentity,
         profilesByBundleID: [String: URL],
         overrideBundleID: String? = nil,
+        entitlementsPolicy: SigningEntitlementsPolicy = .requireAppSubsetOfProfile,
         log: inout [String]
     ) throws {
         guard ExternalTool.codesign.isAvailable else { throw SigningError.toolMissing("codesign") }
@@ -548,12 +728,14 @@ public enum SigningService {
             }
             let profile = try readProfile(at: profileURL)
             try validateProfile(profile, identityName: identity.name, bundleID: bundleID)
-            let requestedEntitlements = try signedEntitlements(at: bundle)
-            let allowedEntitlements = try parsePlistDictionary(profile.entitlementsXML)
-            try validateEntitlementsSubset(
-                requested: requestedEntitlements,
-                allowed: allowedEntitlements
-            )
+            if entitlementsPolicy == .requireAppSubsetOfProfile {
+                let requestedEntitlements = try signedEntitlements(at: bundle)
+                let allowedEntitlements = try parsePlistDictionary(profile.entitlementsXML)
+                try validateEntitlementsSubset(
+                    requested: requestedEntitlements,
+                    allowed: allowedEntitlements
+                )
+            }
             profilesByPath[bundle.standardizedFileURL.path] = (bundleID, profileURL, profile)
         }
 
@@ -802,6 +984,7 @@ public enum SigningService {
         ipaAt url: URL,
         recipe: RealDeviceSigningRecipe,
         overrideBundleID: String? = nil,
+        entitlementsPolicy: SigningEntitlementsPolicy = .requireAppSubsetOfProfile,
         output: URL? = nil
     ) throws -> (URL, [String]) {
         var log: [String] = []
@@ -816,6 +999,7 @@ public enum SigningService {
             identity: SigningIdentity(id: recipe.identityID, name: recipe.identityName),
             profilesByBundleID: recipe.profilesByBundleID,
             overrideBundleID: overrideBundleID,
+            entitlementsPolicy: entitlementsPolicy,
             log: &log
         )
         let proposed = url.deletingPathExtension().appendingPathExtension("signed").appendingPathExtension("ipa")

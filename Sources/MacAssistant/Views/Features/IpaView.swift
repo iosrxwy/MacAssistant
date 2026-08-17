@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import MacAssistantKit
 
-private enum IpaLayout {
+enum IpaLayout {
     static let sectionSpacing: CGFloat = 16
     static let formSpacing: CGFloat = 12
     static let featurePickerMinimumWidth: CGFloat = 520
@@ -118,7 +118,7 @@ struct IpaView: View {
 
                 Group {
                     switch tab {
-                    case .tweak: InjectDylibTab(job: injectionJob, workspace: workspace)
+                    case .tweak: TweakInjectionContainer(job: injectionJob, workspace: workspace)
                     case .slim: SlimTab()
                     case .headers: ClassDumpTab()
                     case .sign: SigningTab()
@@ -199,6 +199,10 @@ struct InjectDylibTab: View {
     @State private var icons: [URL] = []
     @State private var displayName = ""
     @State private var bundleID = ""
+    @State private var shortVersion = ""
+    @State private var buildVersion = ""
+    @State private var minimumOSVersion = ""
+    @State private var randomizeBundleIDForPPQ = false
     @State private var outputName = ""
     @State private var enableFileSharing = false
     @State private var repairWhiteIcon = false
@@ -426,7 +430,7 @@ struct InjectDylibTab: View {
                         Button {
                             workspace.createDebDraft(fileURLs: dylibs.map(\.url) + dependencyFrameworks)
                         } label: {
-                            Label("打包为 DEB", systemImage: "shippingbox")
+                            Label(L("ipaview.packAsDeb"), systemImage: "shippingbox")
                         }
                     }
                     Spacer()
@@ -588,7 +592,7 @@ struct InjectDylibTab: View {
                                             + (target.bundleID.map { " · \($0)" } ?? "")
                                     )
                                     if let point = target.extensionPointIdentifier {
-                                        Text("Extension Point：\(point)")
+                                        Text(L("ipaview.extensionPoint", point))
                                     }
                                     if let note = target.restrictionNote {
                                         Text(note).foregroundStyle(.orange)
@@ -638,7 +642,7 @@ struct InjectDylibTab: View {
                     Button {
                         workspace.createDebDraft(fileURLs: packageablePluginURLs)
                     } label: {
-                        Label("将已选插件 / Framework 打包为 DEB", systemImage: "shippingbox")
+                        Label(L("ipaview.packSelectedAsDeb"), systemImage: "shippingbox")
                     }
                 }
             }
@@ -685,6 +689,14 @@ struct InjectDylibTab: View {
                 Text(L("ipaview.section.metadata")).font(.headline)
                 TextField(L("ipaview.displayName"), text: $displayName).textFieldStyle(.roundedBorder)
                 TextField(L("ipaview.bundleID"), text: $bundleID).textFieldStyle(.roundedBorder)
+                HStack {
+                    TextField(L("ipaview.shortVersion"), text: $shortVersion).textFieldStyle(.roundedBorder)
+                    TextField(L("ipaview.buildVersion"), text: $buildVersion).textFieldStyle(.roundedBorder)
+                    TextField(L("ipaview.minimumOS"), text: $minimumOSVersion).textFieldStyle(.roundedBorder)
+                }
+                Toggle(L("ipaview.ppqRandomize"), isOn: $randomizeBundleIDForPPQ)
+                Text(L("ipaview.ppqRandomize.hint"))
+                    .font(.caption).foregroundStyle(.secondary)
                 TextField(L("ipaview.outputName"), text: $outputName).textFieldStyle(.roundedBorder)
                 IpaMultiFilePickerButton(
                     title: L("ipaview.replaceIcon"),
@@ -858,11 +870,15 @@ struct InjectDylibTab: View {
             metadata: InjectionMetadataChanges(
                 displayName: displayName.nilIfBlank,
                 bundleID: bundleID.nilIfBlank,
+                shortVersion: shortVersion.nilIfBlank,
+                buildVersion: buildVersion.nilIfBlank,
+                minimumOSVersion: minimumOSVersion.nilIfBlank,
                 iconFiles: icons,
                 enableFileSharing: enableFileSharing,
                 repairWhiteIcon: repairWhiteIcon,
                 removeVOIPBackgroundMode: removeVOIPBackgroundMode,
-                removeURLSchemes: removeURLSchemes
+                removeURLSchemes: removeURLSchemes,
+                randomizeBundleIDForPPQ: randomizeBundleIDForPPQ
             ),
             components: InjectionComponentPolicy(
                 watch: removeWatch ? .remove : .preserve,
@@ -963,6 +979,10 @@ struct InjectDylibTab: View {
         targetSession = nil
         displayName = ""
         bundleID = ""
+        shortVersion = ""
+        buildVersion = ""
+        minimumOSVersion = ""
+        randomizeBundleIDForPPQ = false
         outputName = ""
         enableFileSharing = false
         repairWhiteIcon = false
@@ -1026,6 +1046,17 @@ struct InjectDylibTab: View {
         }
         if bundleID.nilIfBlank == nil {
             bundleID = plist["CFBundleIdentifier"] as? String ?? ""
+        }
+        if shortVersion.nilIfBlank == nil {
+            shortVersion = plist["CFBundleShortVersionString"] as? String ?? ""
+        }
+        if buildVersion.nilIfBlank == nil {
+            buildVersion = plist["CFBundleVersion"] as? String ?? ""
+        }
+        if minimumOSVersion.nilIfBlank == nil {
+            minimumOSVersion = (plist["MinimumOSVersion"] as? String)
+                ?? (plist["LSMinimumSystemVersion"] as? String)
+                ?? ""
         }
         if outputName.nilIfBlank == nil, let inputURL {
             let suffix = inputMode == .macOSApp ? "app" : "ipa"

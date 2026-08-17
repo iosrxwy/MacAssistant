@@ -253,32 +253,210 @@ public enum DylibService {
         return result
     }
 
-    // MARK: 从 app / deb / 目录 提取 Mach-O 文件
+    // MARK: 从 app / deb / 目录 提取 dylib、framework、bundle、资源包
 
     /// 从 .app 目录、.deb 包、任意目录或单个文件中提取所有 Mach-O(常用于抽取 dylib)。
+    /// 完整包(framework / bundle / 资源目录)会整份拷出,不再拆成内部二进制。
     @discardableResult
     public static func extractMachOFiles(from source: URL, to destination: URL) throws -> [URL] {
+        try extractPayloads(from: source, to: destination).items.map(\.outputURL)
+    }
+
+    /// 批量提取。每个来源写到自己旁边的 `*.extracted` 目录。
+    /// 单个来源失败不会中断其余来源,失败写在对应结果的 `error` 里。
+    @discardableResult
+    public static func extractPayloads(from sources: [URL]) -> [PayloadExtractionResult] {
+        sources.map { source in
+            let proposed = source.deletingPathExtension().appendingPathExtension("extracted")
+            let dest = FileSystemHelper.uniqueOutputURL(basedOn: proposed)
+            do {
+                return try extractPayloads(from: source, to: dest)
+            } catch {
+                try? FileManager.default.removeItem(at: dest)
+                return PayloadExtractionResult(
+                    source: source,
+                    destination: dest,
+                    items: [],
+                    error: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    /// 从单个 .app / .ipa / .deb / 目录 / Mach-O 提取 dylib、framework、bundle 和资源包。
+    @discardableResult
+    public static func extractPayloads(from source: URL, to destination: URL) throws -> PayloadExtractionResult {
+        let existed = FileManager.default.fileExists(atPath: destination.path)
         try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        do {
+            let items = try collectAndCopyPayloads(from: source, to: destination)
+            if items.isEmpty, !existed {
+                try? FileManager.default.removeItem(at: destination)
+            }
+            return PayloadExtractionResult(source: source, destination: destination, items: items)
+        } catch {
+            if !existed { try? FileManager.default.removeItem(at: destination) }
+            throw error
+        }
+    }
 
-        let candidates: [URL]
-        if source.pathExtension.lowercased() == "deb" {
-            candidates = try DebService.machOFiles(inDebAt: source).files
-        } else if FileSystemHelper.isDirectory(source) {
-            candidates = FileSystemHelper.allFiles(in: source) { MachOIdentifier.isMachO(fileAt: $0) }
-        } else if MachOIdentifier.isMachO(fileAt: source) {
-            candidates = [source]
-        } else {
-            candidates = []
+    private static func collectAndCopyPayloads(from source: URL, to destination: URL) throws -> [ExtractedPayload] {
+        let ext = source.pathExtension.lowercased()
+        if ext == "deb" {
+            let unpacked = try FileSystemHelper.makeTemporaryDirectory(prefix: "deb-payload")
+            defer { try? FileManager.default.removeItem(at: unpacked) }
+            try DebService.extract(debAt: source, to: unpacked, dataOnly: true)
+            return try copyPayloads(from: unpacked, to: destination)
+        }
+        if ext == "ipa" {
+            let unpacked = try FileSystemHelper.makeTemporaryDirectory(prefix: "ipa-payload")
+            defer { try? FileManager.default.removeItem(at: unpacked) }
+            try IpaService.unzip(source, to: unpacked)
+            return try copyPayloads(from: unpacked, to: destination)
+        }
+        if FileSystemHelper.isDirectory(source) {
+            return try copyPayloads(from: source, to: destination)
+        }
+        if MachOIdentifier.isMachO(fileAt: source) {
+            let kind: ExtractedPayloadKind =
+                ext == "dylib" || MachOIdentifier.isDylib(fileAt: source) ? .dylib : .machO
+            return [try copyPayload(source, kind: kind, relativePath: source.lastPathComponent, to: destination)]
+        }
+        return []
+    }
+
+    private static func copyPayloads(from root: URL, to destination: URL) throws -> [ExtractedPayload] {
+        // 来源本身就是 framework / bundle / 资源包时,整份拷走,不要拆内部文件。
+        // .app 当作容器往里找,不把整个 App 再拷一份。
+        if root.pathExtension.lowercased() != "app", let kind = packageKind(of: root) {
+            return [try copyPayload(root, kind: kind, relativePath: root.lastPathComponent, to: destination)]
         }
 
-        var copied: [URL] = []
-        for file in candidates {
-            let dest = uniqueDestination(for: file, in: destination)
-            try? FileManager.default.removeItem(at: dest)
-            try FileManager.default.copyItem(at: file, to: dest)
-            copied.append(dest)
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+
+        var collected: [(url: URL, kind: ExtractedPayloadKind, relativePath: String)] = []
+        var consumed: [String] = []
+        for case let url as URL in enumerator {
+            let isDirectory = FileSystemHelper.isDirectory(url)
+            if isDirectory, url.lastPathComponent == "DEBIAN" {
+                enumerator.skipDescendants()
+                continue
+            }
+            if isDirectory, let kind = packageKind(of: url) {
+                collected.append((url, kind, relativePath(of: url, under: root)))
+                consumed.append(normalizedPath(url))
+                enumerator.skipDescendants()
+                continue
+            }
+            guard !isDirectory else { continue }
+            if url.pathExtension.lowercased() == "dylib" || MachOIdentifier.isMachO(fileAt: url) {
+                let kind: ExtractedPayloadKind =
+                    url.pathExtension.lowercased() == "dylib" || MachOIdentifier.isDylib(fileAt: url)
+                    ? .dylib : .machO
+                collected.append((url, kind, relativePath(of: url, under: root)))
+                consumed.append(normalizedPath(url))
+            }
         }
-        return copied
+
+        for directory in resourcePackageDirectories(in: root, consumed: consumed) {
+            collected.append((directory, .resourcePackage, relativePath(of: directory, under: root)))
+            consumed.append(normalizedPath(directory))
+        }
+
+        var extras: [(url: URL, kind: ExtractedPayloadKind, relativePath: String)] = []
+        var seen = Set(collected.map { normalizedPath($0.url) })
+        for item in collected where item.kind == .dylib || item.kind == .machO {
+            let plist = item.url.deletingPathExtension().appendingPathExtension("plist")
+            let path = normalizedPath(plist)
+            guard fm.fileExists(atPath: plist.path),
+                  !FileSystemHelper.isDirectory(plist),
+                  seen.insert(path).inserted else { continue }
+            extras.append((plist, .resource, relativePath(of: plist, under: root)))
+        }
+
+        let ordered = (collected + extras).sorted {
+            if $0.kind.sortOrder != $1.kind.sortOrder { return $0.kind.sortOrder < $1.kind.sortOrder }
+            return $0.relativePath.localizedStandardCompare($1.relativePath) == .orderedAscending
+        }
+        return try ordered.map {
+            try copyPayload($0.url, kind: $0.kind, relativePath: $0.relativePath, to: destination)
+        }
+    }
+
+    /// 只认扩展名包(framework / bundle / theme 等)和 PreferenceLoader。
+    /// Application Support / Themes 下的资源目录走第二遍,避免包名目录把里面的 .bundle 一起吞掉。
+    private static func packageKind(of url: URL) -> ExtractedPayloadKind? {
+        guard FileSystemHelper.isDirectory(url) else { return nil }
+        switch url.pathExtension.lowercased() {
+        case "framework": return .framework
+        case "bundle", "appex", "xpc": return .bundle
+        case "theme": return .resourcePackage
+        default: break
+        }
+        if url.lastPathComponent == "PreferenceLoader" { return .resourcePackage }
+        return nil
+    }
+
+    private static func resourcePackageDirectories(in root: URL, consumed: [String]) -> [URL] {
+        guard let enumerator = FileManager.default.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+        let containerNames: Set<String> = ["Application Support", "Resources", "Library", "Themes"]
+        var result: [URL] = []
+        for case let url as URL in enumerator {
+            guard FileSystemHelper.isDirectory(url) else { continue }
+            let path = normalizedPath(url)
+            if consumed.contains(where: { path == $0 || path.hasPrefix($0 + "/") }) {
+                enumerator.skipDescendants()
+                continue
+            }
+            if containerNames.contains(url.lastPathComponent) { continue }
+            guard isResourceSearchRoot(url) else { continue }
+            if consumed.contains(where: { $0.hasPrefix(path + "/") }) { continue }
+            result.append(url)
+            enumerator.skipDescendants()
+        }
+        return result
+    }
+
+    private static func isResourceSearchRoot(_ url: URL) -> Bool {
+        isUnderNamedContainer(url, "Application Support") || isUnderNamedContainer(url, "Themes")
+    }
+
+    private static func isUnderNamedContainer(_ url: URL, _ name: String) -> Bool {
+        url.pathComponents.contains(name) && url.lastPathComponent != name
+    }
+
+    private static func normalizedPath(_ url: URL) -> String {
+        url.standardizedFileURL.path.precomposedStringWithCanonicalMapping
+    }
+
+    private static func copyPayload(
+        _ source: URL,
+        kind: ExtractedPayloadKind,
+        relativePath: String,
+        to destination: URL
+    ) throws -> ExtractedPayload {
+        let dest = uniqueDestination(for: source, in: destination)
+        try FileManager.default.copyItem(at: source, to: dest)
+        return ExtractedPayload(kind: kind, sourceRelativePath: relativePath, outputURL: dest)
+    }
+
+    private static func relativePath(of url: URL, under root: URL) -> String {
+        let rootPath = root.standardizedFileURL.path
+        let path = url.standardizedFileURL.path
+        if path == rootPath { return url.lastPathComponent }
+        if path.hasPrefix(rootPath + "/") {
+            return String(path.dropFirst(rootPath.count + 1))
+        }
+        return url.lastPathComponent
     }
 
     private static func uniqueDestination(for file: URL, in directory: URL) -> URL {
@@ -292,6 +470,46 @@ public enum DylibService {
             if !FileManager.default.fileExists(atPath: candidate.path) { return candidate }
             index += 1
         }
+    }
+}
+
+public enum ExtractedPayloadKind: String, Codable, Hashable, Sendable {
+    case dylib
+    case framework
+    case bundle
+    case resourcePackage
+    case resource
+    case machO
+
+    fileprivate var sortOrder: Int {
+        switch self {
+        case .dylib: return 0
+        case .framework: return 1
+        case .bundle: return 2
+        case .resourcePackage: return 3
+        case .resource: return 4
+        case .machO: return 5
+        }
+    }
+}
+
+public struct ExtractedPayload: Hashable, Sendable {
+    public let kind: ExtractedPayloadKind
+    public let sourceRelativePath: String
+    public let outputURL: URL
+}
+
+public struct PayloadExtractionResult: Sendable {
+    public let source: URL
+    public let destination: URL
+    public let items: [ExtractedPayload]
+    public let error: String?
+
+    public init(source: URL, destination: URL, items: [ExtractedPayload], error: String? = nil) {
+        self.source = source
+        self.destination = destination
+        self.items = items
+        self.error = error
     }
 }
 

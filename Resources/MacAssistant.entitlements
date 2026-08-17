@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Mac小助手 / MacAssistant 的最小 entitlement 集合。
+  由 build_app.sh 在发行链路里通过 `codesign --options runtime --entitlements` 一并写入,
+  与 Hardened Runtime + Apple 公证配合使用。
+
+  设计原则:能不开就不开。下面记录了每一条「本可以开、但我们没开」的能力,以及为什么不需要。
+  这不是偷懒留空 —— 对一个「不沙盒 + 不把外部代码载入自身进程」的 App 来说,最小集合本就接近空。
+
+  为什么整体上几乎不需要 entitlement:
+    * 读取用户选择的文件/目录(沙盒外的 IPA / DEB / dylib):本 App 刻意不启用 App Sandbox
+      (不设置 com.apple.security.app-sandbox),因此在非沙盒下拥有常规文件访问权;桌面/文稿/下载
+      仍由 TCC 单独把关,那是运行期授权,不是签名期 entitlement。
+    * 调用 codesign / ldid / dpkg-deb / otool / security / sips / iconutil 等外部工具:
+      Hardened Runtime 约束的是「本进程自身」的内存与代码加载,并不禁止 fork/exec 其它可执行文件,
+      因此派生子进程无需任何 entitlement。这些工具各自带着自己的签名与权限运行。
+    * 读取钥匙串里的签名身份:通过 `security find-identity` 子进程完成(见 signingtab),
+      不走本进程的 Security API;即便直接用 API,非沙盒 App 访问登录钥匙串也不需要 entitlement。
+    * 清理缓存目录、读系统信息、向 GitHub 查询版本号:都是非沙盒进程的常规文件/网络/系统调用,
+      不需要 entitlement。
+
+  以下 Hardened Runtime 例外项经过评估后「刻意不开」:
+    * com.apple.security.cs.allow-jit / allow-unsigned-executable-memory:App 不做 JIT、
+      不申请可写可执行内存,开了只会削弱加固。
+    * com.apple.security.cs.disable-library-validation:App 从不把第三方 dylib 载入自身进程
+      (内置 Class Dump 是随包编译的纯 Swift 代码,外部增强都是子进程),保持库校验开启更安全。
+    * com.apple.security.cs.allow-dyld-environment-variables:App 不依赖 DYLD_* 环境变量注入自身。
+    * com.apple.security.get-task-allow:发行/公证构建必须为假(缺省即为假),否则会被公证拒绝,
+      也会让进程可被调试。这里刻意不出现该键。
+
+  结论:最小且可公证的集合就是一个空的 entitlements 字典。保留此文件是为了
+    1) 让签名结果确定、可复现,且在记录上明确「我们没有申请任何宽松权限」;
+    2) 未来若确有新增能力,改动集中在这一处并保留同样的逐条理由。
+-->
+<plist version="1.0">
+<dict>
+</dict>
+</plist>

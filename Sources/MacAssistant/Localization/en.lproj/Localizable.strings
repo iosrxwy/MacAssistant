@@ -224,6 +224,11 @@
 "ipaview.outputName" = "Custom output name (optional)";
 "ipaview.replaceIcon" = "Add a replacement icon";
 "ipaview.enableFileSharing" = "Enable file access (Files app / iTunes File Sharing)";
+"ipaview.shortVersion" = "Version (CFBundleShortVersionString)";
+"ipaview.buildVersion" = "Build (CFBundleVersion)";
+"ipaview.minimumOS" = "Minimum iOS version";
+"ipaview.ppqRandomize" = "Append a random suffix to the bundle ID (PPQ)";
+"ipaview.ppqRandomize.hint" = "Only for apps you own or are authorized to modify. The suffix is generated at execute time so the plist change and re-sign use the same final ID.";
 "ipaview.repairWhiteIcon" = "Repair blank app icon";
 "ipaview.removeVOIP" = "Remove VOIP background mode";
 "ipaview.removeURLSchemes" = "Remove app URL scheme registrations";
@@ -265,6 +270,139 @@
 "ipaview.result.audit" = "Audited slice mappings: %d";
 "ipaview.scanning" = "Safely scanning the IPA / app for injectable targets…";
 "ipaview.scanned" = "✅ Found %d injectable Mach-O files";
+"ipaview.packAsDeb" = "Pack as DEB";
+"ipaview.packSelectedAsDeb" = "Pack selected plugins / frameworks as DEB";
+"ipaview.extensionPoint" = "Extension Point: %@";
+
+/* IPA workbench */
+"ipaview.mode.picker" = "Injection mode";
+"ipaview.mode.workbench" = "Workbench";
+"ipaview.mode.advanced" = "Advanced wizard";
+"workbench.dropZone.title" = "Drop your files here";
+"workbench.dropZone.hint" = "IPA / .app, .deb, .dylib, .framework, .bundle and .mobileprovision are classified automatically — no need to pick a step first.";
+"workbench.ingest.snapshotting" = "Creating an immutable source snapshot of %@…";
+"workbench.ingest.snapshotDone" = "✅ Source snapshot locked read-only; the original is never modified";
+"workbench.deb.attached" = "✅ Added plugin candidates from %@";
+"workbench.deb.blocked" = "Blocked %@: not eligible as an in-IPA plugin";
+"workbench.section.target" = "Target package";
+"workbench.target.immutable" = "Immutable source snapshot — the original input is never overwritten";
+"workbench.target.identity" = "Main bundle ID: %@";
+"workbench.target.requiredProfiles" = "Bundle IDs needing a matching profile: %d";
+"workbench.permission.iosNote" = "This is macOS-side local file access only. The artifact's on-device file capabilities are decided by the chosen provisioning profile and entitlements — independent of macOS permissions.";
+"workbench.section.blockedDebs" = "Blocked DEBs";
+"workbench.blockedDebs.note" = "These packages behave as device-level components (daemons / command-line tools / setuid / kernel-level) and are blocked as in-IPA plugins by default.";
+"workbench.section.unrecognized" = "Unrecognized inputs";
+"workbench.unrecognized.note" = "Left as-is rather than guessed.";
+"workbench.section.plugins" = "Plugins";
+"workbench.plugins.selectMain" = "Pick a single main tweak; the dependency closure is resolved during preflight.";
+"workbench.plugin.source" = "from %@";
+"workbench.plugin.main" = "Main tweak";
+"workbench.filter.match" = "Filter matches the target";
+"workbench.filter.indeterminate" = "Filter cannot be decided locally — verify on device";
+"workbench.filter.mismatch" = "Filter does not match the target — blocked by default";
+"workbench.filter.ackDetail" = "I understand: writing a dylib directly into the IPA changes the original filter semantics. Loading is then decided by the load command, not the loader. Proceed anyway.";
+"workbench.filter.pendingTarget" = "Waiting for the target package to be analyzed before evaluating the filter.";
+"workbench.section.frameworks" = "Frameworks / bundles";
+"workbench.section.fileAccess" = "File access behavior (macOS)";
+"workbench.fileAccess.prompt" = "Prompt";
+"workbench.fileAccess.require" = "Require";
+"workbench.fileAccess.note" = "Prompt asks for access when needed; Require means access must already be granted before running.";
+"workbench.section.signing" = "Signing";
+"workbench.signing.identity" = "Developer identity";
+"workbench.signing.none" = "None";
+"workbench.signing.profilesCount" = "%d provisioning profile(s), %d matched to a bundle ID";
+"workbench.signing.state.unsigned" = "Modified / unsigned";
+"workbench.signing.state.unsigned.detail" = "No signing materials provided. The artifact is produced unsigned for later signing — it cannot be installed directly.";
+"workbench.signing.state.waiting" = "Waiting for signing materials";
+"workbench.signing.state.waiting.missingIdentity" = "No developer identity selected.";
+"workbench.signing.state.waiting.missingProfiles" = "Missing profiles for: %@";
+"workbench.signing.state.ready" = "Ready to sign for handoff";
+"workbench.signing.state.readyAppleID" = "Apple ID is ready; profiles will be requested at execute time";
+"workbench.signing.state.readyAppleID.detail" = "Team %@ · device %@. Execution requests a 7-day development certificate and profiles, then re-signs from the inside out.";
+"workbench.signing.appleID" = "Apple ID signing";
+"workbench.signing.appleID.team" = "Signed in to team: %@ (%@)";
+"workbench.signing.useManualUDID" = "Use typed UDID";
+"workbench.signing.invalidUDID" = "That UDID does not look valid. Use a 25-character hyphenated value or 40 hex characters.";
+"workbench.signing.manualUDIDApplied" = "Using the typed device: %@";
+"workbench.running" = "Running…";
+"workbench.execute" = "Run: snapshot → plan → preflight → execute";
+"workbench.reset" = "Reset workbench";
+"workbench.cannot.noPlugin" = "Select a main tweak first.";
+"workbench.cannot.filterBlocked" = "Acknowledge the filter mismatch to proceed.";
+"workbench.cannot.waitingSigning" = "Complete the signing materials, or remove them to produce an unsigned artifact.";
+"workbench.result.modifiedUnsigned" = "Modified / unsigned artifact";
+"workbench.result.modifiedUnsigned.detail" = "Prominently unsigned: sign it before it can be installed on a device. Do not assume it is installable as-is.";
+"workbench.result.signedHandoff" = "Signed — ready for device install handoff";
+"workbench.result.handoffSteps" = "The artifact is signed inside-out and installable. Next: install it onto a provisioned device with your tool of choice, then verify behavior on device.";
+"workbench.result.finalDylib" = "Final injected dylib position: %@";
+"workbench.result.pendingVerification" = "Result still pending on-device verification. Nothing here is marked “compatible” or “successful” before you verify on a device.";
+"workbench.audit.export" = "Export audit record (JSON)";
+"workbench.audit.exported" = "✅ Audit exported (home paths redacted): %@";
+
+/* Workbench — recipe persistence */
+"workbench.section.recipe" = "Recipe (save / load)";
+"workbench.recipe.note" = "A recipe stores settings only (target mapping, injection order, file access, component policy, metadata) — never file paths, so it is reusable across sources.";
+"workbench.recipe.save" = "Save recipe…";
+"workbench.recipe.load" = "Load recipe…";
+"workbench.recipe.saved" = "✅ Recipe saved: %@";
+"workbench.recipe.loaded" = "✅ Recipe loaded: %@";
+"workbench.recipe.loadFailed" = "Failed to load recipe: %@";
+
+/* Workbench — standalone preflight */
+"workbench.section.preflight" = "Preflight report";
+"workbench.preflight.run" = "Preflight only (do not execute)";
+"workbench.preflight.running" = "Running preflight…";
+"workbench.preflight.ok" = "✅ Preflight passed with no blockers. Review any warnings before executing.";
+"workbench.preflight.blocked" = "⛔️ Preflight found blockers. Resolve them before executing.";
+"workbench.preflight.noBlockers" = "No blockers";
+"workbench.preflight.hasBlockers" = "%d blocker(s)";
+"workbench.preflight.empty" = "No findings.";
+"workbench.preflight.blockers" = "Blockers (must resolve)";
+"workbench.preflight.warnings" = "Warnings";
+"workbench.preflight.infos" = "Info";
+"workbench.cannot.preflightBlocked" = "Preflight found blockers — resolve them first.";
+
+/* Workbench — result: local vs device verification */
+"workbench.result.localPassed" = "Local structural checks passed";
+"workbench.result.localPassedWithUnconfirmed" = "Local checks passed, but %d dependency(ies) could not be confirmed locally";
+"workbench.result.localFailed" = "Local checks failed";
+"workbench.result.deviceUnverified" = "Not verified on device: this tool can never confirm on-device loading. A green local check does NOT mean it runs on a device.";
+
+/* Workbench — unconfirmed dependencies */
+"workbench.result.unconfirmed.title" = "Unconfirmed dependencies (%d)";
+"workbench.result.unconfirmed.note" = "These cannot be confirmed locally — verify on an authorized device.";
+"workbench.result.unconfirmed.installPath" = "Install path: %@";
+"workbench.result.unconfirmed.referencedBy" = "Referenced by: %@";
+"workbench.result.unconfirmed.classification" = "Classification: %@";
+"workbench.result.unconfirmed.evidence" = "Evidence: %@";
+"workbench.result.unconfirmed.logLine" = "⚠️ %d dependency(ies) unconfirmed — device verification required.";
+
+/* Workbench — before/after diff */
+"workbench.result.diff.title" = "Before/after diff (%d changed path(s))";
+"workbench.result.diff.changedPaths" = "Changed paths";
+"workbench.result.diff.addedLoad" = "＋ load command: %@";
+"workbench.result.diff.removedLoad" = "－ load command: %@";
+"workbench.result.diff.addedRpath" = "＋ rpath: %@";
+"workbench.result.diff.removedRpath" = "－ rpath: %@";
+"workbench.result.diff.signature" = "Signature: %@ → %@";
+"workbench.result.diff.sha" = "SHA-256: %@ → %@";
+"workbench.result.diff.kind.added" = "added";
+"workbench.result.diff.kind.removed" = "removed";
+"workbench.result.diff.kind.modified" = "modified";
+"workbench.result.diff.kind.unchanged" = "unchanged";
+
+/* Workbench — dependency classification labels */
+"workbench.dep.systemLibrary" = "System library";
+"workbench.dep.appEmbedded" = "App-embedded";
+"workbench.dep.deviceProvided" = "Device-provided (jailbreak)";
+"workbench.dep.pluginProvided" = "Provided with this plugin";
+"workbench.dep.unknown" = "Unknown";
+
+/* Workbench — signature state labels */
+"workbench.sig.valid" = "valid";
+"workbench.sig.invalid" = "invalid";
+"workbench.sig.unsigned" = "unsigned";
+"workbench.sig.unavailable" = "unavailable";
 
 /* MemoryView */
 "memoryview.title" = "Memory";
@@ -478,6 +616,7 @@
 "signingtab.noIPA" = "No IPA selected";
 "signingtab.mode.jailbreak" = "Jailbreak / local";
 "signingtab.mode.realDevice" = "Real device (developer)";
+"signingtab.mode.appleID" = "Apple ID";
 "signingtab.log" = "Log";
 "signingtab.jailbreak.title" = "Jailbreak / local fake signing";
 "signingtab.method" = "Method";
@@ -493,6 +632,11 @@
 "signingtab.p12Identity" = "Current certificate: %@";
 "signingtab.p12Hint" = "One .p12 certificate is shared by the main app and nested components; each Bundle still needs its matching .mobileprovision.";
 "signingtab.p12Imported" = "Certificate imported into Keychain; password remembered";
+"signingtab.certificateLibrary" = "Saved certificates";
+"signingtab.removeCertificate" = "Remove from list";
+"signingtab.certificateValid" = "%d days left";
+"signingtab.certificateExpiring" = "Expires in %d days";
+"signingtab.certificateExpired" = "Expired";
 "signingtab.exportPasswordTitle" = "Set export password";
 "signingtab.exportPasswordHint" = "Enter the new .p12 password";
 "signingtab.exportConfirm" = "Export";
@@ -513,6 +657,50 @@
 "signingtab.done" = "✅ Signing finished";
 "signingtab.realDevice.done" = "✅ Signed with the developer certificate and strictly verified; ready for the device installation flow";
 "signingtab.output" = "Output: %@";
+"signingtab.appleID.title" = "Apple ID signing (device + 7-day renewal)";
+"signingtab.appleID.detail" = "Uses a free or paid Apple ID to request a development certificate and profile, writes the connected device’s UDID into the profile, then re-signs from the inside out. Free-account certificates last about 7 days; with renewal enabled, this app can remind you and re-sign while it is open. The flow follows AltSign, xtool, and libimobiledevice, and only operates on IPAs you own or are authorized to modify.";
+"signingtab.appleID.account" = "Apple ID";
+"signingtab.appleID.password" = "Password";
+"signingtab.appleID.remember" = "Remember in Keychain";
+"signingtab.appleID.forget" = "Forget account";
+"signingtab.appleID.twoFactor" = "Two-factor code (when asked)";
+"signingtab.appleID.twoFactor.hint" = "If sign-in asks for a code, enter the 6 digits here and sign again.";
+"signingtab.appleID.devices" = "Connected iPhone / iPad";
+"signingtab.appleID.refreshDevices" = "Refresh devices";
+"signingtab.appleID.noDevices" = "No device found. Connect a cable, tap Trust on the phone, then refresh. Requires idevice_id (brew install libimobiledevice) or Xcode.";
+"signingtab.appleID.install" = "Install onto the selected device after signing";
+"signingtab.appleID.renew" = "Add to the 7-day renewal list";
+"signingtab.appleID.signAndInstall" = "Sign with Apple ID and install";
+"signingtab.appleID.signing" = "Requesting a certificate from Apple and signing…";
+"signingtab.appleID.done" = "✅ Apple ID signing finished";
+"signingtab.appleID.jobs" = "7-day renewal";
+"signingtab.appleID.jobExpires" = "%@ · expires %@";
+"signingtab.appleID.jobDue" = "Expiring soon";
+"signingtab.appleID.renewNow" = "Renew now";
+"signingtab.appleID.removeJob" = "Remove";
+"signingtab.appleID.autoRenew" = "Auto-renew when due";
+"signingtab.appleID.toolsMissing" = "idevice_id was not found. Install libimobiledevice to list USB devices, or use Xcode’s devicectl.";
+"signingtab.appleID.login" = "Sign in with Apple ID";
+"signingtab.appleID.loggingIn" = "Signing in to Apple ID…";
+"signingtab.appleID.loggedIn" = "Signed in: %@ (%@)";
+"signingtab.appleID.team" = "Development team";
+"signingtab.appleID.manualUDID" = "Type a UDID (when no USB device is present)";
+"signingtab.appleID.manualUDID.placeholder" = "00008030-… or 40 hex characters";
+"signingtab.appleID.manualName.placeholder" = "Device name (optional)";
+"signingtab.appleID.manualUDID.hint" = "If no phone is connected, type the iPhone’s UDID here. It is treated the same as a USB selection.";
+"signingtab.appleID.portalResources" = "Developer portal (read-only)";
+"signingtab.appleID.registeredDevices" = "%d registered device(s)";
+"signingtab.appleID.certificates" = "%d development certificate(s)";
+"signingtab.appleID.appIDs" = "%d App ID(s)";
+"signingtab.exportPasswordEmpty" = "The export password cannot be empty";
+"signingtab.capabilities.summary" = "Profile capabilities: %d present, %d absent";
+"signingtab.capabilities.present" = "Present";
+"signingtab.capabilities.absent" = "Absent";
+"signingtab.capabilities.loadFailed" = "Couldn’t read the profile capabilities";
+"signingtab.certificate.details" = "Certificate details";
+"signingtab.certificate.subject" = "Subject: %@";
+"signingtab.certificate.team" = "Team: %@";
+"signingtab.certificate.serial" = "Serial: %@";
 
 /* SlimTab */
 "slimtab.chooseIPA" = "Choose IPA";
@@ -575,7 +763,7 @@
 
 /* DylibView */
 "dylibview.title" = "DYLIB Tools";
-"dylibview.subtitle" = "Inspect dependencies, edit install names and rpaths, extract dylibs from an app or .deb";
+"dylibview.subtitle" = "Inspect dependencies, edit install names and rpaths, extract dylibs, frameworks, bundles, and resource packages from an app or .deb";
 "dylibview.chooseMachO" = "Choose a Mach-O file (executable or .dylib)";
 "dylibview.chooseFile" = "Choose file";
 "dylibview.packAsDeb" = "Pack as DEB";
@@ -597,18 +785,32 @@
 "dylibview.apply" = "Apply";
 "dylibview.addRPath" = "Add rpath";
 "dylibview.add" = "Add";
-"dylibview.extract.title" = "Extract dylibs from an app, .deb or folder";
-"dylibview.sourceFile" = "Choose file";
-"dylibview.sourceFolder" = "Choose folder";
+"dylibview.extract.title" = "Batch-extract dylibs, frameworks, bundles, and resource packages from apps, .debs, or folders";
+"dylibview.sourceFile" = "Choose files";
+"dylibview.sourceFolder" = "Choose folders";
 "dylibview.extract" = "Extract";
-"dylibview.extract.placeholder" = "Choose a .app bundle, a .deb, or any folder";
+"dylibview.extract.placeholder" = "Drop or choose one or more .app bundles, .ipas, .debs, frameworks, bundles, or folders";
 "dylibview.outputSection" = "Output";
 "dylibview.loaded" = "Found %d dependencies and %d rpaths";
 "dylibview.noMachO" = "No Mach-O files found";
-"dylibview.extracted" = "Extracted %d files to: %@";
+"dylibview.noPayload" = "No dylibs, frameworks, bundles, or resource packages found";
+"dylibview.extracted" = "Extracted from %d sources: %d items";
+"dylibview.extract.failed" = "%@: %@";
+"dylibview.extracted.destination" = "→ %@";
+"dylibview.kind.dylib" = "dylib";
+"dylibview.kind.framework" = "framework";
+"dylibview.kind.bundle" = "bundle";
+"dylibview.kind.resourcePackage" = "resource package";
+"dylibview.kind.resource" = "resource";
+"dylibview.kind.machO" = "Mach-O";
 "dylibview.done.deleteRPath" = "Removed rpath";
 "dylibview.done.changeDependency" = "Dependency changed";
 "dylibview.done.addRPath" = "rpath added";
+"dylibview.drop.hintMachO" = "You can also drop a Mach-O executable or .dylib here";
+"dylibview.drop.hintExtract" = "Drop one or more .deb files, .ipa/.app bundles, or folders here to extract immediately";
+"dylibview.drop.notMachO" = "Not a Mach-O executable or .dylib: %@";
+"dylibview.drop.notExtractSource" = "Drop a .app bundle, .ipa, .deb, framework, bundle, or folder: %@";
+"dylibview.drop.skipped" = "Skipped: %@";
 
 /* Shared */
 "common.cancel" = "Cancel";
@@ -626,6 +828,7 @@
 /* EnvironmentView */
 "env.title" = "Environment";
 "env.subtitle" = "%d of %d command line tools ready";
+"env.checking" = "Checking command line tools…";
 "env.installStatus" = "Installation status";
 "env.builtInNote" = "The built-in Class Dump needs no external dependencies. class-dump and dsdump are only used for modern Mach-O formats the built-in parser cannot handle, and no unknown binary is ever downloaded automatically.";
 "env.refresh" = "Rescan";
@@ -648,21 +851,36 @@
 "env.missing.formula" = "Missing · Homebrew Core formula: %@";
 "env.missing.hint" = "Missing · %@";
 "env.tool.accessibility" = "%@, %@";
-"env.language.title" = "Language";
-"env.language.detail" = "Follows the system language by default. Changes apply immediately.";
 
 /* AboutView */
 "about.icon.accessibility" = "Mac Assistant heart icon";
 "about.tagline" = "A native macOS utility & reverse engineering toolbox";
-"about.version" = "Version %@ · MIT License";
+"about.version" = "Version %@ · GPL-3.0";
 "about.github.accessibility" = "Open the iosrxwy GitHub account";
 "about.channel" = "Release channel · @iosrxwy";
 "about.channel.accessibility" = "Open the iosrxwy Telegram release channel";
-"about.license" = "This project is open source under the MIT License. Only use the reverse engineering, modification and repackaging features on files you own or are authorized to modify.";
-"about.thirdParty" = "Third-party licenses";
-"about.thirdParty.detail" = "This app bundles neither class-dump (GPL-3.0) nor the dsdump binary, whose license is unclear, and never downloads them automatically. Homebrew formulae come from Homebrew Core and their source is always shown.";
+"about.license" = "This project is open source under GNU GPL-3.0. Distributed modifications must also be released under GPL-3.0 with complete corresponding source. Only use the reverse engineering, modification and repackaging features on files you own or are authorized to modify.";
+"about.thirdParty" = "Open-source acknowledgements & third-party licenses";
+"about.thirdParty.detail" = "This app is released under GPL-3.0. Apple ID signing follows the AltSign / AltStore (Riley Testut) and xtool / XKit protocols; device communication follows libimobiledevice. Those projects, class-dump, and the dsdump binary (license unclear) are not bundled and are never downloaded automatically. class-dump is also GPL-3.0 and could be combined only together with its corresponding source; dsdump still must not be redistributed. AltStore is AGPL-3.0; this app only follows the public protocol and does not bundle its code. Homebrew formulae come from Homebrew Core and their source is always shown.";
+"about.thirdParty.altSign" = "AltSign (Riley Testut)";
+"about.thirdParty.altStore" = "AltStore";
+"about.thirdParty.xtool" = "xtool / XKit";
+"about.thirdParty.libimobiledevice" = "libimobiledevice";
+"about.thirdParty.theos" = "Theos";
+"about.thirdParty.zsign" = "zsign";
 "about.thirdParty.classDump" = "class-dump project";
 "about.thirdParty.dsdump" = "dsdump project";
 "about.privacy" = "Privacy & security";
 "about.privacy.detail" = "All file processing happens on this Mac; the administrator password is handled by the macOS authorization dialog. The app never disables Gatekeeper globally, never runs curl | bash automatically, and makes no guarantee that reverse-engineered or re-signed artifacts will run on a real device.";
 "about.privacy.apple" = "Apple Platform Security";
+"about.developer" = "Developer iosrxwy";
+"about.language.title" = "Language";
+"about.language.detail" = "Follows the system language by default. Changes apply immediately.";
+"about.checkForUpdates" = "Check for updates";
+"about.checkForUpdates.accessibility" = "Check whether a new version is available";
+"about.automaticUpdateCheck" = "Check automatically";
+"about.automaticUpdateCheck.hint" = "When on, checks at most once a day";
+"about.updatePrivacy" = "Only queries GitHub for the version number; nothing is uploaded, and nothing is downloaded or installed automatically.";
+"about.buildKind.notarized" = "Notarized release (Developer ID)";
+"about.buildKind.development" = "Development build (ad-hoc, not notarized)";
+"about.buildKind.development.hint" = "This is an ad-hoc build that Apple has not notarized, so macOS may block it on first launch. If that happens, open System Settings → Privacy & Security and click “Open Anyway” next to the prompt.";

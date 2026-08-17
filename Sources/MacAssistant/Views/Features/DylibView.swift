@@ -8,7 +8,8 @@ struct DylibView: View {
     @State private var deps: [DylibDependency] = []
     @State private var rpaths: [String] = []
     @State private var snapshot: DylibAnalysisSnapshot?
-    @State private var busy = false
+    @State private var analysisBusy = false
+    @State private var extractBusy = false
     @State private var log = ""
     @State private var ok: Bool?
 
@@ -17,11 +18,16 @@ struct DylibView: View {
     @State private var newRPath = "@executable_path/Frameworks"
 
     // 从 app/deb/目录提取
-    @State private var extractSource: URL?
+    @State private var extractSources: [URL] = []
+    @State private var pendingExtract: (sources: [URL], skipped: [URL])?
+    @State private var machODropTargeted = false
+    @State private var extractDropTargeted = false
 
     init(workspace: WorkspaceStore) {
         self.workspace = workspace
     }
+
+    private var busy: Bool { analysisBusy || extractBusy }
 
     var body: some View {
         FeatureScaffold(title: L("dylibview.title"), subtitle: L("dylibview.subtitle")) {
@@ -31,13 +37,7 @@ struct DylibView: View {
                     HStack {
                         FilePickerButton(title: L("dylibview.chooseFile"), systemImage: "link",
                                          types: [.dylibFile, .unixExecutable, .executable, .item]) { url in
-                            do {
-                                _ = try workspace.importForDylib(fileURL: url)
-                                acceptPendingWorkspaceItem()
-                            } catch {
-                                ok = false
-                                log = error.localizedDescription
-                            }
+                            acceptMachO(url)
                         }
                         Spacer()
                         if fileURL != nil {
@@ -51,8 +51,14 @@ struct DylibView: View {
                         }
                         if fileURL != nil { Button(L("dylibview.reload")) { load() }.disabled(busy) }
                     }
-                    PathBadge(url: fileURL)
+                    PathBadge(url: fileURL, isDropTargeted: machODropTargeted, showsDropChrome: true)
+                    Text(L("dylibview.drop.hintMachO"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+            }
+            .fileURLsDropTarget(isTargeted: $machODropTargeted) { urls in
+                acceptMachODrops(urls)
             }
 
             if let snapshot {
@@ -155,15 +161,50 @@ struct DylibView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(L("dylibview.extract.title")).font(.headline)
                     HStack {
-                        FilePickerButton(title: L("dylibview.sourceFile"), systemImage: "app.badge") { url in extractSource = url }
-                        FilePickerButton(title: L("dylibview.sourceFolder"), systemImage: "folder", chooseDirectory: true) { url in extractSource = url }
-                        if extractSource != nil {
-                            Button(L("dylibview.extract")) { extract() }.disabled(busy)
+                        MultiFilePickerButton(
+                            title: L("dylibview.sourceFile"),
+                            systemImage: "app.badge",
+                            types: [.debPackage, .ipaPackage, .applicationBundle, .dylibFile, .item]
+                        ) { urls in
+                            acceptExtractSources(urls)
+                        }
+                        MultiFilePickerButton(
+                            title: L("dylibview.sourceFolder"),
+                            systemImage: "folder",
+                            chooseDirectory: true
+                        ) { urls in
+                            acceptExtractSources(urls)
+                        }
+                        if !extractSources.isEmpty {
+                            Button(L("dylibview.extract")) { extract(extractSources) }.disabled(extractBusy)
                         }
                         Spacer()
                     }
-                    PathBadge(url: extractSource, placeholder: L("dylibview.extract.placeholder"))
+                    if extractSources.isEmpty {
+                        PathBadge(
+                            url: nil,
+                            placeholder: L("dylibview.extract.placeholder"),
+                            isDropTargeted: extractDropTargeted,
+                            showsDropChrome: true
+                        )
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(extractSources, id: \.path) { url in
+                                PathBadge(
+                                    url: url,
+                                    isDropTargeted: extractDropTargeted,
+                                    showsDropChrome: true
+                                )
+                            }
+                        }
+                    }
+                    Text(L("dylibview.drop.hintExtract"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+            }
+            .fileURLsDropTarget(isTargeted: $extractDropTargeted) { urls in
+                acceptExtractSources(urls)
             }
 
             if busy || !log.isEmpty {
@@ -183,7 +224,7 @@ struct DylibView: View {
 
     private func load() {
         guard let url = fileURL else { return }
-        busy = true; ok = nil; log = ""
+        analysisBusy = true; ok = nil; log = ""
         Task {
             do {
                 let d = try await Task.detached { try DylibService.dependencies(fileAt: url) }.value
@@ -192,8 +233,63 @@ struct DylibView: View {
                 deps = d; rpaths = r; snapshot = s; ok = true
                 log = L("dylibview.loaded", d.count, r.count)
             } catch { ok = false; log = error.localizedDescription }
-            busy = false
+            analysisBusy = false
         }
+    }
+
+    private func acceptMachO(_ url: URL) {
+        do {
+            _ = try workspace.importForDylib(fileURL: url)
+            acceptPendingWorkspaceItem()
+        } catch {
+            ok = false
+            log = error.localizedDescription
+        }
+    }
+
+    private func acceptMachODrops(_ urls: [URL]) {
+        FileSystemHelper.withSecurityScopedAccess(to: urls) {
+            let extractable = urls.filter { !MachOIdentifier.isMachO(fileAt: $0) && isExtractSource($0) }
+            // 混入 .deb/.app 时整批走提取,避免分析日志把提取结果盖掉。
+            if !extractable.isEmpty {
+                acceptExtractSources(urls.filter(isExtractSource))
+                return
+            }
+            if let first = urls.first(where: { MachOIdentifier.isMachO(fileAt: $0) }) {
+                acceptMachO(first)
+                return
+            }
+            let names = urls.map(\.lastPathComponent).joined(separator: ", ")
+            rejectDrop(L("dylibview.drop.notMachO", names))
+        }
+    }
+
+    private func acceptExtractSources(_ urls: [URL]) {
+        FileSystemHelper.withSecurityScopedAccess(to: urls) {
+            let valid = uniquedURLs(urls.filter(isExtractSource))
+            let rejected = urls.filter { !isExtractSource($0) }
+            guard !valid.isEmpty else {
+                let names = rejected.map(\.lastPathComponent).joined(separator: ", ")
+                rejectDrop(L("dylibview.drop.notExtractSource", names))
+                return
+            }
+            extractSources = uniquedURLs(extractSources + valid)
+            extract(valid, skipped: rejected)
+        }
+    }
+
+    private func isExtractSource(_ url: URL) -> Bool {
+        let ext = url.pathExtension.lowercased()
+        if ["deb", "ipa", "app", "framework", "bundle", "appex", "xpc", "dylib", "theme"].contains(ext) {
+            return true
+        }
+        if MachOIdentifier.isMachO(fileAt: url) { return true }
+        return FileSystemHelper.isDirectory(url)
+    }
+
+    private func rejectDrop(_ message: String) {
+        ok = false
+        log = message
     }
 
     private func acceptPendingWorkspaceItem() {
@@ -208,32 +304,86 @@ struct DylibView: View {
         load()
     }
 
-    private func extract() {
-        guard let src = extractSource else { return }
-        let dest = src.deletingPathExtension().appendingPathExtension("extracted-dylibs")
-        busy = true; ok = nil; log = ""
+    private func extract(_ sources: [URL], skipped: [URL] = []) {
+        let uniqueSources = uniquedURLs(sources)
+        guard !uniqueSources.isEmpty else { return }
+        if extractBusy {
+            let queued = pendingExtract.map(\.sources) ?? []
+            let queuedSkipped = pendingExtract.map(\.skipped) ?? []
+            pendingExtract = (uniquedURLs(queued + uniqueSources), uniquedURLs(queuedSkipped + skipped))
+            return
+        }
+        extractBusy = true; ok = nil; log = ""
         Task {
-            do {
-                let files = try await Task.detached { try DylibService.extractMachOFiles(from: src, to: dest) }.value
-                ok = true
-                log = files.isEmpty ? L("dylibview.noMachO") :
-                    L("dylibview.extracted", files.count, dest.path) + "\n"
-                        + files.map { "· " + $0.lastPathComponent }.joined(separator: "\n")
-                revealInFinder(dest)
-            } catch { ok = false; log = error.localizedDescription }
-            busy = false
+            let results = await Task.detached {
+                FileSystemHelper.withSecurityScopedAccess(to: uniqueSources) {
+                    DylibService.extractPayloads(from: uniqueSources)
+                }
+            }.value
+            let items = results.flatMap(\.items)
+            let failures = results.filter { $0.error != nil }
+            var lines: [String] = []
+            if items.isEmpty, failures.isEmpty {
+                lines.append(L("dylibview.noPayload"))
+            } else if !items.isEmpty {
+                lines.append(L("dylibview.extracted", results.count, items.count))
+            }
+            for result in results {
+                if let error = result.error {
+                    lines.append(L("dylibview.extract.failed", result.source.lastPathComponent, error))
+                    continue
+                }
+                if result.items.isEmpty { continue }
+                lines.append(L("dylibview.extracted.destination", result.destination.path))
+                lines.append(contentsOf: result.items.map { item in
+                    let name = item.outputURL.lastPathComponent
+                    return "· \(name) (\(kindLabel(item.kind)))"
+                })
+            }
+            if !skipped.isEmpty {
+                lines.append(L("dylibview.drop.skipped", skipped.map(\.lastPathComponent).joined(separator: ", ")))
+            }
+            ok = failures.isEmpty && !items.isEmpty
+            log = lines.joined(separator: "\n")
+            let successful = results.filter { $0.error == nil && !$0.items.isEmpty }
+            if let first = successful.first {
+                revealInFinder(
+                    successful.count == 1 ? first.destination : first.destination.deletingLastPathComponent()
+                )
+            }
+            extractBusy = false
+            if let pending = pendingExtract {
+                pendingExtract = nil
+                extract(pending.sources, skipped: pending.skipped)
+            }
+        }
+    }
+
+    private func uniquedURLs(_ urls: [URL]) -> [URL] {
+        var seen = Set<String>()
+        return urls.filter { seen.insert($0.standardizedFileURL.path).inserted }
+    }
+
+    private func kindLabel(_ kind: ExtractedPayloadKind) -> String {
+        switch kind {
+        case .dylib: return L("dylibview.kind.dylib")
+        case .framework: return L("dylibview.kind.framework")
+        case .bundle: return L("dylibview.kind.bundle")
+        case .resourcePackage: return L("dylibview.kind.resourcePackage")
+        case .resource: return L("dylibview.kind.resource")
+        case .machO: return L("dylibview.kind.machO")
         }
     }
 
     /// 传入的是「已完成」整句而不是动作名:中英文里动作名和「完成」的拼接顺序不一样。
     private func run(_ doneMessage: String, _ work: @escaping @Sendable () throws -> String) {
-        busy = true; ok = nil; log = ""
+        analysisBusy = true; ok = nil; log = ""
         Task {
             do {
                 let out = try await Task.detached(priority: .userInitiated, operation: work).value
                 ok = true; log = "\(doneMessage)\n\(out)"
                 load()
-            } catch { ok = false; log = error.localizedDescription; busy = false }
+            } catch { ok = false; log = error.localizedDescription; analysisBusy = false }
         }
     }
 }

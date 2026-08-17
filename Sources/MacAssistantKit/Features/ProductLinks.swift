@@ -29,4 +29,13 @@ public enum ProductLinks {
     public static let classDumpProject = URL(string: "https://github.com/nygard/class-dump")!
     public static let dsdumpProject = URL(string: "https://github.com/DerekSelander/dsdump")!
     public static let applePlatformSecurity = URL(string: "https://support.apple.com/guide/security/welcome/web")!
+    /// Apple ID 签名协议参考：xtool / XKit（Kabir Oberai）。
+    public static let xtoolProject = URL(string: "https://github.com/xtool-org/xtool")!
+    /// Apple ID 签名协议参考：AltSign（Riley Testut / AltStore）。不捆绑其二进制。
+    public static let altSignProject = URL(string: "https://github.com/rileytestut/AltSign")!
+    public static let altStore = URL(string: "https://altstore.io")!
+    public static let altStoreGitHub = URL(string: "https://github.com/altstoreio/AltStore")!
+    public static let libimobiledevice = URL(string: "https://libimobiledevice.org")!
+    public static let theosProject = URL(string: "https://github.com/theos/theos")!
+    public static let zsignProject = URL(string: "https://github.com/zhlynn/zsign")!
 }

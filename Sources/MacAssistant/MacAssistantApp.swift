@@ -44,6 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let size = NSApplication.shared.applicationIconImage.size
             print("MACASSISTANT_ICON_READY \(Int(size.width))x\(Int(size.height))")
             NSApplication.shared.terminate(nil)
+            return
+        }
+
+        Task.detached(priority: .utility) {
+            _ = AppleIDSigningService.renewDueJobs()
         }
     }
 

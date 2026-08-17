@@ -37,6 +37,10 @@ Review is requested automatically (`CODEOWNERS`). Maintainers can still push to 
 
 Do not file a public Issue for a vulnerability. See [SECURITY.md](SECURITY.md).
 
+## License
+
+By contributing, you license your work under the [GNU GPL-3.0](LICENSE) that covers this repository.
+
 ---
 
 ## 中文
@@ -48,3 +52,5 @@ Do not file a public Issue for a vulnerability. See [SECURITY.md](SECURITY.md).
 只处理你自己的 Mac，或已获授权的目标。检测绕过、DRM、反作弊、支付或访问控制规避、全局关闭 Gatekeeper、FairPlay 脱壳、捆绑或镜像第三方二进制，一律不接受。
 
 外来 PR 会自动请维护者看；合并前需要 CI 的 `build` 通过。安全问题请走 [SECURITY.md](SECURITY.md)，不要开公开 Issue。
+
+贡献默认按 [GNU GPL-3.0](LICENSE) 授权给本项目。

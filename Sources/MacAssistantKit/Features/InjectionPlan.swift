@@ -131,28 +131,138 @@ public struct InjectionResource: Identifiable, Codable, Hashable, Sendable {
 public struct InjectionMetadataChanges: Codable, Hashable, Sendable {
     public var displayName: String?
     public var bundleID: String?
+    public var shortVersion: String?
+    public var buildVersion: String?
+    public var minimumOSVersion: String?
     public var iconFiles: [URL]
     public var enableFileSharing: Bool
     public var repairWhiteIcon: Bool
     public var removeVOIPBackgroundMode: Bool
     public var removeURLSchemes: Bool
+    /// 在 Bundle ID 后追加一段随机后缀，避开部分商店对「未改 ID 的重签包」的检查。
+    public var randomizeBundleIDForPPQ: Bool
+    public var ppqBundleSuffix: String?
 
     public init(
         displayName: String? = nil,
         bundleID: String? = nil,
+        shortVersion: String? = nil,
+        buildVersion: String? = nil,
+        minimumOSVersion: String? = nil,
         iconFiles: [URL] = [],
         enableFileSharing: Bool = false,
         repairWhiteIcon: Bool = false,
         removeVOIPBackgroundMode: Bool = false,
-        removeURLSchemes: Bool = false
+        removeURLSchemes: Bool = false,
+        randomizeBundleIDForPPQ: Bool = false,
+        ppqBundleSuffix: String? = nil
     ) {
         self.displayName = displayName
         self.bundleID = bundleID
+        self.shortVersion = shortVersion
+        self.buildVersion = buildVersion
+        self.minimumOSVersion = minimumOSVersion
         self.iconFiles = iconFiles
         self.enableFileSharing = enableFileSharing
         self.repairWhiteIcon = repairWhiteIcon
         self.removeVOIPBackgroundMode = removeVOIPBackgroundMode
         self.removeURLSchemes = removeURLSchemes
+        self.randomizeBundleIDForPPQ = randomizeBundleIDForPPQ
+        self.ppqBundleSuffix = ppqBundleSuffix
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case displayName, bundleID, shortVersion, buildVersion, minimumOSVersion
+        case iconFiles, enableFileSharing, repairWhiteIcon
+        case removeVOIPBackgroundMode, removeURLSchemes
+        case randomizeBundleIDForPPQ, ppqBundleSuffix
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+        bundleID = try container.decodeIfPresent(String.self, forKey: .bundleID)
+        shortVersion = try container.decodeIfPresent(String.self, forKey: .shortVersion)
+        buildVersion = try container.decodeIfPresent(String.self, forKey: .buildVersion)
+        minimumOSVersion = try container.decodeIfPresent(String.self, forKey: .minimumOSVersion)
+        iconFiles = try container.decodeIfPresent([URL].self, forKey: .iconFiles) ?? []
+        enableFileSharing = try container.decodeIfPresent(Bool.self, forKey: .enableFileSharing) ?? false
+        repairWhiteIcon = try container.decodeIfPresent(Bool.self, forKey: .repairWhiteIcon) ?? false
+        removeVOIPBackgroundMode = try container.decodeIfPresent(Bool.self, forKey: .removeVOIPBackgroundMode) ?? false
+        removeURLSchemes = try container.decodeIfPresent(Bool.self, forKey: .removeURLSchemes) ?? false
+        randomizeBundleIDForPPQ = try container.decodeIfPresent(Bool.self, forKey: .randomizeBundleIDForPPQ) ?? false
+        ppqBundleSuffix = try container.decodeIfPresent(String.self, forKey: .ppqBundleSuffix)
+    }
+
+    public static func makePPQSuffix(length: Int = 6) -> String {
+        let chars = Array("abcdefghijklmnopqrstuvwxyz0123456789")
+        return String((0..<length).compactMap { _ in chars.randomElement() })
+    }
+
+    /// 若打开 PPQ 随机化，把最终 Bundle ID 写进副本，保证改 plist 与重签用同一个值。
+    public func resolvingBundleID(current: String, suffix: String? = nil) -> InjectionMetadataChanges {
+        var next = self
+        guard randomizeBundleIDForPPQ else { return next }
+        let base = (bundleID?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 }
+            ?? current
+        let token = (suffix ?? ppqBundleSuffix).flatMap { $0.isEmpty ? nil : $0 } ?? Self.makePPQSuffix()
+        next.ppqBundleSuffix = token
+        if base.hasSuffix(".\(token)") {
+            next.bundleID = base
+        } else {
+            next.bundleID = "\(base).\(token)"
+        }
+        return next
+    }
+}
+
+/// 只改 Info.plist 字典，不含拷图标 / 改嵌套 bundle。供单测与执行层共用。
+public enum InfoPlistMetadataApplier {
+    @discardableResult
+    public static func apply(_ changes: InjectionMetadataChanges, to plist: inout [String: Any]) -> [String] {
+        var log: [String] = []
+        if let displayName = changes.displayName {
+            plist["CFBundleDisplayName"] = displayName
+            plist["CFBundleName"] = displayName
+            log.append("displayName")
+        }
+        if let bundleID = changes.bundleID {
+            plist["CFBundleIdentifier"] = bundleID
+            log.append("bundleID")
+        }
+        if let shortVersion = changes.shortVersion, !shortVersion.isEmpty {
+            plist["CFBundleShortVersionString"] = shortVersion
+            log.append("shortVersion")
+        }
+        if let buildVersion = changes.buildVersion, !buildVersion.isEmpty {
+            plist["CFBundleVersion"] = buildVersion
+            log.append("buildVersion")
+        }
+        if let minimumOSVersion = changes.minimumOSVersion, !minimumOSVersion.isEmpty {
+            plist["MinimumOSVersion"] = minimumOSVersion
+            plist["LSMinimumSystemVersion"] = minimumOSVersion
+            log.append("minimumOSVersion")
+        }
+        if changes.enableFileSharing {
+            plist["UIFileSharingEnabled"] = true
+            plist["LSSupportsOpeningDocumentsInPlace"] = true
+            log.append("fileSharing")
+        }
+        if changes.removeVOIPBackgroundMode, let modes = plist["UIBackgroundModes"] as? [String] {
+            let remaining = modes.filter { $0.caseInsensitiveCompare("voip") != .orderedSame }
+            if remaining.isEmpty {
+                plist.removeValue(forKey: "UIBackgroundModes")
+            } else {
+                plist["UIBackgroundModes"] = remaining
+            }
+            log.append("voip")
+        }
+        if changes.removeURLSchemes {
+            plist.keys.filter { $0 == "CFBundleURLTypes" || $0.hasPrefix("CFBundleURLTypes~") }
+                .forEach { plist.removeValue(forKey: $0) }
+            log.append("urlSchemes")
+        }
+        return log
     }
 }
 
@@ -202,6 +312,7 @@ public enum InjectionSigningMode: Codable, Hashable, Sendable {
     case adHoc
     case ldid
     case realDevice(RealDeviceSigningRecipe)
+    case appleID(AppleIDSigningRecipe)
 }
 
 public struct InjectionPlan: Codable, Hashable, Sendable {
