@@ -956,6 +956,8 @@
 "about.tagline" = "原生 macOS 效率与逆向工具箱";
 "about.version" = "版本 %@ · GPL-3.0";
 "about.github.accessibility" = "打开 GitHub 开源账号 iosrxwy";
+"about.twitter" = "X · @iOSRXWY";
+"about.twitter.accessibility" = "打开作者的 X / 推特主页";
 "about.channel" = "发布频道 · @iosrxwy";
 "about.channel.accessibility" = "打开 Telegram 发布频道 iosrxwy";
 "about.license" = "项目以 GNU GPL-3.0 开源。对外分发修改版时必须同样以 GPL-3.0 提供完整对应源代码。仅对你拥有或已获授权的文件使用逆向、修改与重打包功能。";

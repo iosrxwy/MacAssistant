@@ -50,27 +50,20 @@ struct AboutView: View {
 
             buildKindSection
 
-            HStack(spacing: 10) {
-                Button {
-                    NSWorkspace.shared.open(ProductLinks.github)
-                } label: {
-                    Label("GitHub · iosrxwy", systemImage: "chevron.left.forwardslash.chevron.right")
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    publishButtons
                 }
-                .accessibilityLabel(L("about.github.accessibility"))
-                .accessibilityHint(ProductLinks.github.absoluteString)
-                .accessibilityIdentifier("about.github")
-
-                Button {
-                    NSWorkspace.shared.open(ProductLinks.releaseChannel)
-                } label: {
-                    Label(L("about.channel"), systemImage: "paperplane")
+                VStack(spacing: 8) {
+                    HStack(spacing: 10) {
+                        githubButton
+                        twitterButton
+                    }
+                    telegramButton
                 }
-                .accessibilityLabel(L("about.channel.accessibility"))
-                .accessibilityHint(ProductLinks.releaseChannel.absoluteString)
-                .accessibilityIdentifier("about.telegram")
             }
             .buttonStyle(.bordered)
-            .controlSize(.large)
+            .controlSize(.regular)
 
             languageSection
             updateSection
@@ -147,6 +140,46 @@ struct AboutView: View {
         }
         .featureSurfaceBackground()
         .navigationTitle(SidebarItem.about.title)
+    }
+
+    @ViewBuilder
+    private var publishButtons: some View {
+        githubButton
+        twitterButton
+        telegramButton
+    }
+
+    private var githubButton: some View {
+        Button {
+            NSWorkspace.shared.open(ProductLinks.github)
+        } label: {
+            Label("GitHub · iosrxwy", systemImage: "chevron.left.forwardslash.chevron.right")
+        }
+        .accessibilityLabel(L("about.github.accessibility"))
+        .accessibilityHint(ProductLinks.github.absoluteString)
+        .accessibilityIdentifier("about.github")
+    }
+
+    private var twitterButton: some View {
+        Button {
+            NSWorkspace.shared.open(ProductLinks.twitter)
+        } label: {
+            Label(L("about.twitter"), systemImage: "at")
+        }
+        .accessibilityLabel(L("about.twitter.accessibility"))
+        .accessibilityHint(ProductLinks.twitter.absoluteString)
+        .accessibilityIdentifier("about.twitter")
+    }
+
+    private var telegramButton: some View {
+        Button {
+            NSWorkspace.shared.open(ProductLinks.releaseChannel)
+        } label: {
+            Label(L("about.channel"), systemImage: "paperplane")
+        }
+        .accessibilityLabel(L("about.channel.accessibility"))
+        .accessibilityHint(ProductLinks.releaseChannel.absoluteString)
+        .accessibilityIdentifier("about.telegram")
     }
 
     private var languageSection: some View {

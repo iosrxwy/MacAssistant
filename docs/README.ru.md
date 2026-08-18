@@ -1,24 +1,27 @@
 <p align="center">
-  <img src="assets/macassistant-hero-brand.png" alt="Mac小助手宣传图" width="960">
-</p>
-
-<p align="center">
-  <a href="../README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.es.md">Español</a> · <a href="README.ko.md">한국어</a>
+  <img src="assets/macassistant-hero-brand.png" alt="MacAssistant" width="880">
 </p>
 
 <h1 align="center">MacAssistant</h1>
 
-<p align="center">Нативный SwiftUI-набор для обслуживания macOS и работы с бинарными файлами Apple.</p>
+<p align="center">Нативный набор для обслуживания macOS и работы с бинарными файлами Apple.</p>
+
+<p align="center">
+  <a href="../README.md">English</a>
+  · <a href="README.zh-CN.md">简体中文</a>
+  · <a href="README.es.md">Español</a>
+  · <a href="README.ko.md">한국어</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/iosrxwy/MacAssistant/releases"><img src="https://img.shields.io/badge/Download-Releases-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="Download"></a>
+  <a href="https://x.com/iOSRXWY"><img src="https://img.shields.io/badge/X-@iOSRXWY-111111?style=flat-square&logo=x&logoColor=white" alt="X"></a>
+  <a href="https://t.me/iosrxwy"><img src="https://img.shields.io/badge/Telegram-@iosrxwy-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"></a>
+</p>
 
 ## Возможности
 
-- Сведения о системе, очистка, восстановление App, память и сеть
-- 262 команды macOS с поиском и отметками риска
-- DEB, DYLIB, IPA, Mach-O, подпись и Class Dump
-- Предпросмотр и подтверждение изменений
-- Поддержка Apple Silicon и Intel
-- Открытый код, без телеметрии
+Сведения о системе, очистка, восстановление App, память, сеть и 262 команды. DEB, DYLIB, IPA, Mach-O и подпись (Beta). Предпросмотр перед изменениями. Без телеметрии.
 
 ## Скриншоты
 
@@ -29,18 +32,9 @@
 
 ## Загрузка
 
-Последняя версия доступна в [Releases](https://github.com/iosrxwy/MacAssistant/releases). Требуется macOS 13 или новее.
+[Releases](https://github.com/iosrxwy/MacAssistant/releases) · macOS 13+. Эта бета подписана **ad-hoc и не нотаризована**. Если macOS блокирует запуск: откройте приложение один раз, затем **Системные настройки → Конфиденциальность и безопасность → Всё равно открыть**.
 
-### macOS блокирует первый запуск?
-
-Этот публичный бета-билд подписан **ad-hoc и не нотаризован Apple**. При первом открытии может появиться «не удаётся проверить разработчика» или запуск будет заблокирован. Это ожидаемо, архив не повреждён.
-
-1. Попробуйте открыть приложение один раз (блокировка — нормально).
-2. Откройте **Системные настройки → Конфиденциальность и безопасность**.
-3. Прокрутите до сообщения об этом приложении и нажмите **Всё равно открыть**.
-4. Откройте приложение ещё раз.
-
-Не отключайте Gatekeeper глобально. Если кнопки нет, подождите минуту и снова откройте этот раздел — она обычно появляется после первой блокировки.
+[X @iOSRXWY](https://x.com/iOSRXWY) · [Telegram](https://t.me/iosrxwy)
 
 ## Сборка
 
@@ -50,11 +44,14 @@ cd MacAssistant
 ./build_app.sh release universal
 ```
 
-## Звёзды и участники
+## Stars
 
 <p align="center">
-  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub stars"></a><br>
-  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="First star goal: 1 / 100">
+  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=flat-square&logo=github" alt="GitHub stars"></a>
+</p>
+
+<p align="center">
+  <img src="https://progress-bar.xyz/1/?scale=100&title=goal&width=420&color=0A84FF&suffix=%20/%20100" alt="Star goal: 1 / 100">
 </p>
 
 <p align="center">
@@ -62,37 +59,31 @@ cd MacAssistant
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date&theme=dark">
       <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date">
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
+      <img alt="Star History" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
     </picture>
   </a>
 </p>
 
+## Участники
+
 <table>
   <tr>
-    <td align="center" valign="top" width="140">
-      <a href="https://github.com/iosrxwy">
-        <img src="https://github.com/iosrxwy.png?size=140" width="88" height="88" alt="iosrxwy">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://github.com/iosrxwy"><img src="https://github.com/iosrxwy.png?size=120" width="72" height="72" alt="iosrxwy"></a><br>
       <a href="https://github.com/iosrxwy"><b>iosrxwy</b></a><br>
       <sub>Автор</sub>
     </td>
-    <td align="center" valign="top" width="140">
-      <a href="https://github.com/codex">
-        <img src="https://github.com/codex.png?size=140" width="88" height="88" alt="Codex">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://github.com/codex"><img src="https://github.com/codex.png?size=120" width="72" height="72" alt="Codex"></a><br>
       <a href="https://github.com/codex"><b>Codex</b></a><br>
       <sub>Разработка</sub>
     </td>
-    <td align="center" valign="top" width="140">
-      <a href="https://x.ai/grok">
-        <img src="https://github.com/xai-org.png?size=140" width="88" height="88" alt="Grok Build">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://x.ai/grok"><img src="https://github.com/xai-org.png?size=120" width="72" height="72" alt="Grok Build"></a><br>
       <a href="https://x.ai/grok"><b>Grok Build</b></a><br>
       <sub>Разработка</sub>
     </td>
   </tr>
 </table>
-
-**Разработка и сопровождение: Codex** · Публикация: [iosrxwy](https://github.com/iosrxwy).
 
 Thanks: [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign). These projects’ binaries are not bundled.

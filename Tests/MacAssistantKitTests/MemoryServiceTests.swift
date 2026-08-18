@@ -166,6 +166,7 @@ final class MemoryServiceTests: XCTestCase {
 
     func testProductLinksAreExact() {
         XCTAssertEqual(ProductLinks.github.absoluteString, "https://github.com/iosrxwy/MacAssistant")
+        XCTAssertEqual(ProductLinks.twitter.absoluteString, "https://x.com/iOSRXWY")
         XCTAssertEqual(ProductLinks.releaseChannel.absoluteString, "https://t.me/iosrxwy")
         XCTAssertEqual(ProductLinks.altSignProject.absoluteString, "https://github.com/rileytestut/AltSign")
         XCTAssertEqual(ProductLinks.altStoreGitHub.absoluteString, "https://github.com/altstoreio/AltStore")

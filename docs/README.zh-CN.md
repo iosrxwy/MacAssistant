@@ -1,44 +1,34 @@
 <p align="center">
-  <img src="assets/macassistant-hero-brand.png" alt="Mac小助手宣传图" width="960">
-</p>
-
-<p align="center">
-  <a href="../README.md">English</a> ·
-  <a href="README.es.md">Español</a> ·
-  <a href="README.ko.md">한국어</a> ·
-  <a href="README.ru.md">Русский</a>
+  <img src="assets/macassistant-hero-brand.png" alt="Mac小助手" width="880">
 </p>
 
 <h1 align="center">MacAssistant</h1>
 
 <p align="center">
-  <strong>一个 App，搞定 Mac 维护与 Apple 二进制工作流。</strong><br>
-  把零散脚本、命令查询和重复操作，收进清晰、可预览的原生界面。
+  一个 App，搞定 Mac 维护与 Apple 二进制工作流。
 </p>
 
-## 为什么值得用
+<p align="center">
+  <a href="../README.md">English</a>
+  · <a href="README.es.md">Español</a>
+  · <a href="README.ko.md">한국어</a>
+  · <a href="README.ru.md">Русский</a>
+</p>
 
-| 日常维护 | Apple 开发工具 | 用得放心 |
-| --- | --- | --- |
-| 看状态、腾空间、修 App、查内存与网络。 | DEB、DYLIB、IPA、Mach-O 与签名集中处理。 | 操作前预览、关键步骤确认、开源且无遥测。 |
+<p align="center">
+  <a href="https://github.com/iosrxwy/MacAssistant/releases"><img src="https://img.shields.io/badge/Download-Releases-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="Download"></a>
+  <a href="https://x.com/iOSRXWY"><img src="https://img.shields.io/badge/X-@iOSRXWY-111111?style=flat-square&logo=x&logoColor=white" alt="X"></a>
+  <a href="https://t.me/iosrxwy"><img src="https://img.shields.io/badge/Telegram-@iosrxwy-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"></a>
+</p>
 
-## 功能一览
+## 功能
 
-### 日常工具
+| 日常 | 开发者工具 · Beta |
+| --- | --- |
+| 系统概览、清理、应用修复 | DEB、DYLIB、IPA、Mach-O |
+| 内存、网络、262 条命令 | 签名、注入、环境检查 |
 
-- **系统概览**：芯片、内存、磁盘、电池与运行时间一眼看清
-- **安全清理**：缓存、日志、Xcode 数据等可再生文件
-- **应用修复**：诊断签名、隔离属性与启动问题
-- **内存与网络**：压力、进程、端口、Ping、DNS 与公网 IP
-- **命令速查**：262 条 macOS 命令，支持搜索与风险标识
-
-### 开发者工具 · Beta
-
-- **DEB**：制作、检查、解包、转换与重新打包
-- **DYLIB**：依赖检查、动态库提取、安装名与 rpath 修改
-- **IPA**：拖入工作台、安装与原样提取（不脱壳）、可选本机 ipatool 下载自己账号的官方加密包、注入、瘦身、头文件提取、逐层签名与 Apple ID 签名
-- **Mach-O**：原生 Swift 检查与 dylib 注入，支持单架构和通用二进制
-- **环境检查**：识别所需工具并提供清晰的安装指引
+操作前预览，关键步骤确认。开源，无遥测。IPA 安装与提取保持原样，不脱壳。
 
 ## 界面
 
@@ -54,20 +44,13 @@
 
 ## 下载
 
-前往 [Releases](https://github.com/iosrxwy/MacAssistant/releases) 下载 Apple Silicon + Intel 通用版本。
+通用版（Apple Silicon + Intel）：[Releases](https://github.com/iosrxwy/MacAssistant/releases)。需要 macOS 13+。
 
-> 需要 macOS 13 或更高版本。开发者工具标记为 Beta，修改文件前请保留备份。
+发布动态：[X @iOSRXWY](https://x.com/iOSRXWY) · [Telegram](https://t.me/iosrxwy)
 
 ### 首次打开被拦截？
 
-当前公开测试版是 **ad-hoc 开发构建，未经 Apple 公证**。第一次打开时，macOS 可能会提示「无法验证开发者」或直接拦截。这不是损坏，按下面做即可：
-
-1. 先双击打开一次（会被拦，这是正常的）。
-2. 打开 **系统设置 → 隐私与安全性**。
-3. 往下找到刚才被拦的提示，点 **仍要打开**。
-4. 再打开一次 App。
-
-不要全局关闭 Gatekeeper。如果看不到「仍要打开」，等一会儿再回到这一页——按钮通常在首次拦截之后才会出现。
+当前公开测试版是 **ad-hoc 签名，未经 Apple 公证**。先打开一次，再到 **系统设置 → 隐私与安全性 → 仍要打开**。不要全局关闭 Gatekeeper。
 
 ## 构建
 
@@ -78,17 +61,14 @@ cd MacAssistant
 open "dist/Mac小助手.app"
 ```
 
-## 参与贡献
-
-- **Issue** 反馈问题和需求，不要用空 PR 报 Bug。
-- **PR** 提交已经写好的代码或文档，合并前需要 CI 通过。
-- 范围说明见 [CONTRIBUTING.md](../CONTRIBUTING.md)，安全问题见 [SECURITY.md](../SECURITY.md)。
-
-## 星标与贡献者
+## 星标
 
 <p align="center">
-  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub Stars"></a><br>
-  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="首个 Star 目标：1 / 100">
+  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=flat-square&logo=github" alt="GitHub stars"></a>
+</p>
+
+<p align="center">
+  <img src="https://progress-bar.xyz/1/?scale=100&title=goal&width=420&color=0A84FF&suffix=%20/%20100" alt="Star 目标：1 / 100">
 </p>
 
 <p align="center">
@@ -96,52 +76,48 @@ open "dist/Mac小助手.app"
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date&theme=dark">
       <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date">
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
+      <img alt="Star History" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
     </picture>
   </a>
 </p>
 
-<p align="center">如果它帮你省下了时间，点一个 Star 能让更多人看到这个项目。</p>
+## 贡献者
 
 <table>
   <tr>
-    <td align="center" valign="top" width="140">
-      <a href="https://github.com/iosrxwy">
-        <img src="https://github.com/iosrxwy.png?size=140" width="88" height="88" alt="iosrxwy">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://github.com/iosrxwy"><img src="https://github.com/iosrxwy.png?size=120" width="72" height="72" alt="iosrxwy"></a><br>
       <a href="https://github.com/iosrxwy"><b>iosrxwy</b></a><br>
       <sub>作者</sub>
     </td>
-    <td align="center" valign="top" width="140">
-      <a href="https://github.com/codex">
-        <img src="https://github.com/codex.png?size=140" width="88" height="88" alt="Codex">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://github.com/codex"><img src="https://github.com/codex.png?size=120" width="72" height="72" alt="Codex"></a><br>
       <a href="https://github.com/codex"><b>Codex</b></a><br>
       <sub>开发</sub>
     </td>
-    <td align="center" valign="top" width="140">
-      <a href="https://x.ai/grok">
-        <img src="https://github.com/xai-org.png?size=140" width="88" height="88" alt="Grok Build">
-      </a><br>
+    <td align="center" width="120">
+      <a href="https://x.ai/grok"><img src="https://github.com/xai-org.png?size=120" width="72" height="72" alt="Grok Build"></a><br>
       <a href="https://x.ai/grok"><b>Grok Build</b></a><br>
       <sub>开发</sub>
     </td>
   </tr>
 </table>
 
-## 维护
+<p align="center">
+  <a href="https://x.com/iOSRXWY">X</a>
+  · <a href="https://t.me/iosrxwy">Telegram</a>
+  · <a href="https://github.com/iosrxwy">GitHub</a>
+  · <a href="../CONTRIBUTING.md">参与贡献</a>
+</p>
 
-由 **Codex 开发与维护** · 由 [iosrxwy](https://github.com/iosrxwy) 发布。
+## 致谢
 
-特别感谢以下开源项目（均不捆绑其二进制）：
+[AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign) · [ipatool](https://github.com/majd/ipatool)
 
-- [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore)：Apple ID 开发者服务协议参考（Riley Testut）
-- [xtool](https://github.com/xtool-org/xtool)：可选的 Apple ID 命令行
-- [libimobiledevice](https://libimobiledevice.org)：USB 列设备与装机
-- [Theos](https://github.com/theos/theos)：Tweak 项目构建环境
-- [zsign](https://github.com/zhlynn/zsign)：可选的 IPA / Mach-O 签名工具
-- [ipatool](https://github.com/majd/ipatool)：可选的 App Store IPA 下载（MIT，不捆绑）
+均不捆绑其二进制。
 
 ## 许可证
 
-[GNU GPL-3.0](../LICENSE)。对外分发的修改版必须继续以同样许可证提供完整对应源代码。这并不自动允许把别人的工具打进 App：`class-dump` 同为 GPL-3.0，捆绑时必须一并提供其对应源代码；`dsdump` 许可证不明，不可再分发；AltStore / AltSign 为 AGPL-3.0，本项目只参考公开协议、不捆绑其代码。
+[GNU GPL-3.0](../LICENSE)。对外分发的修改版必须继续以同样许可证提供完整对应源代码。这并不允许把别人的工具打进 App：`class-dump` 同为 GPL-3.0，捆绑时必须一并提供对应源代码；`dsdump` 许可证不明，不可再分发；AltStore / AltSign 为 AGPL-3.0，本项目只参考公开协议。
+
+安全问题见 [SECURITY.md](../SECURITY.md)。

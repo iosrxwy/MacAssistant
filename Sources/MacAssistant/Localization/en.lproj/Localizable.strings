@@ -956,6 +956,8 @@
 "about.tagline" = "A native macOS utility & reverse engineering toolbox";
 "about.version" = "Version %@ · GPL-3.0";
 "about.github.accessibility" = "Open the iosrxwy GitHub account";
+"about.twitter" = "X · @iOSRXWY";
+"about.twitter.accessibility" = "Open the author's X profile";
 "about.channel" = "Release channel · @iosrxwy";
 "about.channel.accessibility" = "Open the iosrxwy Telegram release channel";
 "about.license" = "This project is open source under GNU GPL-3.0. Distributed modifications must also be released under GPL-3.0 with complete corresponding source. Only use the reverse engineering, modification and repackaging features on files you own or are authorized to modify.";

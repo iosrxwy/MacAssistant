@@ -25,6 +25,7 @@ public enum ProductLinks {
     }
 
     public static let github = Repository.homepage
+    public static let twitter = URL(string: "https://x.com/iOSRXWY")!
     public static let releaseChannel = URL(string: "https://t.me/iosrxwy")!
     public static let classDumpProject = URL(string: "https://github.com/nygard/class-dump")!
     public static let dsdumpProject = URL(string: "https://github.com/DerekSelander/dsdump")!
