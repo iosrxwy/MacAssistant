@@ -30,7 +30,7 @@ final class HostArchitectureTests: XCTestCase {
 
     /// 任何 Homebrew 工具都必须同时覆盖两种前缀,否则另一类机器上会「装了却找不到」。
     func testHomebrewToolsCoverBothPrefixes() {
-        let homebrewTools: [ExternalTool] = [.brew, .dpkgDeb, .ldid, .classDump, .dsdump, .zsign]
+        let homebrewTools: [ExternalTool] = [.brew, .dpkgDeb, .ldid, .classDump, .dsdump, .zsign, .ipatool]
         for tool in homebrewTools {
             for arch in HostArchitecture.allCases {
                 XCTAssertTrue(

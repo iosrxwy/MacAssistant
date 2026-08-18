@@ -146,7 +146,7 @@ private extension CharacterSet {
 /// - `swift run` / Xcode 直接跑 SwiftPM 可执行文件:没有 Info.plist,走 `fallbackVersion`。
 public enum AppVersionSource {
     /// 必须与仓库根目录 `Resources/AppVersion.txt` 一致,`UpdateServiceTests` 会校验两者不漂移。
-    public static let fallbackVersion = "1.0.0-beta.2"
+    public static let fallbackVersion = "1.0.0-beta.3"
 
     /// 纯函数形式,方便测试。传入解析不了的内容一律回退,保证任何启动方式都拿得到可比较的版本号。
     public static func resolve(infoDictionaryVersion: String?) -> String {

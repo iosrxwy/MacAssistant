@@ -38,4 +38,6 @@ public enum ProductLinks {
     public static let libimobiledevice = URL(string: "https://libimobiledevice.org")!
     public static let theosProject = URL(string: "https://github.com/theos/theos")!
     public static let zsignProject = URL(string: "https://github.com/zhlynn/zsign")!
+    /// 用自己的 Apple ID 从 App Store 下载官方加密 IPA。MIT，不捆绑二进制。
+    public static let ipatoolProject = URL(string: "https://github.com/majd/ipatool")!
 }

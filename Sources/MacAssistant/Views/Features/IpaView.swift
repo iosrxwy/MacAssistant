@@ -6,14 +6,14 @@ import MacAssistantKit
 enum IpaLayout {
     static let sectionSpacing: CGFloat = 16
     static let formSpacing: CGFloat = 12
-    static let featurePickerMinimumWidth: CGFloat = 520
+    static let featurePickerMinimumWidth: CGFloat = 640
     static let stepPickerMinimumWidth: CGFloat = 660
     /// 进度轨比同样内容的分段控件紧凑，阈值沿用 660 会让默认窗口宽度直接退化成下拉菜单。
     static let stepRailMinimumWidth: CGFloat = 560
     static let navigationButtonWidth: CGFloat = 88
 }
 
-/// IPA 工具箱:插件注入 / 瘦身 / 提取头文件 / 签名。
+/// IPA 工具箱:安装提取 / 插件注入 / 瘦身 / 提取头文件 / 签名。
 @MainActor
 final class IpaInjectionJob: ObservableObject {
     @Published private(set) var running = false
@@ -66,6 +66,7 @@ enum InjectionInputMode: Equatable {
 
 struct IpaView: View {
     enum Tab: String, CaseIterable, Identifiable {
+        case transfer = "安装 / 提取"
         case tweak = "插件注入"
         case slim = "瘦身"
         case headers = "提取头文件"
@@ -75,6 +76,7 @@ struct IpaView: View {
         /// rawValue 同时是选中态的标识,展示一律走这里。
         var title: String {
             switch self {
+            case .transfer: return L("ipaview.tab.transfer")
             case .tweak: return L("ipaview.tab.tweak")
             case .slim: return L("ipaview.tab.slim")
             case .headers: return L("ipaview.tab.headers")
@@ -84,6 +86,7 @@ struct IpaView: View {
 
         var icon: String {
             switch self {
+            case .transfer: return "iphone.and.arrow.forward"
             case .tweak: return "puzzlepiece.extension"
             case .slim: return "scissors"
             case .headers: return "doc.text.magnifyingglass"
@@ -92,7 +95,7 @@ struct IpaView: View {
         }
     }
 
-    @State private var tab: Tab = .tweak
+    @State private var tab: Tab = .transfer
     @ObservedObject var injectionJob: IpaInjectionJob
     @ObservedObject var workspace: WorkspaceStore
 
@@ -118,6 +121,7 @@ struct IpaView: View {
 
                 Group {
                     switch tab {
+                    case .transfer: IpaTransferTab()
                     case .tweak: TweakInjectionContainer(job: injectionJob, workspace: workspace)
                     case .slim: SlimTab()
                     case .headers: ClassDumpTab()

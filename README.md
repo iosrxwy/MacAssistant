@@ -44,7 +44,7 @@
 
 - **DEB** — create, inspect, unpack, convert and rebuild packages
 - **DYLIB** — inspect dependencies, extract libraries and rewrite install names or rpaths
-- **IPA** — drag-in workbench, injection, thinning, header extraction, layered signing, and Apple ID signing
+- **IPA** — drag-in workbench, install and extract (as-is, no FairPlay dump), optional App Store download via local `ipatool` (own Apple ID, still encrypted), injection, thinning, header extraction, layered signing, and Apple ID signing
 - **Mach-O** — native Swift inspection and dylib injection for thin or universal binaries
 - **Environment check** — find required tools and get guided setup actions
 
@@ -112,6 +112,7 @@ Special thanks to these open-source projects (none of their binaries are bundled
 - [libimobiledevice](https://libimobiledevice.org) — USB device listing and install
 - [Theos](https://github.com/theos/theos) — tweak project build environment
 - [zsign](https://github.com/zhlynn/zsign) — optional IPA / Mach-O signing tool
+- [ipatool](https://github.com/majd/ipatool) — optional App Store IPA download (MIT; not bundled)
 
 ## License
 

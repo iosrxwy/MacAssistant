@@ -54,8 +54,126 @@ public struct IpaInjectionResult: Sendable {
     public var log: [String]
 }
 
+/// 把本机 .app / .xcarchive / 已解包 Payload 原样打成 IPA 的结果。不修改 Mach-O，不脱壳。
+public struct IpaPackageResult: Sendable {
+    public var outputIPA: URL
+    public var appName: String
+    public var bundleIdentifier: String?
+    public var executableName: String
+    public var isEncrypted: Bool
+    public var architectures: [String]
+    public var log: [String]
+}
+
 /// IPA 的解包、注入 dylib、重签名与重打包。
 public enum IpaService {
+
+    /// 把本机 `.app`、`.xcarchive` 或已解包的 `Payload` 打成 IPA。
+    /// 只做拷贝和打包，不改 cryptid，也不解密 FairPlay。
+    public static func package(source: URL, outputURL: URL? = nil) throws -> IpaPackageResult {
+        var log: [String] = []
+        let app = try resolveAppBundle(from: source)
+        try rejectMacApp(app)
+        log.append(L("ipa.log.packageSource", app.path))
+
+        let work = try FileSystemHelper.makeTemporaryDirectory(prefix: "ipa-package")
+        defer { try? FileManager.default.removeItem(at: work) }
+        let payload = work.appendingPathComponent("Payload")
+        try FileManager.default.createDirectory(at: payload, withIntermediateDirectories: true)
+        let destApp = payload.appendingPathComponent(app.lastPathComponent)
+        try copyAppBundle(app, to: destApp)
+        try validatePayloadStructure(in: work)
+
+        let plist = try infoPlist(appBundle: destApp)
+        let execName = (plist["CFBundleExecutable"] as? String)
+            ?? destApp.deletingPathExtension().lastPathComponent
+        let bundleID = plist["CFBundleIdentifier"] as? String
+        let execURL = destApp.appendingPathComponent(execName)
+        guard MachOIdentifier.isMachO(fileAt: execURL) else { throw IpaError.executableNotFound }
+        let facts = MachOInspector.facts(fileAt: execURL)
+        let encrypted = facts?.isEncrypted == true
+        log.append(L("ipa.log.mainExecutable", execName))
+        log.append(encrypted ? L("ipa.log.encryptedCopy") : L("ipa.log.unencryptedCopy"))
+
+        let proposed = outputURL ?? source
+            .deletingPathExtension()
+            .appendingPathExtension("ipa")
+        let output = FileSystemHelper.uniqueOutputURL(basedOn: proposed)
+        try zipPayload(in: work, to: output)
+        log.append(L("ipa.log.packaged", output.lastPathComponent))
+
+        return IpaPackageResult(
+            outputIPA: output,
+            appName: destApp.lastPathComponent,
+            bundleIdentifier: bundleID,
+            executableName: execName,
+            isEncrypted: encrypted,
+            architectures: facts?.archs ?? [],
+            log: log
+        )
+    }
+
+    /// 把设备归档（zip / ipa / 裸 .app）规范成 IPA。仍是原样拷贝，不脱壳。
+    public static func adoptDeviceArchive(_ archive: URL, outputURL: URL) throws -> IpaPackageResult {
+        var log: [String] = [L("ipa.log.adoptArchive", archive.lastPathComponent)]
+        if archive.pathExtension.lowercased() == "app", FileSystemHelper.isDirectory(archive) {
+            let result = try package(source: archive, outputURL: outputURL)
+            return IpaPackageResult(
+                outputIPA: result.outputIPA,
+                appName: result.appName,
+                bundleIdentifier: result.bundleIdentifier,
+                executableName: result.executableName,
+                isEncrypted: result.isEncrypted,
+                architectures: result.architectures,
+                log: log + result.log
+            )
+        }
+
+        let work = try FileSystemHelper.makeTemporaryDirectory(prefix: "ipa-adopt")
+        defer { try? FileManager.default.removeItem(at: work) }
+        try unzip(archive, to: work)
+
+        if (try? validatePayloadStructure(in: work)) != nil {
+            let app = try locateApp(in: work)
+            try rejectMacApp(app)
+            let facts = try executableFacts(appBundle: app)
+            let output = FileSystemHelper.uniqueOutputURL(basedOn: outputURL)
+            guard !FileManager.default.fileExists(atPath: output.path) else {
+                throw IpaError.outputExists(output.path)
+            }
+            try FileManager.default.copyItem(at: archive, to: output)
+            log.append(facts.isEncrypted ? L("ipa.log.encryptedCopy") : L("ipa.log.unencryptedCopy"))
+            log.append(L("ipa.log.packaged", output.lastPathComponent))
+            return IpaPackageResult(
+                outputIPA: output,
+                appName: app.lastPathComponent,
+                bundleIdentifier: facts.bundleIdentifier,
+                executableName: facts.executableName,
+                isEncrypted: facts.isEncrypted,
+                architectures: facts.architectures,
+                log: log
+            )
+        }
+
+        let rootApps = try FileManager.default.contentsOfDirectory(
+            at: work,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ).filter { $0.pathExtension.lowercased() == "app" && FileSystemHelper.isDirectory($0) }
+        guard rootApps.count == 1 else {
+            throw IpaError.invalidPayload(L("ipa.invalidPayload.archiveAppCount", rootApps.count))
+        }
+        let wrapped = try package(source: rootApps[0], outputURL: outputURL)
+        return IpaPackageResult(
+            outputIPA: wrapped.outputIPA,
+            appName: wrapped.appName,
+            bundleIdentifier: wrapped.bundleIdentifier,
+            executableName: wrapped.executableName,
+            isEncrypted: wrapped.isEncrypted,
+            architectures: wrapped.architectures,
+            log: log + wrapped.log
+        )
+    }
 
     /// 解包 IPA 并返回其中的 Payload/*.app 信息(用于查看)。
     public static func inspect(ipaAt url: URL) throws -> (appName: String, executable: String, plist: [String: Any]) {
@@ -68,6 +186,77 @@ public enum IpaService {
         let plist = try infoPlist(appBundle: app)
         let exec = (plist["CFBundleExecutable"] as? String) ?? app.deletingPathExtension().lastPathComponent
         return (app.lastPathComponent, exec, plist)
+    }
+
+    public static func identity(ipaAt url: URL) throws -> IpaIdentity {
+        let inspected = try inspect(ipaAt: url)
+        let bundleID = (inspected.plist["CFBundleIdentifier"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !bundleID.isEmpty else {
+            throw IpaError.invalidPayload(L("ipa.invalidPayload.missingBundleID"))
+        }
+        return IpaIdentity(
+            appName: inspected.appName,
+            bundleIdentifier: bundleID,
+            executableName: inspected.executable,
+            shortVersion: inspected.plist["CFBundleShortVersionString"] as? String,
+            buildVersion: inspected.plist["CFBundleVersion"] as? String
+        )
+    }
+
+    /// 保留数据降级：只提高 CFBundleVersion，让 iOS 把旧包当成升级覆盖。
+    /// 显示版本（CFBundleShortVersionString）保持 IPA 原值。改 Info.plist 后必须重签。
+    public static func prepareKeepDataDowngrade(
+        ipaAt url: URL,
+        installedBuild: String?,
+        signMethod: SignMethod,
+        outputURL: URL? = nil
+    ) throws -> IpaPackageResult {
+        var log: [String] = []
+        let work = try FileSystemHelper.makeTemporaryDirectory(prefix: "ipa-downgrade")
+        defer { try? FileManager.default.removeItem(at: work) }
+        let extractDir = work.appendingPathComponent("extract")
+        try unzip(url, to: extractDir)
+        try validatePayloadStructure(in: extractDir)
+        let app = try locateApp(in: extractDir)
+        try rejectMacApp(app)
+        let facts = try executableFacts(appBundle: app)
+        if facts.isEncrypted {
+            throw IpaError.unsupportedSource(L("ipa.error.encryptedNoInPlaceDowngrade"))
+        }
+
+        let plist = try infoPlist(appBundle: app)
+        let originalBuild = plist["CFBundleVersion"] as? String
+        let shortVersion = plist["CFBundleShortVersionString"] as? String
+        let newBuild = AppVersionOrdering.buildNumberForInPlaceDowngrade(
+            ipaBuild: originalBuild,
+            installedBuild: installedBuild
+        )
+        try bumpBuildNumbers(in: app, to: newBuild)
+        log.append(L("ipa.log.bumpedBuild", originalBuild ?? "—", newBuild))
+        log.append(L("ipa.log.keepShortVersion", shortVersion ?? "—"))
+
+        try SigningService.resignJailbreak(app: app, method: signMethod, entitlements: nil, log: &log)
+        try validatePayloadStructure(in: extractDir)
+
+        let proposed = outputURL ?? url
+            .deletingPathExtension()
+            .appendingPathExtension("downgrade")
+            .appendingPathExtension("ipa")
+        let output = FileSystemHelper.uniqueOutputURL(basedOn: proposed)
+        let topItems = try FileManager.default.contentsOfDirectory(atPath: extractDir.path)
+        try zipItems(topItems, in: extractDir, to: output)
+        log.append(L("ipa.log.packaged", output.lastPathComponent))
+
+        return IpaPackageResult(
+            outputIPA: output,
+            appName: app.lastPathComponent,
+            bundleIdentifier: facts.bundleIdentifier,
+            executableName: facts.executableName,
+            isEncrypted: false,
+            architectures: facts.architectures,
+            log: log
+        )
     }
 
     /// 向 IPA 注入 dylib。
@@ -150,17 +339,8 @@ public enum IpaService {
             .appendingPathExtension("injected")
             .appendingPathExtension("ipa")
         let output = outputURL ?? FileSystemHelper.uniqueOutputURL(basedOn: proposed)
-        guard !FileManager.default.fileExists(atPath: output.path) else {
-            throw IpaError.outputExists(output.path)
-        }
-        let temporaryOutput = output.deletingLastPathComponent()
-            .appendingPathComponent(".\(output.lastPathComponent).\(UUID().uuidString).tmp")
-        defer { try? FileManager.default.removeItem(at: temporaryOutput) } // 失败时清理未发布半成品。
         let topItems = try FileManager.default.contentsOfDirectory(atPath: extractDir.path)
-        let zipResult = try ExternalTool.zip.run(["-qry", "-X", temporaryOutput.path] + topItems, currentDirectory: extractDir)
-        guard zipResult.succeeded else { throw IpaError.commandFailed(zipResult.combinedOutput) }
-        _ = try ArchiveSafety.validateZIP(at: temporaryOutput)
-        try FileManager.default.moveItem(at: temporaryOutput, to: output)
+        try zipItems(topItems, in: extractDir, to: output)
         log.append(L("ipa.log.repackaged", output.lastPathComponent))
 
         return IpaInjectionResult(outputIPA: output,
@@ -235,6 +415,109 @@ public enum IpaService {
             throw IpaError.invalidPayload(L("ipa.invalidPayload.appCount", apps.count))
         }
     }
+
+    static func resolveAppBundle(from source: URL) throws -> URL {
+        let ext = source.pathExtension.lowercased()
+        if ext == "ipa" {
+            throw IpaError.unsupportedSource(L("ipa.error.alreadyIPA"))
+        }
+        if ext == "app", FileSystemHelper.isDirectory(source) {
+            return source
+        }
+        if ext == "xcarchive", FileSystemHelper.isDirectory(source) {
+            let appsDir = source.appendingPathComponent("Products/Applications")
+            let items = (try? FileManager.default.contentsOfDirectory(
+                at: appsDir,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )) ?? []
+            let apps = items.filter { $0.pathExtension.lowercased() == "app" && FileSystemHelper.isDirectory($0) }
+            guard apps.count == 1 else {
+                throw IpaError.invalidPayload(L("ipa.invalidPayload.xcarchiveAppCount", apps.count))
+            }
+            return apps[0]
+        }
+        if source.lastPathComponent == "Payload" {
+            return try locateApp(in: source.deletingLastPathComponent())
+        }
+        let nestedPayload = source.appendingPathComponent("Payload")
+        if FileSystemHelper.isDirectory(nestedPayload) {
+            try validatePayloadStructure(in: source)
+            return try locateApp(in: source)
+        }
+        throw IpaError.unsupportedSource(L("ipa.error.unsupportedPackageSource"))
+    }
+
+    static func rejectMacApp(_ app: URL) throws {
+        let macOSDir = app.appendingPathComponent("Contents/MacOS")
+        guard !FileSystemHelper.isDirectory(macOSDir) else {
+            throw IpaError.unsupportedSource(L("ipa.error.macAppNotIPA"))
+        }
+    }
+
+    private static func copyAppBundle(_ app: URL, to dest: URL) throws {
+        try FileManager.default.copyItem(at: app, to: dest)
+        let links = FileSystemHelper.allFiles(in: dest) {
+            (try? $0.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true
+        }
+        guard links.isEmpty else { throw ArchiveSafetyError.symbolicLink(links[0].path) }
+    }
+
+    private static func zipPayload(in workDir: URL, to output: URL) throws {
+        try zipItems(["Payload"], in: workDir, to: output)
+    }
+
+    private static func zipItems(_ items: [String], in directory: URL, to output: URL) throws {
+        guard !items.isEmpty else { throw IpaError.commandFailed(L("ipa.error.emptyZipItems")) }
+        guard !FileManager.default.fileExists(atPath: output.path) else {
+            throw IpaError.outputExists(output.path)
+        }
+        let temporaryOutput = output.deletingLastPathComponent()
+            .appendingPathComponent(".\(output.lastPathComponent).\(UUID().uuidString).tmp")
+        defer { try? FileManager.default.removeItem(at: temporaryOutput) }
+        let zipResult = try ExternalTool.zip.run(
+            ["-qry", "-X", temporaryOutput.path] + items,
+            currentDirectory: directory
+        )
+        guard zipResult.succeeded else { throw IpaError.commandFailed(zipResult.combinedOutput) }
+        _ = try ArchiveSafety.validateZIP(at: temporaryOutput)
+        try FileManager.default.moveItem(at: temporaryOutput, to: output)
+    }
+
+    private static func executableFacts(appBundle: URL) throws -> (
+        executableName: String,
+        bundleIdentifier: String?,
+        isEncrypted: Bool,
+        architectures: [String]
+    ) {
+        let plist = try infoPlist(appBundle: appBundle)
+        let execName = (plist["CFBundleExecutable"] as? String)
+            ?? appBundle.deletingPathExtension().lastPathComponent
+        let execURL = appBundle.appendingPathComponent(execName)
+        guard MachOIdentifier.isMachO(fileAt: execURL) else { throw IpaError.executableNotFound }
+        let facts = MachOInspector.facts(fileAt: execURL)
+        return (
+            execName,
+            plist["CFBundleIdentifier"] as? String,
+            facts?.isEncrypted == true,
+            facts?.archs ?? []
+        )
+    }
+
+    private static func bumpBuildNumbers(in app: URL, to newBuild: String) throws {
+        var plistURLs = FileSystemHelper.allFiles(in: app) { $0.lastPathComponent == "Info.plist" }
+        let root = infoPlistURL(appBundle: app)
+        if !plistURLs.contains(root) { plistURLs.insert(root, at: 0) }
+        for plistURL in plistURLs {
+            var format: PropertyListSerialization.PropertyListFormat = .xml
+            let data = try Data(contentsOf: plistURL)
+            let object = try PropertyListSerialization.propertyList(from: data, options: [], format: &format)
+            guard var dictionary = object as? [String: Any] else { continue }
+            dictionary["CFBundleVersion"] = newBuild
+            let written = try PropertyListSerialization.data(fromPropertyList: dictionary, format: format, options: 0)
+            try written.write(to: plistURL)
+        }
+    }
 }
 
 public enum IpaError: LocalizedError {
@@ -244,6 +527,7 @@ public enum IpaError: LocalizedError {
     case outputExists(String)
     case architectureMismatch(executable: [String], dylib: [String], missing: [String])
     case invalidPayload(String)
+    case unsupportedSource(String)
 
     public var errorDescription: String? {
         switch self {
@@ -259,6 +543,7 @@ public enum IpaError: LocalizedError {
                 missing.joined(separator: ",")
             )
         case let .invalidPayload(reason): return L("ipa.error.invalidPayload", reason)
+        case let .unsupportedSource(reason): return reason
         }
     }
 }

@@ -22,6 +22,7 @@ final class ExternalToolRegistrationTests: XCTestCase {
         XCTAssertNotNil(hint(.classDump))
         XCTAssertNotNil(hint(.dsdump))
         XCTAssertNotNil(hint(.zsign))
+        XCTAssertEqual(hint(.ipatool), "brew install ipatool")
     }
 
     func testCommandNames() {
@@ -32,6 +33,7 @@ final class ExternalToolRegistrationTests: XCTestCase {
         XCTAssertEqual(ExternalTool.ideviceInfo.commandName, "ideviceinfo")
         XCTAssertEqual(ExternalTool.ideviceInstaller.commandName, "ideviceinstaller")
         XCTAssertEqual(ExternalTool.xtool.commandName, "xtool")
+        XCTAssertEqual(ExternalTool.ipatool.commandName, "ipatool")
     }
 
     func testHomebrewFormulaCommandUsesFixedArguments() throws {
@@ -42,6 +44,12 @@ final class ExternalToolRegistrationTests: XCTestCase {
         XCTAssertEqual(command.executable, "/opt/homebrew/bin/brew")
         XCTAssertEqual(command.arguments, ["install", "dpkg"])
         XCTAssertEqual(command.preview, "'/opt/homebrew/bin/brew' install 'dpkg'")
+
+        let ipatool = try EnvironmentInstaller.makeCommand(
+            for: .homebrewFormula("ipatool"),
+            brewPath: "/opt/homebrew/bin/brew"
+        )
+        XCTAssertEqual(ipatool.arguments, ["install", "ipatool"])
     }
 
     func testFormulaValidationRejectsShellInjection() {
@@ -79,6 +87,7 @@ final class ExternalToolRegistrationTests: XCTestCase {
         XCTAssertEqual(ExternalTool.dpkgDeb.installStrategy, .homebrewFormula("dpkg"))
         XCTAssertEqual(ExternalTool.ldid.installStrategy, .homebrewFormula("ldid"))
         XCTAssertEqual(ExternalTool.zsign.installStrategy, .homebrewFormula("zsign"))
+        XCTAssertEqual(ExternalTool.ipatool.installStrategy, .homebrewFormula("ipatool"))
     }
 
     func testFormulaAllowlistRejectsUnregisteredButSyntacticallyValidFormula() {
@@ -97,7 +106,7 @@ final class ExternalToolRegistrationTests: XCTestCase {
     }
 
     func testEveryExternalToolHasExplicitSupplyChainStrategy() {
-        XCTAssertEqual(Set(EnvironmentInstaller.allowedFormulae), Set(["dpkg", "ldid", "zsign"]))
+        XCTAssertEqual(Set(EnvironmentInstaller.allowedFormulae), Set(["dpkg", "ldid", "zsign", "ipatool"]))
         for tool in ExternalTool.allCases {
             switch tool.installStrategy {
             case let .homebrewFormula(formula):

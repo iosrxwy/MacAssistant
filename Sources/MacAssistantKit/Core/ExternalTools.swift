@@ -37,7 +37,7 @@ public enum EnvironmentInstallError: LocalizedError {
 }
 
 public enum EnvironmentInstaller {
-    public static let allowedFormulae: Set<String> = ["dpkg", "ldid", "zsign"]
+    public static let allowedFormulae: Set<String> = ["dpkg", "ldid", "zsign", "ipatool"]
     public static let homebrewInstructionsURL = URL(string: "https://brew.sh/")!
 
     public static func makeCommand(
@@ -120,6 +120,7 @@ public enum ExternalTool: String, CaseIterable, Sendable {
     case ideviceInfo // ideviceinfo          读 UDID / 名称 / 系统版本
     case ideviceInstaller // ideviceinstaller 把已签名 IPA 装到已连接设备
     case xtool       // xtool                Apple ID 开发者服务(可选)
+    case ipatool     // ipatool              自己账号下载 App Store IPA(可选)
 
     /// 命令名(用于 which 查找)。
     public var commandName: String {
@@ -168,6 +169,9 @@ public enum ExternalTool: String, CaseIterable, Sendable {
         case .xtool:
             return HostArchitecture.homebrewBinaryPaths("xtool")
                 + [NSHomeDirectory() + "/.local/bin/xtool", "/usr/local/bin/xtool"]
+        case .ipatool:
+            return HostArchitecture.homebrewBinaryPaths("ipatool")
+                + [NSHomeDirectory() + "/.local/bin/ipatool"]
         }
     }
 
@@ -195,6 +199,8 @@ public enum ExternalTool: String, CaseIterable, Sendable {
             return .openProjectPage(ProductLinks.libimobiledevice)
         case .xtool:
             return .openProjectPage(ProductLinks.xtoolProject)
+        case .ipatool:
+            return .homebrewFormula("ipatool")
         case .classDump:
             return .builtInFallback(
                 description: L("tool.classDump.builtInFallback"),

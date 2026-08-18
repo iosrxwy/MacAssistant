@@ -2,6 +2,29 @@
 
 All notable changes to MacAssistant are recorded here.
 
+## [1.0.0-beta.3] - 2026-08-18
+
+Third public prerelease. Users on 1.0.0-beta.2 can pick this up from **About → Check for updates** or from [Releases](https://github.com/iosrxwy/MacAssistant/releases).
+
+### Highlights
+
+- IPA toolbox now has Install / Extract: sideload a signed IPA with upgrade or keep-data downgrade, package a local `.app` / `.xcarchive` / Payload, or export an app from a device as-is. FairPlay dump is still out of scope.
+- Keep-data downgrade raises `CFBundleVersion` and re-signs so iOS treats the older package as an upgrade. Encrypted store IPAs are rejected on this path.
+- Optional local `ipatool` (MIT, not bundled): sign in with your own Apple ID, search the App Store, list older versions, and download the official encrypted IPA. Install it from Environment Check with Homebrew.
+- Official store packages stay FairPlay-encrypted. They are not sideloadable developer IPAs and cannot use keep-data downgrade.
+
+### Validation
+
+- `swift test`: 348 tests passed (2 skipped).
+- Live `ipatool` 2.3.2: missing App Store login is reported as not signed in, not as a crash.
+- Local IPA packaging, encrypted-copy reporting, and keep-data build bump covered by tests.
+- Universal release build: successful.
+- Strict local code-signature verification: successful.
+
+### Distribution note
+
+This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
+
 ## [1.0.0-beta.2] - 2026-08-18
 
 Second public prerelease. Users on 1.0.0-beta.1 can pick this up from **About → Check for updates** or from [Releases](https://github.com/iosrxwy/MacAssistant/releases).
@@ -49,5 +72,6 @@ First public prerelease.
 
 This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.0-beta.3]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.1

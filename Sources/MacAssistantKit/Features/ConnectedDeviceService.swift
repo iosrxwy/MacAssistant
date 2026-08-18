@@ -43,11 +43,45 @@ public struct ConnectedDevice: Identifiable, Hashable, Sendable, Codable {
     }
 }
 
+/// 设备上已安装的应用。导出时只做原样归档，不脱壳。
+public struct InstalledApp: Identifiable, Hashable, Sendable {
+    public var bundleIdentifier: String
+    public var name: String
+    public var version: String?
+    public var shortVersion: String?
+
+    public var id: String { bundleIdentifier }
+
+    public init(
+        bundleIdentifier: String,
+        name: String,
+        version: String? = nil,
+        shortVersion: String? = nil
+    ) {
+        self.bundleIdentifier = bundleIdentifier
+        self.name = name
+        self.version = version
+        self.shortVersion = shortVersion
+    }
+
+    public var summary: String {
+        var parts = [name, bundleIdentifier]
+        if let shortVersion, !shortVersion.isEmpty { parts.append(shortVersion) }
+        else if let version, !version.isEmpty { parts.append(version) }
+        return parts.joined(separator: " · ")
+    }
+}
+
 public enum ConnectedDeviceError: LocalizedError {
     case noDeviceTool
     case listFailed(String)
     case installFailed(String)
     case noDeviceSelected
+    case listAppsFailed(String)
+    case exportFailed(String)
+    case noAppSelected
+    case uninstallFailed(String)
+    case downgradeNeedsConfirmation
 
     public var errorDescription: String? {
         switch self {
@@ -55,6 +89,11 @@ public enum ConnectedDeviceError: LocalizedError {
         case let .listFailed(output): return L("device.error.listFailed", output)
         case let .installFailed(output): return L("device.error.installFailed", output)
         case .noDeviceSelected: return L("device.error.noDeviceSelected")
+        case let .listAppsFailed(output): return L("device.error.listAppsFailed", output)
+        case let .exportFailed(output): return L("device.error.exportFailed", output)
+        case .noAppSelected: return L("device.error.noAppSelected")
+        case let .uninstallFailed(output): return L("device.error.uninstallFailed", output)
+        case .downgradeNeedsConfirmation: return L("device.error.downgradeNeedsConfirmation")
         }
     }
 }
@@ -72,6 +111,14 @@ public enum ConnectedDeviceService {
         ExternalTool.ideviceInstaller.isAvailable
             || ExternalTool.xcrun.isAvailable
             || ExternalTool.xtool.isAvailable
+    }
+
+    public static var canListApps: Bool {
+        ExternalTool.ideviceInstaller.isAvailable
+    }
+
+    public static var canExportApps: Bool {
+        ExternalTool.ideviceInstaller.isAvailable
     }
 
     public static func listDevices() throws -> [ConnectedDevice] {
@@ -133,6 +180,214 @@ public enum ConnectedDeviceService {
             return
         }
         throw ConnectedDeviceError.noDeviceTool
+    }
+
+    /// 按版本关系安装、升级或降级。
+    /// 降级默认提高 Build 后覆盖安装以保留数据；`uninstallFirst` 才会卸掉应用。
+    public static func install(
+        ipaAt url: URL,
+        to device: ConnectedDevice,
+        plan: AppInstallPlan,
+        downgrade: AppDowngradeStrategy = .keepData(signMethod: .codesignAdhoc)
+    ) throws {
+        switch plan.relation {
+        case .fresh, .unknown:
+            try install(ipaAt: url, to: device)
+        case .upgrade, .same:
+            try upgrade(ipaAt: url, to: device)
+        case .downgrade:
+            switch downgrade {
+            case let .keepData(signMethod):
+                let prepared = try IpaService.prepareKeepDataDowngrade(
+                    ipaAt: url,
+                    installedBuild: plan.installedBuild,
+                    signMethod: signMethod
+                )
+                try upgrade(ipaAt: prepared.outputIPA, to: device)
+            case .uninstallFirst:
+                try uninstall(plan.identity.bundleIdentifier, from: device)
+                try install(ipaAt: url, to: device)
+            }
+        }
+    }
+
+    public static func upgrade(ipaAt url: URL, to device: ConnectedDevice) throws {
+        if ExternalTool.ideviceInstaller.isAvailable {
+            let modern = try ExternalTool.ideviceInstaller.run(["-u", device.udid, "upgrade", url.path])
+            if modern.succeeded { return }
+            let legacy = try ExternalTool.ideviceInstaller.run(["-u", device.udid, "-g", url.path])
+            if legacy.succeeded { return }
+            try install(ipaAt: url, to: device)
+            return
+        }
+        try install(ipaAt: url, to: device)
+    }
+
+    public static func uninstall(_ bundleID: String, from device: ConnectedDevice) throws {
+        guard ExternalTool.ideviceInstaller.isAvailable else { throw ConnectedDeviceError.noDeviceTool }
+        let modern = try ExternalTool.ideviceInstaller.run(["-u", device.udid, "uninstall", bundleID])
+        if modern.succeeded { return }
+        let legacy = try ExternalTool.ideviceInstaller.run(["-u", device.udid, "-U", bundleID])
+        if legacy.succeeded { return }
+        throw ConnectedDeviceError.uninstallFailed(modern.combinedOutput)
+    }
+
+    public static func listInstalledApps(
+        on device: ConnectedDevice,
+        includeSystem: Bool = false
+    ) throws -> [InstalledApp] {
+        guard ExternalTool.ideviceInstaller.isAvailable else { throw ConnectedDeviceError.noDeviceTool }
+        let scope = includeSystem ? "list_all" : "list_user"
+        let xmlAttempts = [
+            ["-u", device.udid, "list", "-o", "xml,\(scope)"],
+            ["-u", device.udid, "-l", "-o", "xml,\(scope)"]
+        ]
+        for arguments in xmlAttempts {
+            if let result = try? ExternalTool.ideviceInstaller.run(arguments), result.succeeded {
+                let data = Data(result.stdout.utf8)
+                if let apps = try? parseInstalledAppsPlist(data), !apps.isEmpty {
+                    return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                }
+            }
+        }
+        let textAttempts = [
+            ["-u", device.udid, "list", "-o", scope],
+            ["-u", device.udid, "-l", "-o", scope],
+            ["-u", device.udid, "-l"]
+        ]
+        var lastOutput = ""
+        for arguments in textAttempts {
+            let result = try ExternalTool.ideviceInstaller.run(arguments)
+            lastOutput = result.combinedOutput
+            if result.succeeded {
+                let apps = parseInstalledAppsList(result.stdout)
+                if !apps.isEmpty {
+                    return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                }
+            }
+        }
+        throw ConnectedDeviceError.listAppsFailed(lastOutput)
+    }
+
+    /// 通过 installation_proxy 归档应用并保存为 IPA。这是原样拷贝，不解密 FairPlay。
+    public static func exportApp(
+        _ app: InstalledApp,
+        from device: ConnectedDevice,
+        toDirectory directory: URL
+    ) throws -> IpaPackageResult {
+        guard ExternalTool.ideviceInstaller.isAvailable else { throw ConnectedDeviceError.noDeviceTool }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let stage = try FileSystemHelper.makeTemporaryDirectory(prefix: "device-export")
+        defer { try? FileManager.default.removeItem(at: stage) }
+
+        let attempts = [
+            ["-u", device.udid, "archive", app.bundleIdentifier, "-o", "copy=\(stage.path),remove,app_only"],
+            ["-u", device.udid, "-a", app.bundleIdentifier, "-o", "copy=\(stage.path),remove,app_only"]
+        ]
+        var lastOutput = ""
+        var copied: URL?
+        for arguments in attempts {
+            let result = try ExternalTool.ideviceInstaller.run(arguments)
+            lastOutput = result.combinedOutput
+            if result.succeeded, let file = newestArchive(in: stage) {
+                copied = file
+                break
+            }
+        }
+        guard let archive = copied else {
+            throw ConnectedDeviceError.exportFailed(lastOutput)
+        }
+        let proposed = directory.appendingPathComponent(sanitizedIPAName(app))
+        return try IpaService.adoptDeviceArchive(archive, outputURL: proposed)
+    }
+
+    static func parseInstalledAppsList(_ output: String) -> [InstalledApp] {
+        output.split(whereSeparator: \.isNewline).compactMap { raw in
+            parseInstalledAppLine(String(raw))
+        }
+    }
+
+    static func parseInstalledAppLine(_ line: String) -> InstalledApp? {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let lower = trimmed.lowercased()
+        if lower.hasPrefix("total:") { return nil }
+        if lower.hasPrefix("error") { return nil }
+        guard let separator = trimmed.range(of: " - ") else { return nil }
+        let bundleID = String(trimmed[..<separator.lowerBound]).trimmingCharacters(in: .whitespaces)
+        guard bundleID.contains("."), bundleID.count > 2 else { return nil }
+        let rest = String(trimmed[separator.upperBound...]).trimmingCharacters(in: .whitespaces)
+        let split = splitAppNameAndAttributes(rest)
+        var name = split.name
+        if name.isEmpty { name = bundleID }
+        var version: String?
+        var shortVersion: String?
+        for token in split.attributes.split(whereSeparator: \.isWhitespace) {
+            let piece = String(token)
+            if let value = piece.split(separator: "=").last.map(String.init) {
+                if piece.hasPrefix("CFBundleVersion=") { version = value }
+                if piece.hasPrefix("CFBundleShortVersionString=") { shortVersion = value }
+            }
+        }
+        return InstalledApp(
+            bundleIdentifier: bundleID,
+            name: name,
+            version: version,
+            shortVersion: shortVersion
+        )
+    }
+
+    static func splitAppNameAndAttributes(_ rest: String) -> (name: String, attributes: String) {
+        var text = rest
+        if text.first == "\"" {
+            text.removeFirst()
+            if let close = text.firstIndex(of: "\"") {
+                let name = String(text[..<close])
+                let attrs = String(text[text.index(after: close)...]).trimmingCharacters(in: .whitespaces)
+                return (name, attrs)
+            }
+        }
+        let markers = [" CFBundleVersion=", " CFBundleShortVersionString="]
+        var cut: String.Index?
+        for marker in markers {
+            if let range = text.range(of: marker) {
+                if cut == nil || range.lowerBound < cut! {
+                    cut = range.lowerBound
+                }
+            }
+        }
+        if let cut {
+            return (
+                String(text[..<cut]).trimmingCharacters(in: .whitespaces),
+                String(text[cut...]).trimmingCharacters(in: .whitespaces)
+            )
+        }
+        return (text.trimmingCharacters(in: .whitespaces), "")
+    }
+
+    static func parseInstalledAppsPlist(_ data: Data) throws -> [InstalledApp] {
+        let object = try PropertyListSerialization.propertyList(from: data, format: nil)
+        let dictionaries: [[String: Any]]
+        if let array = object as? [[String: Any]] {
+            dictionaries = array
+        } else if let dict = object as? [String: Any] {
+            dictionaries = dict.values.compactMap { $0 as? [String: Any] }
+        } else {
+            return []
+        }
+        return dictionaries.compactMap { dict in
+            let bundleID = string(dict["CFBundleIdentifier"]) ?? string(dict["bundleIdentifier"])
+            guard let bundleID, bundleID.contains(".") else { return nil }
+            let name = string(dict["CFBundleDisplayName"])
+                ?? string(dict["CFBundleName"])
+                ?? bundleID
+            return InstalledApp(
+                bundleIdentifier: bundleID,
+                name: name,
+                version: string(dict["CFBundleVersion"]),
+                shortVersion: string(dict["CFBundleShortVersionString"])
+            )
+        }
     }
 
     // MARK: - libimobiledevice
@@ -338,6 +593,32 @@ public enum ConnectedDeviceService {
             return false
         }
         return isLikelyUDID(device.udid)
+    }
+
+    private static func newestArchive(in directory: URL) -> URL? {
+        let items = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        let archives = items.filter { url in
+            let ext = url.pathExtension.lowercased()
+            let isFile = (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+            return isFile && ["ipa", "zip"].contains(ext)
+        }
+        return archives.max { lhs, rhs in
+            let left = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            let right = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            return left < right
+        }
+    }
+
+    private static func sanitizedIPAName(_ app: InstalledApp) -> String {
+        let raw = app.name.isEmpty ? app.bundleIdentifier : app.name
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
+        let cleaned = raw.unicodeScalars.map { allowed.contains($0) ? Character($0) : "-" }
+        let name = String(cleaned).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        return (name.isEmpty ? app.bundleIdentifier : name) + ".ipa"
     }
 
     private static func extractDeviceDictionaries(from root: [String: Any]) -> [[String: Any]] {

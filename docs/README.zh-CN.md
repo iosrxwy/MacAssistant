@@ -36,7 +36,7 @@
 
 - **DEB**：制作、检查、解包、转换与重新打包
 - **DYLIB**：依赖检查、动态库提取、安装名与 rpath 修改
-- **IPA**：拖入工作台、注入、瘦身、头文件提取、逐层签名与 Apple ID 签名
+- **IPA**：拖入工作台、安装与原样提取（不脱壳）、可选本机 ipatool 下载自己账号的官方加密包、注入、瘦身、头文件提取、逐层签名与 Apple ID 签名
 - **Mach-O**：原生 Swift 检查与 dylib 注入，支持单架构和通用二进制
 - **环境检查**：识别所需工具并提供清晰的安装指引
 
@@ -104,6 +104,7 @@ open "dist/Mac小助手.app"
 - [libimobiledevice](https://libimobiledevice.org)：USB 列设备与装机
 - [Theos](https://github.com/theos/theos)：Tweak 项目构建环境
 - [zsign](https://github.com/zhlynn/zsign)：可选的 IPA / Mach-O 签名工具
+- [ipatool](https://github.com/majd/ipatool)：可选的 App Store IPA 下载（MIT，不捆绑）
 
 ## 许可证
 
