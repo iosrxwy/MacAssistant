@@ -19,9 +19,14 @@
   <a href="https://t.me/iosrxwy"><img src="https://img.shields.io/badge/Telegram-@iosrxwy-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"></a>
 </p>
 
-## 기능
+## 주요 기능
 
-시스템 개요, 정리, App 복구, 메모리, 네트워크, 262개 명령. DEB, DYLIB, IPA, Mach-O, 서명(Beta). 변경 전 미리보기. 텔레메트리 없음.
+- 시스템 개요, 정리, App 복구, 메모리 및 네트워크 도구
+- 위험 표시가 포함된 262개 macOS 명령
+- DEB, DYLIB, IPA, Mach-O, 서명 및 Class Dump
+- 변경 작업 전 미리보기와 확인
+- Apple Silicon 및 Intel 지원
+- 오픈 소스, 텔레메트리 없음
 
 ## 스크린샷
 

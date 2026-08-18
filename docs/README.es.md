@@ -21,7 +21,12 @@
 
 ## Funciones
 
-Resumen del sistema, limpieza, reparación de apps, memoria, red y 262 comandos. DEB, DYLIB, IPA, Mach-O y firma (Beta). Vista previa antes de cada cambio. Sin telemetría.
+- Resumen del sistema, limpieza, reparación de apps, memoria y red
+- 262 comandos de macOS con etiquetas de riesgo
+- DEB, DYLIB, IPA, Mach-O, firma y Class Dump
+- Vista previa y confirmación antes de cada cambio
+- Compatible con Apple Silicon e Intel
+- Código abierto, sin telemetría
 
 ## Capturas
 

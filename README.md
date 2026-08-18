@@ -28,14 +28,29 @@
   <a href="https://t.me/iosrxwy"><img src="https://img.shields.io/badge/Telegram-@iosrxwy-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"></a>
 </p>
 
-## Features
+## Why MacAssistant
 
-| Daily | Developer · Beta |
-| --- | --- |
-| System overview, cleanup, app repair | DEB, DYLIB, IPA, Mach-O |
-| Memory, network, 262 macOS commands | Signing, injection, environment check |
+| Everyday Mac tools | Apple developer workflows | Built for confidence |
+| --- | --- | --- |
+| See system health, reclaim space, repair apps and inspect memory or network state. | Build DEB packages, inspect DYLIBs, process IPAs, edit Mach-O files and manage signing. | Preview-first actions, explicit confirmation, open source and no telemetry. |
 
-Preview first. Confirm before changes. Open source, no telemetry. IPA install and extract stay as-is — no FairPlay dump.
+## What’s inside
+
+### Daily toolkit
+
+- **System overview** — chip, memory, disk, battery and uptime at a glance
+- **Safe cleanup** — caches, logs, Xcode data and other regenerable files
+- **App repair** — diagnose signatures, quarantine attributes and launch issues
+- **Memory & network** — pressure, processes, ports, ping, DNS and public IP
+- **Command library** — 262 searchable macOS commands with risk labels
+
+### Developer toolkit · Beta
+
+- **DEB** — create, inspect, unpack, convert and rebuild packages
+- **DYLIB** — inspect dependencies, extract libraries and rewrite install names or rpaths
+- **IPA** — drag-in workbench, install and extract (as-is, no FairPlay dump), optional App Store download via local `ipatool` (own Apple ID, still encrypted), injection, thinning, header extraction, layered signing, and Apple ID signing
+- **Mach-O** — native Swift inspection and dylib injection for thin or universal binaries
+- **Environment check** — find required tools and get guided setup actions
 
 ## Screenshots
 
