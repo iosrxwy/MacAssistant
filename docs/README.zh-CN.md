@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="../README.md">English</a> ·
-  <a href="README.ja.md">日本語</a> ·
+  <a href="README.es.md">Español</a> ·
   <a href="README.ko.md">한국어</a> ·
   <a href="README.ru.md">Русский</a>
 </p>
@@ -92,6 +92,17 @@ open "dist/Mac小助手.app"
 - **Issue** 反馈问题和需求，不要用空 PR 报 Bug。
 - **PR** 提交已经写好的代码或文档，合并前需要 CI 通过。
 - 范围说明见 [CONTRIBUTING.md](../CONTRIBUTING.md)，安全问题见 [SECURITY.md](../SECURITY.md)。
+
+## 贡献者
+
+<p align="center">
+  <a href="https://x.ai/grok">
+    <img src="https://github.com/xai-org.png?size=64" width="64" height="64" alt="Grok" style="border-radius:50%">
+  </a>
+  <a href="https://github.com/iosrxwy/MacAssistant/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iosrxwy/MacAssistant" alt="贡献者">
+  </a>
+</p>
 
 ## 维护
 

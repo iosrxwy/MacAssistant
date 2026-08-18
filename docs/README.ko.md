@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="../README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.ja.md">日本語</a> · <a href="README.ru.md">Русский</a>
+  <a href="README.es.md">Español</a> · <a href="README.ru.md">Русский</a>
 </p>
 
 <h1 align="center">MacAssistant</h1>
@@ -49,6 +49,17 @@ git clone https://github.com/iosrxwy/MacAssistant.git
 cd MacAssistant
 ./build_app.sh release universal
 ```
+
+## 기여자
+
+<p align="center">
+  <a href="https://x.ai/grok">
+    <img src="https://github.com/xai-org.png?size=64" width="64" height="64" alt="Grok" style="border-radius:50%">
+  </a>
+  <a href="https://github.com/iosrxwy/MacAssistant/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iosrxwy/MacAssistant" alt="기여자">
+  </a>
+</p>
 
 **Codex가 개발·유지 관리** · [iosrxwy](https://github.com/iosrxwy)가 배포합니다.
 

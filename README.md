@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="docs/README.zh-CN.md">简体中文</a> ·
-  <a href="docs/README.ja.md">日本語</a> ·
+  <a href="docs/README.es.md">Español</a> ·
   <a href="docs/README.ko.md">한국어</a> ·
   <a href="docs/README.ru.md">Русский</a>
 </p>
@@ -100,6 +100,17 @@ open "dist/Mac小助手.app"
 - **Issue** — bugs, ideas, and usage questions. Use the form; do not open an empty PR to report a problem.
 - **Pull request** — code or docs you want merged. CI (`build`) must pass.
 - Scope and “will not accept” list: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
+
+## Contributors
+
+<p align="center">
+  <a href="https://x.ai/grok">
+    <img src="https://github.com/xai-org.png?size=64" width="64" height="64" alt="Grok" style="border-radius:50%">
+  </a>
+  <a href="https://github.com/iosrxwy/MacAssistant/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iosrxwy/MacAssistant" alt="Contributors">
+  </a>
+</p>
 
 ## Credits
 
