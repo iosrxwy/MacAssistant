@@ -50,7 +50,22 @@ cd MacAssistant
 ./build_app.sh release universal
 ```
 
-## 기여자
+## 스타와 기여자
+
+<p align="center">
+  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub stars"></a><br>
+  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="First star goal: 1 / 100">
+</p>
+
+<p align="center">
+  <a href="https://star-history.com/#iosrxwy/MacAssistant&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date&theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date">
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
+    </picture>
+  </a>
+</p>
 
 <table>
   <tr>

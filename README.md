@@ -60,15 +60,6 @@
   <img src="docs/assets/screenshots/system-overview.png" alt="System overview" width="49%">
 </p>
 
-## Star goal
-
-<p align="center">
-  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub stars"></a><br>
-  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="First star goal: 1 / 100">
-</p>
-
-<p align="center">If MacAssistant saves you time, a star helps more people discover it.</p>
-
 ## Download
 
 Get the universal Apple Silicon + Intel build from [Releases](https://github.com/iosrxwy/MacAssistant/releases).
@@ -101,7 +92,24 @@ open "dist/Mac小助手.app"
 - **Pull request** — code or docs you want merged. CI (`build`) must pass.
 - Scope and “will not accept” list: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
 
-## Contributors
+## Stars & Contributors
+
+<p align="center">
+  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub stars"></a><br>
+  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="First star goal: 1 / 100">
+</p>
+
+<p align="center">
+  <a href="https://star-history.com/#iosrxwy/MacAssistant&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date&theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date">
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
+    </picture>
+  </a>
+</p>
+
+<p align="center">If MacAssistant saves you time, a star helps more people discover it.</p>
 
 <table>
   <tr>

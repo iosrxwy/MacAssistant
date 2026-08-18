@@ -52,15 +52,6 @@
   <img src="assets/screenshots/system-overview.png" alt="系统概览" width="49%">
 </p>
 
-## Star 目标
-
-<p align="center">
-  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub Stars"></a><br>
-  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="首个 Star 目标：1 / 100">
-</p>
-
-<p align="center">如果它帮你省下了时间，点一个 Star 能让更多人看到这个项目。</p>
-
 ## 下载
 
 前往 [Releases](https://github.com/iosrxwy/MacAssistant/releases) 下载 Apple Silicon + Intel 通用版本。
@@ -93,7 +84,24 @@ open "dist/Mac小助手.app"
 - **PR** 提交已经写好的代码或文档，合并前需要 CI 通过。
 - 范围说明见 [CONTRIBUTING.md](../CONTRIBUTING.md)，安全问题见 [SECURITY.md](../SECURITY.md)。
 
-## 贡献者
+## 星标与贡献者
+
+<p align="center">
+  <a href="https://github.com/iosrxwy/MacAssistant/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/MacAssistant?style=for-the-badge&logo=github&label=Stars&color=0A84FF" alt="GitHub Stars"></a><br>
+  <img src="https://progress-bar.xyz/1/?scale=100&title=First%20goal&width=480&color=0A84FF&suffix=%20%2F%20100" alt="首个 Star 目标：1 / 100">
+</p>
+
+<p align="center">
+  <a href="https://star-history.com/#iosrxwy/MacAssistant&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date&theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date">
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=iosrxwy/MacAssistant&type=Date" width="640">
+    </picture>
+  </a>
+</p>
+
+<p align="center">如果它帮你省下了时间，点一个 Star 能让更多人看到这个项目。</p>
 
 <table>
   <tr>
