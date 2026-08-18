@@ -2,6 +2,23 @@
 
 All notable changes to MacAssistant are recorded here.
 
+## [1.0.0-beta.4] - 2026-08-19
+
+Patch over 1.0.0-beta.3. Users on 1.0.0-beta.3 can pick this up from **About → Check for updates**.
+
+### Highlights
+
+- Fix App Store version-list compilation on the GitHub Actions macOS 14 / Swift 5.10 runner (`Task.detached` no longer captures a mutable array). 1.0.0-beta.3’s local build succeeded, but CI did not.
+
+### Validation
+
+- Local `swift test` and `swift build`.
+- GitHub Actions `build` on `macos-14` must be green before this tag is published.
+
+### Distribution note
+
+This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
+
 ## [1.0.0-beta.3] - 2026-08-18
 
 Third public prerelease. Users on 1.0.0-beta.2 can pick this up from **About → Check for updates** or from [Releases](https://github.com/iosrxwy/MacAssistant/releases).
@@ -72,6 +89,7 @@ First public prerelease.
 
 This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.0-beta.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.4
 [1.0.0-beta.3]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.0-beta.1

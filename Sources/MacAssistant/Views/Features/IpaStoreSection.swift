@@ -343,11 +343,12 @@ struct IpaStoreSection: View {
                 log = L("ipastore.versions.done", listed.count)
                 if resolve {
                     let cap = min(listed.count, 25)
-                    for index in 0..<cap {
+                    let versionIDs = listed.prefix(cap).map(\.externalVersionID)
+                    for (index, versionID) in versionIDs.enumerated() {
                         let metadata = try? await Task.detached {
                             try IpaStoreService.versionMetadata(
                                 app: app,
-                                externalVersionID: listed[index].externalVersionID
+                                externalVersionID: versionID
                             )
                         }.value
                         if let metadata {
