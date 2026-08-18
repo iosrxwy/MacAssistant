@@ -52,14 +52,31 @@ cd MacAssistant
 
 ## 기여자
 
-<p align="center">
-  <a href="https://x.ai/grok">
-    <img src="https://github.com/xai-org.png?size=64" width="64" height="64" alt="Grok" style="border-radius:50%">
-  </a>
-  <a href="https://github.com/iosrxwy/MacAssistant/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iosrxwy/MacAssistant" alt="기여자">
-  </a>
-</p>
+<table>
+  <tr>
+    <td align="center" valign="top" width="140">
+      <a href="https://github.com/iosrxwy">
+        <img src="https://github.com/iosrxwy.png?size=140" width="88" height="88" alt="iosrxwy">
+      </a><br>
+      <a href="https://github.com/iosrxwy"><b>iosrxwy</b></a><br>
+      <sub>작성자</sub>
+    </td>
+    <td align="center" valign="top" width="140">
+      <a href="https://github.com/codex">
+        <img src="https://github.com/codex.png?size=140" width="88" height="88" alt="Codex">
+      </a><br>
+      <a href="https://github.com/codex"><b>Codex</b></a><br>
+      <sub>개발</sub>
+    </td>
+    <td align="center" valign="top" width="140">
+      <a href="https://x.ai/grok">
+        <img src="https://github.com/xai-org.png?size=140" width="88" height="88" alt="Grok Build">
+      </a><br>
+      <a href="https://x.ai/grok"><b>Grok Build</b></a><br>
+      <sub>개발</sub>
+    </td>
+  </tr>
+</table>
 
 **Codex가 개발·유지 관리** · [iosrxwy](https://github.com/iosrxwy)가 배포합니다.
 
