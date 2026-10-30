@@ -524,21 +524,28 @@ struct WindowSceneChrome: NSViewRepresentable {
         }
 
         private func setGlassStyle(_ view: NSView, clear: Bool) {
+            // macOS 14 SDK 没有 NSGlassEffectView。新编译器才走类型，旧编译器用 KVC。
+#if compiler(>=6.2)
             if #available(macOS 26.0, *), let glass = view as? NSGlassEffectView {
                 glass.style = clear ? .clear : .regular
                 glass.tintColor = nil
                 return
             }
+#endif
             view.setValue(clear ? 1 : 0, forKey: "style")
         }
 
         private func setGlassBackdropHidden(_ view: NSView, hidden: Bool) {
             let content: NSView?
+#if compiler(>=6.2)
             if #available(macOS 26.0, *), let glass = view as? NSGlassEffectView {
                 content = glass.contentView
             } else {
                 content = view.value(forKey: "contentView") as? NSView
             }
+#else
+            content = view.value(forKey: "contentView") as? NSView
+#endif
             for sub in view.subviews where sub !== content {
                 let name = String(describing: type(of: sub))
                 let looksLikeMaterial = name.contains("Backdrop")

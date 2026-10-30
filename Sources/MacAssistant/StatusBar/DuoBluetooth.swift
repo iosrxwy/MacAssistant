@@ -33,13 +33,16 @@ final class DuoBluetoothModel: ObservableObject {
 
     init() {
         bridge.onComplete = { [weak self] address, _ in
+            // Swift 5.10 把 weak self 当成 var，不能直接送进 Task。
+            let model = self
             Task { @MainActor in
-                self?.finishConnect(address)
+                model?.finishConnect(address)
             }
         }
         bridge.onAnyConnect = { [weak self] in
+            let model = self
             Task { @MainActor in
-                self?.refresh()
+                model?.refresh()
             }
         }
         connectNote = IOBluetoothDevice.register(
@@ -54,8 +57,9 @@ final class DuoBluetoothModel: ObservableObject {
         for name in names {
             powerNotes.append(
                 center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    let model = self
                     Task { @MainActor in
-                        self?.refresh()
+                        model?.refresh()
                     }
                 }
             )
@@ -96,8 +100,9 @@ final class DuoBluetoothModel: ObservableObject {
         reloadDevices()
         guard on, pendingAddress != nil else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            let model = self
             Task { @MainActor in
-                self?.resumePendingConnect()
+                model?.resumePendingConnect()
             }
         }
     }
@@ -160,10 +165,11 @@ final class DuoBluetoothModel: ObservableObject {
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in
+            let model = self
             Task { @MainActor in
-                guard let self, self.connectGeneration == generation else { return }
-                self.connectingAddress = nil
-                self.reloadDevices()
+                guard let model, model.connectGeneration == generation else { return }
+                model.connectingAddress = nil
+                model.reloadDevices()
             }
         }
     }

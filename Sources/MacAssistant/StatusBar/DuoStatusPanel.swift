@@ -202,12 +202,7 @@ private final class DuoGlassBackdrop: NSView {
 
     init(host: NSView) {
         self.host = host
-        if #available(macOS 26.0, *) {
-            let glass = NSGlassEffectView()
-            glass.style = .regular
-            glass.cornerRadius = DuoPanelMetrics.cornerRadius
-            glass.tintColor = NSColor(srgbRed: 0.55, green: 0.78, blue: 0.96, alpha: 0.38)
-            glass.contentView = host
+        if let glass = Self.makeGlass(host: host) {
             chrome = glass
         } else {
             let effect = NSVisualEffectView()
@@ -236,6 +231,21 @@ private final class DuoGlassBackdrop: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         nil
+    }
+
+    /// macOS 14 的 SDK 没有这个类。只有带 macOS 26 SDK 的编译器才创建它。
+    private static func makeGlass(host: NSView) -> NSView? {
+#if compiler(>=6.2)
+        if #available(macOS 26.0, *) {
+            let glass = NSGlassEffectView()
+            glass.style = .regular
+            glass.cornerRadius = DuoPanelMetrics.cornerRadius
+            glass.tintColor = NSColor(srgbRed: 0.55, green: 0.78, blue: 0.96, alpha: 0.38)
+            glass.contentView = host
+            return glass
+        }
+#endif
+        return nil
     }
 
     override func layout() {
