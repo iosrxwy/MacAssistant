@@ -586,6 +586,70 @@ public enum DylibInjector {
         }
     }
 
+    /// 从每个切片删掉匹配的 `LC_LOAD_DYLIB` / `LC_LOAD_WEAK_DYLIB`，不改 `LC_ID_DYLIB`。
+    public static func removeLoadCommand(
+        dylibPath: String,
+        fileAt url: URL
+    ) throws {
+        var bytes = [UInt8](try Data(contentsOf: url))
+        try removeLoadCommand(dylibPath, bytes: &bytes)
+        try Data(bytes).write(to: url, options: .atomic)
+    }
+
+    public static func removeLoadCommand(
+        _ dylibPath: String,
+        bytes: inout [UInt8]
+    ) throws {
+        guard !dylibPath.isEmpty, !dylibPath.utf8.contains(0) else {
+            throw MachOError.unsupported(L("dylib.macho.unsupported.emptyPath"))
+        }
+        let slices = try parseSlices(bytes)
+        guard !slices.isEmpty else { throw MachOError.emptyFat }
+        var changed = false
+        for slice in slices {
+            var matches = try removableLoadCommands(
+                bytes,
+                sliceOffset: slice.offset,
+                sliceSize: slice.size,
+                dylibPath: dylibPath
+            )
+            while let match = matches.first {
+                try removeLoadCommand(
+                    &bytes,
+                    sliceOffset: slice.offset,
+                    sliceSize: slice.size,
+                    commandOffset: match.offset,
+                    commandSize: match.size
+                )
+                changed = true
+                matches = try removableLoadCommands(
+                    bytes,
+                    sliceOffset: slice.offset,
+                    sliceSize: slice.size,
+                    dylibPath: dylibPath
+                )
+            }
+        }
+        guard changed else {
+            throw MachOError.unsupported(L("dylib.macho.unsupported.removeMissing", dylibPath))
+        }
+    }
+
+    private static func removableLoadCommands(
+        _ bytes: [UInt8],
+        sliceOffset: Int,
+        sliceSize: Int,
+        dylibPath: String
+    ) throws -> [DylibCommandLocation] {
+        try dylibCommandLocations(
+            bytes,
+            sliceOffset: sliceOffset,
+            sliceSize: sliceSize
+        ).filter {
+            $0.path == dylibPath && ($0.command == LC.loadDylib || $0.command == LC.loadWeakDylib)
+        }
+    }
+
     /// 各切片补上缺失的 `LC_RPATH`。已有的切片跳过。
     public static func addRPath(
         _ path: String,

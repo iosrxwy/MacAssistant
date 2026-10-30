@@ -100,16 +100,15 @@ private struct TheosProjectMaker: View {
                         openProject($0)
                     }
                     FilePickerButton(title: "新建项目", systemImage: "folder.badge.plus", chooseDirectory: true) {
-                        newProjectDirectory = $0
-                        if projectName == "MyTweak", !$0.lastPathComponent.isEmpty {
-                            projectName = $0.lastPathComponent
-                        }
+                        chooseNewProjectDirectory($0)
                     }
                     Button("构建 DEB") { build() }
                         .disabled(projectURL == nil || busy || dirty)
                         .glassActionButtonStyle(prominent: true)
                 }
-                PathBadge(url: projectURL, placeholder: "尚未选择包含 Makefile 的 Theos 项目")
+                PathBadge(url: projectURL, placeholder: "尚未选择包含 Makefile 的 Theos 项目") { urls in
+                    if let url = urls.first { openProject(url) }
+                }
                 HStack {
                     Toggle("构建前 clean", isOn: $cleanBuild).toggleStyle(.checkbox)
                     Picker("构建布局", selection: $projectLayout) {
@@ -159,7 +158,9 @@ private struct TheosProjectMaker: View {
                         Button("生成并打开") { createProject() }
                             .glassActionButtonStyle(prominent: true)
                     }
-                    PathBadge(url: newProjectDirectory)
+                    PathBadge(url: newProjectDirectory) { urls in
+                        if let url = urls.first { chooseNewProjectDirectory(url) }
+                    }
                     HStack {
                         FilePickerButton(
                             title: L("theos.draft.fromBinary"),
@@ -253,6 +254,13 @@ private struct TheosProjectMaker: View {
                     StatusBadge(ok: ok)
                 }
             }
+        }
+    }
+
+    private func chooseNewProjectDirectory(_ url: URL) {
+        newProjectDirectory = url
+        if projectName == "MyTweak", !url.lastPathComponent.isEmpty {
+            projectName = url.lastPathComponent
         }
     }
 
@@ -467,13 +475,12 @@ private struct DebConverter: View {
                     }
                     Spacer()
                     FilePickerButton(title: "选择 .deb", systemImage: "shippingbox", types: [.debPackage, .data]) {
-                        sourceURL = $0
-                        outputURL = nil
-                        log = ""
-                        ok = nil
+                        selectSource($0)
                     }
                 }
-                PathBadge(url: sourceURL, placeholder: "尚未选择源 DEB")
+                PathBadge(url: sourceURL, placeholder: "尚未选择源 DEB") { urls in
+                    if let url = urls.first { selectSource(url) }
+                }
 
                 Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
                     GridRow {
@@ -519,6 +526,13 @@ private struct DebConverter: View {
 
         Label("转换会改写 payload 路径、control Architecture 和 Mach-O 越狱路径；输出后重新执行 DEB 校验。", systemImage: "checkmark.shield")
             .font(.caption).foregroundStyle(.secondary)
+    }
+
+    private func selectSource(_ url: URL) {
+        sourceURL = url
+        outputURL = nil
+        log = ""
+        ok = nil
     }
 
     private func chooseOutput() {
@@ -1428,12 +1442,7 @@ private struct DebInspector: View {
                             systemImage: "shippingbox",
                             types: [.debPackage, .data]
                         ) {
-                            debURL = $0
-                            info = nil
-                            scanSession = nil
-                            selectedArtifacts = []
-                            log = ""
-                            inspect()
+                            selectDeb($0)
                         }
                         .controlSize(.large)
                         .glassActionButtonStyle(prominent: true)
@@ -1444,7 +1453,9 @@ private struct DebInspector: View {
                     }
                 }
 
-                PathBadge(url: debURL, placeholder: "选择后这里显示完整路径")
+                PathBadge(url: debURL, placeholder: "选择后这里显示完整路径") { urls in
+                    if let url = urls.first { selectDeb(url) }
+                }
 
                 Divider()
 
@@ -1638,7 +1649,9 @@ private struct DebInspector: View {
                         .disabled(repackDirectory == nil || busy)
                     Spacer(minLength: 0)
                 }
-                PathBadge(url: repackDirectory, placeholder: "尚未选择目录")
+                PathBadge(url: repackDirectory, placeholder: "尚未选择目录") { urls in
+                    if let url = urls.first { repackDirectory = url }
+                }
             }
         }
     }
@@ -1668,6 +1681,15 @@ private struct DebInspector: View {
     }
 
     // MARK: 动作
+
+    private func selectDeb(_ url: URL) {
+        debURL = url
+        info = nil
+        scanSession = nil
+        selectedArtifacts = []
+        log = ""
+        inspect()
+    }
 
     private func inspect() {
         guard let debURL else { return }

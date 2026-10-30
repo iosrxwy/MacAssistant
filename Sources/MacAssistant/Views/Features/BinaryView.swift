@@ -120,7 +120,9 @@ struct BinaryView: View {
                     }
                     Spacer()
                 }
-                PathBadge(url: sourceURL, placeholder: L("binaryview.inputPlaceholder"))
+                PathBadge(url: sourceURL, placeholder: L("binaryview.inputPlaceholder")) { urls in
+                    if let url = urls.first { openInput(url) }
+                }
                 Text(L("binaryview.safetyNote"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)

@@ -109,6 +109,21 @@ public enum ToolFinder {
                 "分身", "应用分身", "双开", "多开", "临时多开", "克隆", "clone", "dual", "wechat",
                 "微信分身", "QQ分身", "sandbox", "多账号", "open -n"
             ]
+        ),
+        FeatureEntry(
+            id: "appUninstall",
+            destination: .appUninstall,
+            keywords: [
+                "卸载", "卸除", "删除应用", "残留", "废纸篓", "uninstall", "remove app", "leftover"
+            ]
+        ),
+        FeatureEntry(
+            id: "macApp",
+            destination: .macApp,
+            keywords: [
+                "注入", "卸载", "卸除", "插件", "卸载插件", "卸除插件",
+                "dylib", "wechat", "微信插件", "inject", "uninject", "plugin", "tweak"
+            ]
         )
     ]
 }

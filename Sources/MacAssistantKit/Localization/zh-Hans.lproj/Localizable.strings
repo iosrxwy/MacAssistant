@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "不会更改全局安全策略；把路径替换为目标 App";
 "recipe.gatekeeper-settings.name" = "打开隐私与安全性";
 "recipe.gatekeeper-settings.detail" = "按 Apple 官方流程使用“仍要打开”授予单个 App 例外";
+"recipe.software-update-off.name" = "禁用系统自动更新";
+"recipe.software-update-off.detail" = "关闭 macOS 自动检查、下载和安装；需管理员权限。不会伪装版本号";
+"recipe.software-update-on.name" = "恢复系统自动更新";
+"recipe.software-update-on.detail" = "重新打开 macOS 自动检查、下载和安装；需管理员权限";
+"softwareupdate.error.unsupportedKey" = "不允许写入软件更新键：%@";
 
 /* 系统信息 */
 "sysinfo.hostname" = "主机名";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "自定义桌面文件、文件夹和应用图标，也可恢复默认";
 "toolfinder.feature.appClone.title" = "应用分身";
 "toolfinder.feature.appClone.detail" = "为微信、浏览器等应用创建独立数据目录的分身，互不登录";
+"toolfinder.feature.macApp.title" = "本机 App 注入";
+"toolfinder.feature.macApp.detail" = "向本机 macOS App 注入插件，或扫描并卸载已写入的第三方库";
+"toolfinder.feature.appUninstall.title" = "应用卸载";
+"toolfinder.feature.appUninstall.detail" = "把普通应用和它在个人资料库里的残留移到废纸篓";
 "permission.repair-files.title" = "文件与文件夹";
 "permission.repair-files.usedBy" = "你选中的 App，用来去隔离、清扩展属性和重签";
 "permission.repair-files.withoutIt" = "选不到目标时，这些动作会停在预览，不会改系统别处";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "应用库扫描 /Applications 与你手动添加的 .app";
 "permission.macapp-files.withoutIt" = "列表可能不完整；仍可手动选择单个 App";
 "permission.macapp-management.title" = "App 管理";
-"permission.macapp-management.usedBy" = "向本机 App 写入插件时可能需要";
-"permission.macapp-management.withoutIt" = "打开仍可用；写入受保护 App 会被系统拒绝";
+"permission.macapp-management.usedBy" = "向本机 App 写入或卸除插件时可能需要";
+"permission.macapp-management.withoutIt" = "打开仍可用；改受保护 App 会被系统拒绝";
+"permission.appuninstall-fda.title" = "完全磁盘访问";
+"permission.appuninstall-fda.usedBy" = "扫描容器、群组容器里跟这个应用对应的数据";
+"permission.appuninstall-fda.withoutIt" = "扫不到的目录会单独标出来，不会当成没有残留";
+"permission.appuninstall-management.title" = "App 管理";
+"permission.appuninstall-management.usedBy" = "把「应用程序」里的 App 移到废纸篓时，系统可能会询问";
+"permission.appuninstall-management.withoutIt" = "系统拒绝时，这一项会留在列表里并写明原因";
 "tweakdraft.error.invalidDirectory" = "草稿输出目录无效";
 "tweakdraft.error.writeFailed" = "无法写入草稿：%@";
 "macapp.launch.error.notAnApp" = "所选项目不是 macOS App";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "读取内存信息失败：%@";
 "memory.error.invalid-pid" = "PID 无效";
 "memory.error.protected-process" = "为避免系统不稳定，不能结束 %@";
-"memory.error.permission-denied" = "没有权限结束该进程";
+"memory.error.protected-freeze" = "为避免系统不稳定，不能冻结 %@";
+"memory.error.permission-denied" = "没有权限向该进程发送信号";
 "memory.error.process-not-found" = "进程已经退出";
 "memory.error.signal-failed" = "发送信号失败（errno %d）";
 "memory.error.purge-unavailable" = "当前系统没有可用的 purge 命令";
@@ -810,6 +826,8 @@
 "dylib.error.commandFailed" = "命令执行失败:%@";
 "dylib.error.notMachO" = "不是有效的 Mach-O：%@";
 "dylib.error.noExpectedChange" = "修改命令未产生预期结果：%@";
+"dylib.error.cannotRemoveInstallName" = "不能删除 install name：%@";
+"dylib.error.dependencyNotRemoved" = "未能删除依赖：%@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "不是有效的 Mach-O 文件";
@@ -826,6 +844,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "fat 切片偏移或长度溢出";
 "dylib.macho.unsupported.fatSliceOverlap" = "fat 切片范围重叠";
 "dylib.macho.unsupported.changeMissing" = "找不到要改写的 load command：%@";
+"dylib.macho.unsupported.removeMissing" = "找不到要删除的 load command：%@";
 "ipaflow.log.substrateStubCopied" = "已放入兼容库";
 "ipaflow.log.substrateStubWarning" = "新系统上若插件打不开，再换兼容库即可";
 "ipaflow.error.missingSubstrateStub" = "需要内置 libsubstrate.dylib，但资源缺失";
@@ -834,6 +853,17 @@
 "dylib.macho.log.replacedWithStrong" = "已把切片 %d 的现有命令替换为强引用：%@";
 "dylib.macho.log.strippedCodeSignature" = "已移除 %@-bit 切片的 LC_CODE_SIGNATURE 以腾出空间";
 "dylib.macho.log.injectedIntoSlice" = "已向 %@-bit 切片注入:%@";
+"injectscan.error.notApp" = "请选择一个 .app";
+"injectscan.error.systemLibrary" = "拒绝删除系统库：%@";
+"injectscan.error.bundledLibrary" = "这是 App 自带依赖，未当作第三方注入：%@";
+"injectscan.log.alreadyGone" = "加载命令已不存在，跳过：%@";
+"injectscan.log.removedCommand" = "已删除 %@（宿主 %@）";
+"injectscan.log.payloadMissing" = "未找到对应的插件文件，只卸了加载命令";
+"injectscan.log.payloadOutside" = "插件路径不在本 App 内，未删除：%@";
+"injectscan.log.deletedPayload" = "已删除插件文件：%@";
+"injectscan.log.payloadPermission" = "插件文件未能删除（%@）：%@";
+"injectscan.log.signed" = "已重签：%@";
+"injectscan.log.signFailed" = "重签未通过（%@）：%@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "单个 Mach-O";
@@ -904,15 +934,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "系统概览";
+"sidebar.menuBar" = "导航优化";
 "sidebar.repair" = "应用修复";
 "sidebar.cleanup" = "系统清理";
+"sidebar.appUninstall" = "应用卸载";
 "sidebar.desktopIcons" = "桌面图标";
 "sidebar.appClone" = "应用分身";
 "sidebar.memory" = "内存工具";
 "sidebar.network" = "网络工具";
 "sidebar.cheatsheet" = "命令速查";
 "sidebar.recipes" = "快捷开关";
-"sidebar.deb" = "软件打包";
+"sidebar.deb" = "插件功能";
 "sidebar.dylib" = "动态链接";
 "sidebar.ipa" = "应用封装";
 "sidebar.macApp" = "注入工具";
@@ -1084,6 +1116,41 @@
 "desktopicon.preset.software.symbols" = "符号";
 "desktopicon.preset.software.plugins" = "插件";
 "desktopicon.preset.software.build" = "构建";
+"desktopicon.preset.costume.puppy" = "毛绒小狗";
+"desktopicon.preset.costume.kitten" = "毛绒小猫";
+"desktopicon.preset.costume.pear" = "梨子";
+"desktopicon.preset.costume.fridge" = "笑脸冰箱";
+"desktopicon.preset.costume.moon" = "月球";
+"desktopicon.preset.costume.spider" = "蜘蛛";
+"desktopicon.preset.costume.berry" = "草莓";
+"desktopicon.preset.costume.gift" = "礼物";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "小猫";
+"desktopicon.preset.cute.bunny" = "兔子";
+"desktopicon.preset.cute.bear" = "小熊";
+"desktopicon.preset.cute.peach" = "桃子";
+"desktopicon.preset.cute.heart" = "爱心";
+"desktopicon.preset.cute.star" = "星星";
+"desktopicon.preset.cute.cloud" = "云朵";
+"desktopicon.preset.cute.moon" = "月亮";
+"desktopicon.preset.cute.flower" = "花朵";
+"desktopicon.preset.cute.rainbow" = "彩虹";
+"desktopicon.preset.cute.coffee" = "咖啡";
+"desktopicon.preset.cute.book" = "书本";
+"desktopicon.preset.cute.music" = "音乐";
+"desktopicon.preset.cute.camera" = "相机";
+"desktopicon.preset.cute.gift" = "礼物";
+"desktopicon.preset.cute.rocket" = "火箭";
 
 /* 应用分身 */
 "appclone.strategy.hard" = "硬分身";
@@ -1138,3 +1205,15 @@
 "appearance.system" = "跟随系统";
 "appearance.light" = "日间";
 "appearance.dark" = "夜间";
+
+/* 应用卸载 */
+"appuninstall.block.notAnApp" = "这不是 macOS 应用";
+"appuninstall.block.missing" = "应用已经不在原位置";
+"appuninstall.block.systemLocation" = "系统自带应用不能从这里卸载";
+"appuninstall.block.appleBundle" = "Apple 系统应用不能从这里卸载";
+"appuninstall.block.currentApp" = "不能卸载正在使用的 Mac小助手";
+"appuninstall.error.nothingSelected" = "还没有选择要移到废纸篓的项目";
+"appuninstall.error.symlink" = "这是符号链接，已跳过";
+
+/* 能耗模式授权框。授权会保持到退出应用，所以提示只在第一次切换出现。 */
+"energy.auth.once" = "切换能耗模式需要管理员权限。授权这一次后，本次打开不用再确认。";

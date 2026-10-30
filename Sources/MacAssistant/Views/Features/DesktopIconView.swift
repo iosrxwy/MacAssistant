@@ -268,6 +268,9 @@ struct DesktopIconView: View {
 
             HStack {
                 Button(L("desktopicon.chooseTarget")) { pickTarget() }
+                    .filePickerDrop { urls in
+                        if let url = urls.first { selectTarget(url) }
+                    }
                 if target != nil {
                     Button(L("desktopicon.clear")) {
                         target = nil
@@ -359,8 +362,44 @@ struct DesktopIconView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Text(L("desktopicon.preset.ai"))
+                    .font(.subheadline.weight(.semibold))
+                Text(L("desktopicon.preset.ai.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: Self.presetColumns, spacing: 10) {
+                    ForEach(DesktopIconPresets.ai) { preset in
+                        presetButton(preset, showsTitle: true)
+                    }
+                }
+
+                Text(L("desktopicon.preset.costume"))
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.top, 4)
+                Text(L("desktopicon.preset.costume.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: Self.presetColumns, spacing: 10) {
+                    ForEach(DesktopIconPresets.costumes) { preset in
+                        presetButton(preset, showsTitle: true)
+                    }
+                }
+
+                Text(L("desktopicon.preset.cute"))
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.top, 4)
+                Text(L("desktopicon.preset.cute.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: Self.presetColumns, spacing: 10) {
+                    ForEach(DesktopIconPresets.cute) { preset in
+                        presetButton(preset, showsTitle: true)
+                    }
+                }
+
                 Text(L("desktopicon.preset.colors"))
                     .font(.subheadline.weight(.semibold))
+                    .padding(.top, 4)
                 LazyVGrid(columns: Self.presetColumns, spacing: 8) {
                     ForEach(DesktopIconPresets.colors) { preset in
                         presetButton(preset, showsTitle: true)

@@ -53,7 +53,9 @@ struct ClassDumpTab: View {
                             systemImage: "folder",
                             chooseDirectory: true
                         ) { session.outputDirectory = $0 }
-                        PathBadge(url: session.outputDirectory, placeholder: L("classdumptab.noOutput"))
+                        PathBadge(url: session.outputDirectory, placeholder: L("classdumptab.noOutput")) { urls in
+                            if let url = urls.first { session.outputDirectory = url }
+                        }
                     }
 
                     HStack {
@@ -463,7 +465,9 @@ private struct TweakDraftSheet: View {
                     systemImage: "folder",
                     chooseDirectory: true
                 ) { outputDirectory = $0 }
-                PathBadge(url: outputDirectory, placeholder: L("classdumptab.noOutput"))
+                PathBadge(url: outputDirectory, placeholder: L("classdumptab.noOutput")) { urls in
+                    if let url = urls.first { outputDirectory = url }
+                }
             }
             Toggle(L("classdumptab.draft.includeTweak"), isOn: $includeTweak)
             Toggle(L("classdumptab.draft.includeFrida"), isOn: $includeFrida)

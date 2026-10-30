@@ -355,7 +355,17 @@ struct InjectDylibTab: View {
                     }
                 }
                 .controlSize(.regular)
-                PathBadge(url: inputURL, placeholder: L("ipaview.noInput"))
+                PathBadge(url: inputURL, placeholder: L("ipaview.noInput")) { urls in
+                    guard let url = urls.first else { return }
+                    if inputMode == .macOSApp, url.pathExtension.lowercased() != "app" {
+                        ok = false
+                        log = L("ipaview.needAppDirectory")
+                        return
+                    }
+                    inputURL = url
+                    invalidate()
+                    discoverTargets()
+                }
                 Text(L("ipaview.input.note"))
                     .font(.footnote).foregroundStyle(.secondary)
                 if let targetSession {
@@ -1281,6 +1291,7 @@ private struct IpaMultiFilePickerButton: View {
                 onPick(urls)
             }
         }
+        .filePickerDrop(multiple: true, onPick: onPick)
     }
 }
 

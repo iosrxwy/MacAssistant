@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "Does not change the global security policy; replace the path with your app";
 "recipe.gatekeeper-settings.name" = "Open Privacy & Security";
 "recipe.gatekeeper-settings.detail" = "Use Apple’s Open Anyway flow to allow a single app";
+"recipe.software-update-off.name" = "Disable automatic system updates";
+"recipe.software-update-off.detail" = "Turns off automatic checking, downloading, and installing of macOS updates. Requires administrator privileges. Does not spoof the OS version";
+"recipe.software-update-on.name" = "Restore automatic system updates";
+"recipe.software-update-on.detail" = "Turns automatic checking, downloading, and installing of macOS updates back on. Requires administrator privileges";
+"softwareupdate.error.unsupportedKey" = "Refusing to write Software Update key: %@";
 
 /* System information */
 "sysinfo.hostname" = "Host name";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "Customize icons for desktop files, folders, and apps, or restore the defaults";
 "toolfinder.feature.appClone.title" = "App Clones";
 "toolfinder.feature.appClone.detail" = "Create isolated clones of WeChat, browsers, and other Mac apps with separate data";
+"toolfinder.feature.macApp.title" = "Local App Injection";
+"toolfinder.feature.macApp.detail" = "Inject plugins into a local macOS app, or scan and remove third-party libraries already written into it";
+"toolfinder.feature.appUninstall.title" = "Uninstall Apps";
+"toolfinder.feature.appUninstall.detail" = "Move an ordinary app and its leftovers in your Library to the Trash";
 "permission.repair-files.title" = "Files and Folders";
 "permission.repair-files.usedBy" = "The app you choose, for quarantine removal, xattr reset and resigning";
 "permission.repair-files.withoutIt" = "Those actions stay at preview if no app is selected; nothing else on the Mac is changed";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "Scanning /Applications and any .app you add by hand";
 "permission.macapp-files.withoutIt" = "The library may be incomplete; you can still choose a single app";
 "permission.macapp-management.title" = "App Management";
-"permission.macapp-management.usedBy" = "May be required when writing a plugin into a local app";
-"permission.macapp-management.withoutIt" = "Opening the app still works; writes to protected apps are refused";
+"permission.macapp-management.usedBy" = "May be required when writing or removing a plugin in a local app";
+"permission.macapp-management.withoutIt" = "Opening the app still works; changes to protected apps are refused";
+"permission.appuninstall-fda.title" = "Full Disk Access";
+"permission.appuninstall-fda.usedBy" = "Scan containers and group containers that belong to the app";
+"permission.appuninstall-fda.withoutIt" = "Unreadable folders are listed separately and are not treated as empty";
+"permission.appuninstall-management.title" = "App Management";
+"permission.appuninstall-management.usedBy" = "macOS may ask before moving an app out of Applications";
+"permission.appuninstall-management.withoutIt" = "If the system refuses, that item stays and the reason is shown";
 "tweakdraft.error.invalidDirectory" = "The draft output folder is invalid";
 "tweakdraft.error.writeFailed" = "Couldn’t write the draft: %@";
 "macapp.launch.error.notAnApp" = "The selected item is not a macOS app";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "Couldn’t read memory information: %@";
 "memory.error.invalid-pid" = "Invalid PID";
 "memory.error.protected-process" = "Quitting %@ could destabilize the system, so it isn’t allowed";
-"memory.error.permission-denied" = "You don’t have permission to quit this process";
+"memory.error.protected-freeze" = "Freezing %@ could destabilize the system, so it isn’t allowed";
+"memory.error.permission-denied" = "You don’t have permission to signal this process";
 "memory.error.process-not-found" = "The process has already exited";
 "memory.error.signal-failed" = "Couldn’t send the signal (errno %d)";
 "memory.error.purge-unavailable" = "The purge command isn’t available on this Mac";
@@ -793,6 +809,8 @@
 "dylib.error.commandFailed" = "Command failed: %@";
 "dylib.error.notMachO" = "Not a valid Mach-O: %@";
 "dylib.error.noExpectedChange" = "The edit command did not produce the expected result: %@";
+"dylib.error.cannotRemoveInstallName" = "The install name cannot be removed: %@";
+"dylib.error.dependencyNotRemoved" = "The dependency was not removed: %@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "Not a valid Mach-O file";
@@ -809,6 +827,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "A fat slice offset or length overflows";
 "dylib.macho.unsupported.fatSliceOverlap" = "Fat slice ranges overlap";
 "dylib.macho.unsupported.changeMissing" = "No load command to rewrite: %@";
+"dylib.macho.unsupported.removeMissing" = "No load command to remove: %@";
 "ipaflow.log.substrateStubCopied" = "Copied the bundled compatibility library into Frameworks";
 "ipaflow.log.substrateStubWarning" = "On newer iOS, if plugins fail to load, switch to a newer compatibility library";
 "ipaflow.error.missingSubstrateStub" = "The bundled libsubstrate.dylib is required but missing from resources";
@@ -817,6 +836,17 @@
 "dylib.macho.log.replacedWithStrong" = "Replaced the existing command in slice %d with a strong reference: %@";
 "dylib.macho.log.strippedCodeSignature" = "Removed LC_CODE_SIGNATURE from the %@-bit slice to free up space";
 "dylib.macho.log.injectedIntoSlice" = "Injected into the %@-bit slice: %@";
+"injectscan.error.notApp" = "Choose an .app";
+"injectscan.error.systemLibrary" = "Refusing to remove a system library: %@";
+"injectscan.error.bundledLibrary" = "This is a bundled app dependency, not treated as a third-party injection: %@";
+"injectscan.log.alreadyGone" = "The load command is already gone, skipped: %@";
+"injectscan.log.removedCommand" = "Removed %@ (host %@)";
+"injectscan.log.payloadMissing" = "No matching plugin file was found; only the load command was removed";
+"injectscan.log.payloadOutside" = "The plugin path is outside this app, so it was not deleted: %@";
+"injectscan.log.deletedPayload" = "Deleted plugin file: %@";
+"injectscan.log.payloadPermission" = "Could not delete the plugin file (%@): %@";
+"injectscan.log.signed" = "Re-signed: %@";
+"injectscan.log.signFailed" = "Re-sign did not succeed (%@): %@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "Single Mach-O";
@@ -887,15 +917,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "Overview";
+"sidebar.menuBar" = "Navigation";
 "sidebar.repair" = "App Repair";
 "sidebar.cleanup" = "Cleanup";
+"sidebar.appUninstall" = "Uninstall Apps";
 "sidebar.desktopIcons" = "Desktop Icons";
 "sidebar.appClone" = "App Clones";
 "sidebar.memory" = "Memory";
 "sidebar.network" = "Network";
 "sidebar.cheatsheet" = "Commands";
 "sidebar.recipes" = "Quick Toggles";
-"sidebar.deb" = "Packaging";
+"sidebar.deb" = "Plugins";
 "sidebar.dylib" = "Dylibs";
 "sidebar.ipa" = "IPA";
 "sidebar.macApp" = "Inject";
@@ -1067,6 +1099,41 @@
 "desktopicon.preset.software.symbols" = "Symbols";
 "desktopicon.preset.software.plugins" = "Plugins";
 "desktopicon.preset.software.build" = "Build";
+"desktopicon.preset.costume.puppy" = "Puppy";
+"desktopicon.preset.costume.kitten" = "Kitten";
+"desktopicon.preset.costume.pear" = "Pear";
+"desktopicon.preset.costume.fridge" = "Smiling Fridge";
+"desktopicon.preset.costume.moon" = "Moon";
+"desktopicon.preset.costume.spider" = "Spider";
+"desktopicon.preset.costume.berry" = "Strawberry";
+"desktopicon.preset.costume.gift" = "Gift";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "Kitten";
+"desktopicon.preset.cute.bunny" = "Bunny";
+"desktopicon.preset.cute.bear" = "Bear";
+"desktopicon.preset.cute.peach" = "Peach";
+"desktopicon.preset.cute.heart" = "Heart";
+"desktopicon.preset.cute.star" = "Star";
+"desktopicon.preset.cute.cloud" = "Cloud";
+"desktopicon.preset.cute.moon" = "Moon";
+"desktopicon.preset.cute.flower" = "Flower";
+"desktopicon.preset.cute.rainbow" = "Rainbow";
+"desktopicon.preset.cute.coffee" = "Coffee";
+"desktopicon.preset.cute.book" = "Book";
+"desktopicon.preset.cute.music" = "Music";
+"desktopicon.preset.cute.camera" = "Camera";
+"desktopicon.preset.cute.gift" = "Gift";
+"desktopicon.preset.cute.rocket" = "Rocket";
 
 /* App clones */
 "appclone.strategy.hard" = "Hard clone";
@@ -1121,3 +1188,17 @@
 "appearance.system" = "System";
 "appearance.light" = "Light";
 "appearance.dark" = "Dark";
+
+/* Software library */
+
+/* App uninstall */
+"appuninstall.block.notAnApp" = "This is not a macOS app";
+"appuninstall.block.missing" = "The app is no longer at its original location";
+"appuninstall.block.systemLocation" = "Built-in system apps can’t be uninstalled here";
+"appuninstall.block.appleBundle" = "Apple system apps can’t be uninstalled here";
+"appuninstall.block.currentApp" = "Mac Assistant can’t uninstall itself while it is running";
+"appuninstall.error.nothingSelected" = "Nothing is selected to move to the Trash";
+"appuninstall.error.symlink" = "This is a symbolic link and was skipped";
+
+/* Energy-mode authorization dialog. The grant lasts until quit, so this appears once. */
+"energy.auth.once" = "Changing the energy mode needs an administrator. After you allow it once, this launch will not ask again.";

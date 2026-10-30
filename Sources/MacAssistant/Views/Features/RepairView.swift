@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 import MacAssistantKit
@@ -8,6 +9,8 @@ struct RepairView: View {
 
     @State private var selectedApp: URL?
     @State private var removeSignatureFirst = false
+    @State private var softwareUpdatePolicy = SoftwareUpdatePolicyService.read()
+    @State private var includeSecurityDataUpdates = false
 
     var body: some View {
         FeatureScaffold(title: L("repairview.title"),
@@ -18,6 +21,9 @@ struct RepairView: View {
             signingSection
             interfaceSection
             footnote
+        }
+        .onAppear {
+            refreshSoftwareUpdatePolicy()
         }
     }
 
@@ -60,7 +66,9 @@ struct RepairView: View {
                             Button(L("repairview.clear")) { selectedApp = nil }.buttonStyle(.borderless)
                         }
                     }
-                    PathBadge(url: selectedApp, placeholder: L("repairview.noApp"))
+                    PathBadge(url: selectedApp, placeholder: L("repairview.noApp")) { urls in
+                        if let url = urls.first { selectedApp = url }
+                    }
                 }
             }
 
@@ -134,6 +142,8 @@ struct RepairView: View {
                          ? L("repairview.section.interface.detail.arm")
                          : L("repairview.section.interface.detail"))
 
+            softwareUpdateCard
+
             Card {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L("repairview.restart.title")).font(.callout.weight(.semibold))
@@ -167,6 +177,65 @@ struct RepairView: View {
                 ) { performResult { try RepairService.installRosetta() } }
             }
         }
+    }
+
+    private var softwareUpdateCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(L("repairview.softwareUpdate.title")).font(.callout.weight(.semibold))
+                    RiskBadge(risk: .caution)
+                    Spacer()
+                    Toggle(isOn: disableAutomaticUpdatesBinding) {
+                        Text(L("repairview.softwareUpdate.toggle"))
+                    }
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .disabled(task.running)
+                    .accessibilityLabel(L("repairview.softwareUpdate.toggle"))
+                    .accessibilityIdentifier("repair.softwareUpdate.toggle")
+                }
+                Text(softwareUpdateStatusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(L("repairview.softwareUpdate.detail"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Toggle(isOn: $includeSecurityDataUpdates) {
+                    Text(L("repairview.softwareUpdate.includeSecurity"))
+                        .font(.caption)
+                }
+                .disabled(task.running)
+                commandPreview(SoftwareUpdatePolicyService.commandPreview(softwareUpdatePreviewPolicy))
+                HStack {
+                    Button { openSoftwareUpdateSettings() } label: {
+                        Label(L("repairview.softwareUpdate.openSettings"), systemImage: "gearshape")
+                    }
+                    Button { refreshSoftwareUpdatePolicy() } label: {
+                        Label(L("repairview.softwareUpdate.refresh"), systemImage: "arrow.clockwise")
+                    }
+                    .disabled(task.running)
+                }
+            }
+        }
+    }
+
+    private var disableAutomaticUpdatesBinding: Binding<Bool> {
+        Binding(
+            get: { softwareUpdatePolicy.suppressesAutomaticMacOSUpdates },
+            set: { applySoftwareUpdateDisable($0) }
+        )
+    }
+
+    private var softwareUpdateStatusText: String {
+        if softwareUpdatePolicy.suppressesAutomaticMacOSUpdates {
+            return L("repairview.softwareUpdate.status.on")
+        }
+        if softwareUpdatePolicy.isPartial {
+            return L("repairview.softwareUpdate.status.partial")
+        }
+        return L("repairview.softwareUpdate.status.off")
     }
 
     private var footnote: some View {
@@ -245,6 +314,68 @@ struct RepairView: View {
     private func openSystemSettings() {
         if let url = URL(string: RepairService.privacySecurityURL) {
             NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func openSoftwareUpdateSettings() {
+        for raw in SoftwareUpdatePolicyService.settingsURLs {
+            if let url = URL(string: raw), NSWorkspace.shared.open(url) {
+                return
+            }
+        }
+    }
+
+    private func refreshSoftwareUpdatePolicy() {
+        softwareUpdatePolicy = SoftwareUpdatePolicyService.read()
+    }
+
+    private var softwareUpdatePreviewPolicy: SoftwareUpdatePolicy {
+        softwareUpdatePolicy.suppressesAutomaticMacOSUpdates
+            ? .automatic(includingSecurityData: includeSecurityDataUpdates)
+            : .suppressed(includingSecurityData: includeSecurityDataUpdates)
+    }
+
+    private func applySoftwareUpdateDisable(_ disable: Bool) {
+        guard !task.running else { return }
+        let policy: SoftwareUpdatePolicy = disable
+            ? .suppressed(includingSecurityData: includeSecurityDataUpdates)
+            : .automatic(includingSecurityData: includeSecurityDataUpdates)
+        task.running = true
+        task.ok = nil
+        Task {
+            do {
+                let text = try await Task.detached(priority: .userInitiated) {
+                    let result = try SoftwareUpdatePolicyService.apply(policy)
+                    if AdminRunner.isCancelled(result) {
+                        throw NSError(
+                            domain: "Repair",
+                            code: 128,
+                            userInfo: [NSLocalizedDescriptionKey: L("repairview.softwareUpdate.cancelled")]
+                        )
+                    }
+                    if !result.succeeded {
+                        let output = result.combinedOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                        throw NSError(
+                            domain: "Repair",
+                            code: Int(result.exitCode),
+                            userInfo: [
+                                NSLocalizedDescriptionKey: output.isEmpty
+                                    ? L("repairview.exitCode", Int(result.exitCode))
+                                    : output
+                            ]
+                        )
+                    }
+                    let output = result.combinedOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return output.isEmpty ? L("repairview.doneNoOutput") : output
+                }.value
+                task.log = text
+                task.ok = true
+            } catch {
+                task.log = error.localizedDescription
+                task.ok = false
+            }
+            refreshSoftwareUpdatePolicy()
+            task.running = false
         }
     }
 

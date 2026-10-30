@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "No cambia la política de seguridad global; sustituye la ruta por la de tu app";
 "recipe.gatekeeper-settings.name" = "Abrir Privacidad y seguridad";
 "recipe.gatekeeper-settings.detail" = "Usa el flujo oficial «Abrir de todos modos» de Apple para permitir una sola app";
+"recipe.software-update-off.name" = "Desactivar las actualizaciones automáticas del sistema";
+"recipe.software-update-off.detail" = "Desactiva la comprobación, descarga e instalación automáticas de macOS. Requiere privilegios de administrador. No falsifica la versión del sistema";
+"recipe.software-update-on.name" = "Restaurar las actualizaciones automáticas del sistema";
+"recipe.software-update-on.detail" = "Vuelve a activar la comprobación, descarga e instalación automáticas de macOS. Requiere privilegios de administrador";
+"softwareupdate.error.unsupportedKey" = "No se permite escribir la clave de Software Update: %@";
 
 /* System information */
 "sysinfo.hostname" = "Nombre de host";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "Personaliza iconos de archivos, carpetas y apps del escritorio, o restaura los valores por defecto";
 "toolfinder.feature.appClone.title" = "Clones de apps";
 "toolfinder.feature.appClone.detail" = "Crea clones aislados de WeChat, navegadores y otras apps de Mac con datos separados";
+"toolfinder.feature.macApp.title" = "Inyección en apps locales";
+"toolfinder.feature.macApp.detail" = "Inyecta plugins en una app de macOS local, o escanea y quita bibliotecas de terceros ya escritas";
+"toolfinder.feature.appUninstall.title" = "Desinstalar apps";
+"toolfinder.feature.appUninstall.detail" = "Mueve una app normal y sus restos en tu Biblioteca a la Papelera";
 "permission.repair-files.title" = "Archivos y carpetas";
 "permission.repair-files.usedBy" = "La app que elijas, para quitar la cuarentena, restablecer xattr y volver a firmar";
 "permission.repair-files.withoutIt" = "Esas acciones se quedan en vista previa si no hay app seleccionada; no se cambia nada más en el Mac";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "Escanear /Applications y cualquier .app que añadas a mano";
 "permission.macapp-files.withoutIt" = "La biblioteca puede estar incompleta; aún puedes elegir una sola app";
 "permission.macapp-management.title" = "Gestión de apps";
-"permission.macapp-management.usedBy" = "Puede hacer falta al escribir un plugin en una app local";
-"permission.macapp-management.withoutIt" = "Abrir la app sigue funcionando; las escrituras en apps protegidas se rechazan";
+"permission.macapp-management.usedBy" = "Puede hacer falta al escribir o quitar un plugin en una app local";
+"permission.macapp-management.withoutIt" = "Abrir la app sigue funcionando; los cambios en apps protegidas se rechazan";
+"permission.appuninstall-fda.title" = "Acceso total al disco";
+"permission.appuninstall-fda.usedBy" = "Buscar datos de la app en contenedores y contenedores de grupo";
+"permission.appuninstall-fda.withoutIt" = "Las carpetas ilegibles se indican aparte y no se tratan como vacías";
+"permission.appuninstall-management.title" = "Gestión de apps";
+"permission.appuninstall-management.usedBy" = "macOS puede pedir permiso para mover una app fuera de Aplicaciones";
+"permission.appuninstall-management.withoutIt" = "Si el sistema lo rechaza, el elemento permanece y se muestra el motivo";
 "tweakdraft.error.invalidDirectory" = "La carpeta de destino del borrador no es válida";
 "tweakdraft.error.writeFailed" = "No se ha podido escribir el borrador: %@";
 "macapp.launch.error.notAnApp" = "El elemento seleccionado no es una app de macOS";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "No se ha podido leer la información de memoria: %@";
 "memory.error.invalid-pid" = "PID no válido";
 "memory.error.protected-process" = "Salir de %@ podría desestabilizar el sistema, así que no se permite";
-"memory.error.permission-denied" = "No tienes permiso para salir de este proceso";
+"memory.error.protected-freeze" = "Congelar %@ podría desestabilizar el sistema, así que no se permite";
+"memory.error.permission-denied" = "No tienes permiso para enviar una señal a este proceso";
 "memory.error.process-not-found" = "El proceso ya ha terminado";
 "memory.error.signal-failed" = "No se ha podido enviar la señal (errno %d)";
 "memory.error.purge-unavailable" = "El comando purge no está disponible en este Mac";
@@ -793,6 +809,8 @@
 "dylib.error.commandFailed" = "El comando ha fallado: %@";
 "dylib.error.notMachO" = "No es un Mach-O válido: %@";
 "dylib.error.noExpectedChange" = "El comando de edición no produjo el resultado esperado: %@";
+"dylib.error.cannotRemoveInstallName" = "No se puede quitar el install name: %@";
+"dylib.error.dependencyNotRemoved" = "No se quitó la dependencia: %@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "No es un archivo Mach-O válido";
@@ -809,6 +827,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "Un desplazamiento o longitud de slice fat se desborda";
 "dylib.macho.unsupported.fatSliceOverlap" = "Los rangos de slices fat se solapan";
 "dylib.macho.unsupported.changeMissing" = "No hay load command que reescribir: %@";
+"dylib.macho.unsupported.removeMissing" = "No hay load command que quitar: %@";
 "ipaflow.log.substrateStubCopied" = "Se copió la biblioteca de compatibilidad incluida a Frameworks";
 "ipaflow.log.substrateStubWarning" = "En iOS más reciente, si los plugins no se cargan, cambia a una biblioteca de compatibilidad más nueva";
 "ipaflow.error.missingSubstrateStub" = "Se requiere el libsubstrate.dylib incluido, pero falta en los recursos";
@@ -817,6 +836,17 @@
 "dylib.macho.log.replacedWithStrong" = "Se reemplazó el comando existente de la slice %d por una referencia fuerte: %@";
 "dylib.macho.log.strippedCodeSignature" = "Se eliminó LC_CODE_SIGNATURE de la slice de %@ bits para liberar espacio";
 "dylib.macho.log.injectedIntoSlice" = "Inyectado en la slice de %@ bits: %@";
+"injectscan.error.notApp" = "Elige un .app";
+"injectscan.error.systemLibrary" = "No se quita una biblioteca del sistema: %@";
+"injectscan.error.bundledLibrary" = "Es una dependencia de la propia app, no se trata como inyección de terceros: %@";
+"injectscan.log.alreadyGone" = "El load command ya no está, se omite: %@";
+"injectscan.log.removedCommand" = "Se quitó %@ (huésped %@)";
+"injectscan.log.payloadMissing" = "No se encontró el archivo del plugin; solo se quitó el load command";
+"injectscan.log.payloadOutside" = "La ruta del plugin está fuera de esta app, no se borró: %@";
+"injectscan.log.deletedPayload" = "Archivo del plugin borrado: %@";
+"injectscan.log.payloadPermission" = "No se pudo borrar el archivo del plugin (%@): %@";
+"injectscan.log.signed" = "Refirmado: %@";
+"injectscan.log.signFailed" = "La refirma no se completó (%@): %@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "Mach-O único";
@@ -887,15 +917,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "Resumen";
+"sidebar.menuBar" = "Navegación";
 "sidebar.repair" = "Reparación";
 "sidebar.cleanup" = "Limpieza";
+"sidebar.appUninstall" = "Desinstalar apps";
 "sidebar.desktopIcons" = "Iconos del escritorio";
 "sidebar.appClone" = "Clones de apps";
 "sidebar.memory" = "Memoria";
 "sidebar.network" = "Red";
 "sidebar.cheatsheet" = "Comandos";
 "sidebar.recipes" = "Interruptores rápidos";
-"sidebar.deb" = "Empaquetado";
+"sidebar.deb" = "Plugins";
 "sidebar.dylib" = "Dylibs";
 "sidebar.ipa" = "IPA";
 "sidebar.macApp" = "Inyección";
@@ -1067,6 +1099,41 @@
 "desktopicon.preset.software.symbols" = "Símbolos";
 "desktopicon.preset.software.plugins" = "Plugins";
 "desktopicon.preset.software.build" = "Compilación";
+"desktopicon.preset.costume.puppy" = "Perrito";
+"desktopicon.preset.costume.kitten" = "Gatito";
+"desktopicon.preset.costume.pear" = "Pera";
+"desktopicon.preset.costume.fridge" = "Nevera sonriente";
+"desktopicon.preset.costume.moon" = "Luna";
+"desktopicon.preset.costume.spider" = "Araña";
+"desktopicon.preset.costume.berry" = "Fresa";
+"desktopicon.preset.costume.gift" = "Regalo";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "Gatito";
+"desktopicon.preset.cute.bunny" = "Conejito";
+"desktopicon.preset.cute.bear" = "Osito";
+"desktopicon.preset.cute.peach" = "Melocotón";
+"desktopicon.preset.cute.heart" = "Corazón";
+"desktopicon.preset.cute.star" = "Estrella";
+"desktopicon.preset.cute.cloud" = "Nube";
+"desktopicon.preset.cute.moon" = "Luna";
+"desktopicon.preset.cute.flower" = "Flor";
+"desktopicon.preset.cute.rainbow" = "Arcoíris";
+"desktopicon.preset.cute.coffee" = "Café";
+"desktopicon.preset.cute.book" = "Libro";
+"desktopicon.preset.cute.music" = "Música";
+"desktopicon.preset.cute.camera" = "Cámara";
+"desktopicon.preset.cute.gift" = "Regalo";
+"desktopicon.preset.cute.rocket" = "Cohete";
 
 /* App clones */
 "appclone.strategy.hard" = "Clon duro";
@@ -1121,3 +1188,17 @@
 "appearance.system" = "Sistema";
 "appearance.light" = "Claro";
 "appearance.dark" = "Oscuro";
+
+/* Biblioteca de apps */
+
+/* Desinstalar apps */
+"appuninstall.block.notAnApp" = "Esto no es una app de macOS";
+"appuninstall.block.missing" = "La app ya no está en su ubicación original";
+"appuninstall.block.systemLocation" = "Las apps integradas del sistema no se pueden desinstalar aquí";
+"appuninstall.block.appleBundle" = "Las apps del sistema de Apple no se pueden desinstalar aquí";
+"appuninstall.block.currentApp" = "Mac Assistant no puede desinstalarse a sí mismo mientras se está ejecutando";
+"appuninstall.error.nothingSelected" = "No hay nada seleccionado para mover a la Papelera";
+"appuninstall.error.symlink" = "Es un enlace simbólico y se ha omitido";
+
+/* Diálogo de autorización del modo de energía. El permiso dura hasta salir. */
+"energy.auth.once" = "Cambiar el modo de energía requiere un administrador. Después de permitirlo una vez, esta sesión no volverá a preguntar.";

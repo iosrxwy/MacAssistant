@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import MacAssistantKit
 
-/// macOS 本机应用工作台：左侧应用库，右侧插件注入；隔离登录请走应用分身页。
+/// macOS 本机应用工作台：左侧应用库，右侧可注入或卸除插件；隔离登录请走应用分身页。
 struct MacAppView: View {
     @ObservedObject var workspace: WorkspaceStore
     @ObservedObject private var library = MacAppLibraryMonitor.shared
@@ -25,6 +25,7 @@ struct MacAppView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let selectedApp {
                         appHeader(selectedApp)
+                        InjectedPluginPane(app: selectedApp) { self.selectedApp = $0 }
                         TweakInjectTab(
                             inputMode: .macOSApp,
                             initialInput: selectedApp,
@@ -97,6 +98,9 @@ struct MacAppView: View {
                         .frame(width: 56, height: 56)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(MacAppLibrary.displayName(of: app)).font(.title3.weight(.semibold))
+                        Text(MacAppLibrary.copyLabel(of: app))
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(.primary)
                         Text(app.path)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -133,10 +137,13 @@ struct MacAppView: View {
     }
 }
 
-/// 注入页与分身页共用的本机应用列表。
+/// 注入页、分身页、卸载页共用的本机应用列表。一行一个。
 struct MacAppLibraryPane: View {
     @ObservedObject var library: MacAppLibraryMonitor
     @Binding var selection: URL?
+    var interactionLocked = false
+    /// 卸载页把左栏拉满窗口高度；注入页和分身页保持内容高度。
+    var fillsAvailableHeight = false
 
     var body: some View {
         Card(padding: 10) {
@@ -153,7 +160,7 @@ struct MacAppLibraryPane: View {
                         }
                     }
                     .buttonStyle(.borderless)
-                    .disabled(library.isScanning)
+                    .disabled(library.isScanning || interactionLocked)
                     .help(L("macappview.refresh"))
                     .accessibilityLabel(L("macappview.refresh"))
                 }
@@ -169,60 +176,95 @@ struct MacAppLibraryPane: View {
                     RoundedRectangle(cornerRadius: 8),
                     legacyFill: Color.primary.opacity(0.06)
                 )
+                .disabled(interactionLocked)
 
-                if library.visibleApps.isEmpty {
-                    Group {
-                        if library.isScanning {
-                            ProgressView(L("macappview.scanning"))
-                                .controlSize(.small)
-                        } else {
-                            Text(L("macappview.noSelection"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 360)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 1) {
-                            ForEach(library.visibleApps, id: \.self) { app in
-                                Button {
-                                    selection = app
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Image(nsImage: MacAppIconCache.image(for: app))
-                                            .resizable()
-                                            .frame(width: 28, height: 28)
-                                        Text(MacAppLibrary.displayName(of: app))
-                                            .foregroundStyle(Color.primary)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-                                        Spacer(minLength: 0)
-                                    }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(QuietRowButtonStyle(selected: selection == app))
-                            }
-                        }
-                        .animation(nil, value: selection)
-                    }
-                    .frame(minHeight: 360)
-                    .accessibilityIdentifier("macapp.library")
-                }
+                libraryList
 
                 FilePickerButton(
                     title: L("macappview.chooseApp"),
                     systemImage: "plus",
                     chooseDirectory: true
                 ) { url in
-                    guard url.pathExtension.lowercased() == "app" else { return }
+                    guard !interactionLocked, url.pathExtension.lowercased() == "app" else { return }
                     library.addExtra(url)
                     selection = url
                 }
+                .disabled(interactionLocked)
             }
+            .modifier(LibraryPaneFill(enabled: fillsAvailableHeight))
+        }
+    }
+
+    @ViewBuilder
+    private var libraryList: some View {
+        if library.visibleApps.isEmpty {
+            Group {
+                if library.isScanning {
+                    ProgressView(L("macappview.scanning"))
+                        .controlSize(.small)
+                } else {
+                    Text(L("macappview.noSelection"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 360)
+            .modifier(LibraryPaneFill(enabled: fillsAvailableHeight))
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 1) {
+                    ForEach(library.visibleApps, id: \.self) { app in
+                        Button {
+                            guard !interactionLocked else { return }
+                            selection = app
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(nsImage: MacAppIconCache.image(for: app))
+                                    .resizable()
+                                    .frame(width: 28, height: 28)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(MacAppLibrary.displayName(of: app))
+                                        .foregroundStyle(Color.primary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Text(MacAppLibrary.copyLabel(of: app))
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(QuietRowButtonStyle(selected: isCurrent(app)))
+                        .disabled(interactionLocked)
+                    }
+                }
+                .animation(nil, value: selection)
+            }
+            .frame(minHeight: 360)
+            .modifier(LibraryPaneFill(enabled: fillsAvailableHeight))
+            .accessibilityIdentifier("macapp.library")
+        }
+    }
+
+    private func isCurrent(_ app: URL) -> Bool {
+        selection?.standardizedFileURL.path == app.standardizedFileURL.path
+    }
+}
+
+private struct LibraryPaneFill: ViewModifier {
+    var enabled: Bool
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        } else {
+            content
         }
     }
 }
@@ -249,10 +291,14 @@ private struct MacAppGuideSheet: View {
                 title: L("macappview.guide.inject.title"),
                 detail: L("macappview.guide.inject.detail")
             )
+            guideBlock(
+                title: L("macappview.guide.uninject.title"),
+                detail: L("macappview.guide.uninject.detail")
+            )
             Spacer(minLength: 0)
         }
         .padding(22)
-        .frame(width: 460, height: 360)
+        .frame(width: 460, height: 480)
     }
 
     private func guideBlock(title: String, detail: String) -> some View {

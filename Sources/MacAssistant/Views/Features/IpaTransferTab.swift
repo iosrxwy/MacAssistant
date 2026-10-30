@@ -155,7 +155,13 @@ struct IpaTransferTab: View {
                     }
                     Spacer()
                 }
-                PathBadge(url: ipaURL, placeholder: L("ipatransfer.noIPA"))
+                PathBadge(url: ipaURL, placeholder: L("ipatransfer.noIPA")) { urls in
+                    guard let url = urls.first else { return }
+                    ipaURL = url
+                    replaceConfirmed = false
+                    log = ""
+                    ok = nil
+                }
                 if comparing {
                     ProgressView(L("ipatransfer.comparing")).controlSize(.small)
                 } else if let plan = installPlan {
@@ -200,7 +206,12 @@ struct IpaTransferTab: View {
                     }
                     Spacer()
                 }
-                PathBadge(url: appURL, placeholder: L("ipatransfer.noApp"))
+                PathBadge(url: appURL, placeholder: L("ipatransfer.noApp")) { urls in
+                    guard let url = urls.first else { return }
+                    appURL = url
+                    log = ""
+                    ok = nil
+                }
                 Button {
                     packageLocal()
                 } label: {
@@ -252,7 +263,9 @@ struct IpaTransferTab: View {
                         systemImage: "folder",
                         chooseDirectory: true
                     ) { outputDirectory = $0 }
-                    PathBadge(url: outputDirectory, placeholder: L("ipatransfer.noOutput"))
+                    PathBadge(url: outputDirectory, placeholder: L("ipatransfer.noOutput")) { urls in
+                        if let url = urls.first { outputDirectory = url }
+                    }
                 }
                 Button {
                     exportFromDevice()

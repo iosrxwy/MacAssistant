@@ -15,7 +15,10 @@ var targets: [Target] = [
         resources: [
             .process("Localization"),
             .copy("Resources/libsubstrate.dylib"),
-            .copy("Resources/CloneSupport")
+            .copy("Resources/CloneSupport"),
+            .copy("Resources/CuteIcons"),
+            .copy("Resources/FolderCostumes"),
+            .copy("Resources/AIIcons")
         ],
         linkerSettings: [
             .linkedFramework("IOKit"),
@@ -31,7 +34,21 @@ var targets: [Target] = [
         resources: [
             .copy("Resources/AppIcon.png"),
             .process("Localization")
+        ],
+        linkerSettings: [
+            .linkedFramework("CoreWLAN"),
+            .linkedFramework("CoreAudio"),
+            .linkedFramework("IOBluetooth"),
+            .linkedFramework("IOKit"),
+            .linkedFramework("Network"),
+            .linkedFramework("SystemConfiguration"),
+            .linkedFramework("ApplicationServices")
         ]
+    ),
+    // 只跑 pmset 的小程序。菜单栏进程不把自己提权，避免整份 SwiftUI 应用以 root 启动。
+    .executableTarget(
+        name: "MacAssistantEnergyHelper",
+        path: "Sources/MacAssistantEnergyHelper"
     )
 ]
 
@@ -40,7 +57,7 @@ if FileManager.default.fileExists(atPath: "Tests/MacAssistantKitTests") {
     targets.append(
         .testTarget(
             name: "MacAssistantKitTests",
-            dependencies: ["MacAssistantKit"],
+            dependencies: ["MacAssistantKit", "MacAssistantEnergyHelper"],
             path: "Tests/MacAssistantKitTests"
         )
     )
@@ -55,6 +72,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "MacAssistant", targets: ["MacAssistant"]),
+        .executable(name: "MacAssistantEnergyHelper", targets: ["MacAssistantEnergyHelper"]),
         .library(name: "MacAssistantKit", targets: ["MacAssistantKit"])
     ],
     targets: targets

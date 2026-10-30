@@ -70,7 +70,9 @@ struct SigningTab: View {
                         }
                         Spacer()
                     }
-                    PathBadge(url: ipaURL, placeholder: L("signingtab.noIPA"))
+                    PathBadge(url: ipaURL, placeholder: L("signingtab.noIPA")) { urls in
+                        if let url = urls.first { selectIPA(url) }
+                    }
                 }
             }
 

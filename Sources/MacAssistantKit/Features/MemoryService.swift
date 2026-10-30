@@ -79,6 +79,8 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
     public let displayName: String
     /// `ps` 的 comm：Electron 会改成带窗口/工作区的名称，例如 `extension-host Mac小助手`。
     public let processTitle: String
+    /// 进程处于 SSTOP（SIGSTOP / 调试挂起）。冻结后列表仍保留，方便再点一次恢复。
+    public let isStopped: Bool
 
     public var id: Int32 { pid }
     public var name: String {
@@ -103,7 +105,8 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
         executablePath: String,
         footprintBytes: UInt64 = 0,
         displayName: String? = nil,
-        processTitle: String = ""
+        processTitle: String = "",
+        isStopped: Bool = false
     ) {
         self.pid = pid
         self.userID = userID
@@ -111,6 +114,7 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
         self.footprintBytes = footprintBytes
         self.executablePath = executablePath
         self.processTitle = processTitle
+        self.isStopped = isStopped
         let fallback = ProcessDisplayNameResolver.executableName(executablePath)
         if let displayName, !displayName.isEmpty {
             self.displayName = displayName
@@ -288,12 +292,28 @@ public struct ProcessIconCacheKey: Hashable, Sendable {
 public enum ProcessSignal: Equatable, Sendable {
     case terminate
     case kill
+    /// 暂停执行，保留地址空间。macOS 随后可以压缩或换出不再活动的页。
+    case suspend
+    /// 从暂停处继续，对应 SIGCONT。
+    case resume
 
     var rawValue: Int32 {
         switch self {
         case .terminate: return SIGTERM
         case .kill: return SIGKILL
+        case .suspend: return SIGSTOP
+        case .resume: return SIGCONT
         }
+    }
+}
+
+public struct ProcessSignalBatch: Sendable, Equatable {
+    public let sent: Int
+    public let failure: String?
+
+    public init(sent: Int, failure: String?) {
+        self.sent = sent
+        self.failure = failure
     }
 }
 
@@ -315,6 +335,7 @@ public enum MemoryServiceError: LocalizedError {
     case processNotFound
     case signalFailed(Int32)
     case purgeUnavailable
+    case protectedFreeze(String)
 
     public var errorDescription: String? {
         switch self {
@@ -325,6 +346,7 @@ public enum MemoryServiceError: LocalizedError {
         case .processNotFound: return L("memory.error.process-not-found")
         case let .signalFailed(code): return L("memory.error.signal-failed", code)
         case .purgeUnavailable: return L("memory.error.purge-unavailable")
+        case let .protectedFreeze(name): return L("memory.error.protected-freeze", name)
         }
     }
 }
@@ -425,7 +447,9 @@ public enum MemoryService {
                 let path = processExecutablePath(pid: process.pid) ?? process.executablePath
                 let footprint = processMemoryFootprint(pid: process.pid) ?? 0
                 let memory = footprint > 0 ? footprint : process.rssBytes
-                guard memory > 0 else { return nil }
+                let stopped = processIsStopped(pid: process.pid)
+                // 冻结成功后 footprint 可能降到 0，仍要留在列表里，否则无法恢复。
+                guard shouldListProcess(memoryBytes: memory, isStopped: stopped) else { return nil }
                 return ProcessMemoryInfo(
                     pid: process.pid,
                     userID: process.userID,
@@ -433,7 +457,8 @@ public enum MemoryService {
                     executablePath: path,
                     footprintBytes: footprint,
                     displayName: ProcessDisplayNameResolver.displayName(executablePath: path),
-                    processTitle: process.processTitle
+                    processTitle: process.processTitle,
+                    isStopped: stopped
                 )
             }
             .sorted(by: Self.isHigherMemoryUsage)
@@ -550,15 +575,141 @@ public enum MemoryService {
         }
     }
 
-    public static func send(_ signal: ProcessSignal, to process: ProcessMemoryInfo) throws {
-        try validatePID(process.pid, processName: process.name)
-        guard Darwin.kill(process.pid, signal.rawValue) == 0 else {
-            switch errno {
-            case EPERM: throw MemoryServiceError.permissionDenied
-            case ESRCH: throw MemoryServiceError.processNotFound
-            default: throw MemoryServiceError.signalFailed(errno)
+    /// 内存为 0 的普通进程不进列表；已冻结的要留下，方便再次点击恢复。
+    public static func shouldListProcess(memoryBytes: UInt64, isStopped: Bool) -> Bool {
+        memoryBytes > 0 || isStopped
+    }
+
+    /// `proc_bsdinfo.pbi_status == SSTOP`。活动监视器里显示为已暂停的进程也算。
+    public static func isStoppedBSDStatus(_ status: UInt32) -> Bool {
+        status == UInt32(SSTOP)
+    }
+
+    static func processBSDStatus(pid: Int32) -> UInt32? {
+        guard pid > 0 else { return nil }
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        let written = withUnsafeMutablePointer(to: &info) { pointer in
+            proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, pointer, size)
+        }
+        guard written > 0 else { return nil }
+        return info.pbi_status
+    }
+
+    public static func processIsStopped(pid: Int32) -> Bool {
+        guard let status = processBSDStatus(pid: pid) else { return false }
+        return isStoppedBSDStatus(status)
+    }
+
+    /// 最外层 .app 相同的进程算同一个应用。没有 .app 时只动选中的那一个。
+    public static func applicationGroup(
+        for process: ProcessMemoryInfo,
+        among processes: [ProcessMemoryInfo]
+    ) -> [ProcessMemoryInfo] {
+        guard let bundle = process.applicationBundlePath else { return [process] }
+        let group = processes.filter { $0.applicationBundlePath == bundle }
+        return group.isEmpty ? [process] : group
+    }
+
+    /// 可执行文件直接属于最外层 .app 时视为主进程；嵌套 Helper.app 不是。
+    public static func isApplicationMainProcess(_ process: ProcessMemoryInfo) -> Bool {
+        let bundles = ProcessApplicationResolver.applicationBundlePaths(forExecutablePath: process.executablePath)
+        guard let outer = bundles.first, let inner = bundles.last else { return true }
+        return outer == inner
+    }
+
+    public static func isOwnApplication(
+        _ process: ProcessMemoryInfo,
+        ownPID: Int32 = ProcessInfo.processInfo.processIdentifier,
+        ownExecutablePath: String? = nil
+    ) -> Bool {
+        if process.pid == ownPID { return true }
+        guard let ownExecutablePath,
+              let ownBundle = ProcessApplicationResolver.applicationBundlePath(forExecutablePath: ownExecutablePath),
+              let bundle = process.applicationBundlePath
+        else { return false }
+        return ownBundle == bundle
+    }
+
+    /// 冻结 / 恢复的目标：同一应用的主进程和辅助进程。
+    /// 暂停时主进程在前，避免它再拉起逃过冻结的子进程；恢复时辅助进程在前。
+    public static func suspensionTargets(
+        for process: ProcessMemoryInfo,
+        among processes: [ProcessMemoryInfo],
+        action: ProcessSignal,
+        ownPID: Int32 = ProcessInfo.processInfo.processIdentifier,
+        ownExecutablePath: String? = nil
+    ) throws -> [ProcessMemoryInfo] {
+        guard action == .suspend || action == .resume else { return [process] }
+        let ownPath = ownExecutablePath ?? processExecutablePath(pid: ownPID)
+        if isOwnApplication(process, ownPID: ownPID, ownExecutablePath: ownPath) {
+            throw MemoryServiceError.protectedFreeze(L("memory.process.self"))
+        }
+        var allowed: [ProcessMemoryInfo] = []
+        for item in applicationGroup(for: process, among: processes) {
+            if isOwnApplication(item, ownPID: ownPID, ownExecutablePath: ownPath) { continue }
+            do {
+                try validatePID(item.pid, processName: item.name, ownPID: ownPID)
+                allowed.append(item)
+            } catch {
+                if item.pid == process.pid {
+                    throw MemoryServiceError.protectedFreeze(item.displayName)
+                }
             }
         }
+        guard !allowed.isEmpty else {
+            throw MemoryServiceError.protectedFreeze(process.displayName)
+        }
+        return orderedForSignal(allowed, action: action)
+    }
+
+    static func orderedForSignal(
+        _ processes: [ProcessMemoryInfo],
+        action: ProcessSignal
+    ) -> [ProcessMemoryInfo] {
+        let ordered = processes.sorted { lhs, rhs in
+            let lhsMain = isApplicationMainProcess(lhs)
+            let rhsMain = isApplicationMainProcess(rhs)
+            if lhsMain != rhsMain { return lhsMain }
+            return lhs.pid < rhs.pid
+        }
+        return action == .resume ? Array(ordered.reversed()) : ordered
+    }
+
+    /// 已暂停的进程收不到 SIGTERM，要先 SIGCONT。SIGKILL 对暂停进程仍然有效。
+    static func signalCodes(_ signal: ProcessSignal, isStopped: Bool) -> [Int32] {
+        if signal == .terminate, isStopped {
+            return [SIGCONT, signal.rawValue]
+        }
+        return [signal.rawValue]
+    }
+
+    public static func send(_ signal: ProcessSignal, to process: ProcessMemoryInfo) throws {
+        try validatePID(process.pid, processName: process.name)
+        let stopped = signal == .terminate && processIsStopped(pid: process.pid)
+        for code in signalCodes(signal, isStopped: stopped) {
+            guard Darwin.kill(process.pid, code) == 0 else {
+                switch errno {
+                case EPERM: throw MemoryServiceError.permissionDenied
+                case ESRCH: throw MemoryServiceError.processNotFound
+                default: throw MemoryServiceError.signalFailed(errno)
+                }
+            }
+        }
+    }
+
+    public static func send(_ signal: ProcessSignal, to processes: [ProcessMemoryInfo]) -> ProcessSignalBatch {
+        var sent = 0
+        var failure: String?
+        for process in processes {
+            do {
+                try send(signal, to: process)
+                sent += 1
+            } catch {
+                if failure == nil { failure = error.localizedDescription }
+            }
+        }
+        return ProcessSignalBatch(sent: sent, failure: failure)
     }
 
     public static var purgeAvailable: Bool {

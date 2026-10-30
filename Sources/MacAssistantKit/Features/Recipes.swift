@@ -114,7 +114,13 @@ public enum RecipeLibrary {
         .init(id: "gatekeeper-assess", categoryID: "security",
               command: "spctl --assess --type execute --verbose=4 /Applications/示例.app"),
         .init(id: "gatekeeper-settings", categoryID: "security",
-              command: "open 'x-apple.systempreferences:com.apple.preference.security?Privacy'")
+              command: "open 'x-apple.systempreferences:com.apple.preference.security?Privacy'"),
+        .init(id: "software-update-off", categoryID: "security",
+              command: SoftwareUpdatePolicyService.commandPreview(.suppressed),
+              needsSudo: true),
+        .init(id: "software-update-on", categoryID: "security",
+              command: SoftwareUpdatePolicyService.commandPreview(.automatic),
+              needsSudo: true)
     ]
 
     /// 运行一条配方(通过登录 shell,使 defaults/killall 等可用)。

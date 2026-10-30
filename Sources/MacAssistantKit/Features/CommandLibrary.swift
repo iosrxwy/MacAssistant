@@ -653,6 +653,10 @@ public enum CommandLibrary {
         softwareupdate -ia --restart
         """#,
          "列出/安装全部更新,可自动重启。", .caution, nil),
+        ("Time Machine·启动项", "禁用系统自动更新", SoftwareUpdatePolicyService.commandPreview(.suppressed),
+         "关闭 macOS 自动检查、下载和安装，并清空已缓存的可用更新列表。不会伪装系统版本；手动打开软件更新仍可升级。需管理员权限。", .caution, "Ventura 13+ 对应系统设置 > 通用 > 软件更新"),
+        ("Time Machine·启动项", "恢复系统自动更新", SoftwareUpdatePolicyService.commandPreview(.automatic),
+         "重新打开 macOS 自动检查、下载和安装。需管理员权限。", .caution, nil),
         ("Time Machine·启动项", "图片批处理(sips)", #"""
         sips -s format png in.jpg --out out.png
         sips -Z 1024 *.jpg

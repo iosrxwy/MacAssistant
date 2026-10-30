@@ -79,6 +79,11 @@ if [[ ! -f "$EXECUTABLE" ]]; then
   echo "错误:未找到可执行文件 $EXECUTABLE" >&2
   exit 1
 fi
+ENERGY_HELPER="$BIN_DIR/MacAssistantEnergyHelper"
+if [[ ! -x "$ENERGY_HELPER" ]]; then
+  echo "错误:未找到能耗模式辅助程序 $ENERGY_HELPER" >&2
+  exit 1
+fi
 for BUNDLE in "${RESOURCE_BUNDLES[@]}"; do
   if [[ ! -d "$BUNDLE" ]]; then
     echo "错误:未找到 SwiftPM 资源包 $BUNDLE" >&2
@@ -123,6 +128,13 @@ if [[ "$ARCH_MODE" == "universal" ]]; then
       exit 1
     }
   done
+  HELPER_ARCHS="$(lipo -archs "$ENERGY_HELPER")"
+  for WANT in x86_64 arm64; do
+    [[ " $HELPER_ARCHS " == *" $WANT "* ]] || {
+      echo "错误:能耗模式辅助程序缺少 $WANT 切片(实际:$HELPER_ARCHS)" >&2
+      exit 1
+    }
+  done
 fi
 
 # 从 Resources/AppIcon.png 生成 AppIcon.icns 放进 bundle(临时 iconset 目录用完即删,不入库)。
@@ -130,6 +142,8 @@ fi
 echo "==> 编译应用分身辅助程序 …"
 HELPERS="$CONTENTS/Helpers"
 mkdir -p "$HELPERS"
+cp "$ENERGY_HELPER" "$HELPERS/MacAssistantEnergyHelper"
+chmod +x "$HELPERS/MacAssistantEnergyHelper"
 CLONE_SRC="Sources/MacAssistantKit/Resources/CloneSupport"
 if [[ "$ARCH_MODE" == "universal" ]]; then
   CLONE_ARCHS=(-arch arm64 -arch x86_64)
@@ -183,11 +197,23 @@ localized_display_name() {
     *)  printf '%s' "$APP_NAME" ;;
   esac
 }
+# 读蓝牙设备时系统会查这句。缺了会直接 SIGABRT，而不是弹出授权框。
+bluetooth_usage() {
+  case "$1" in
+    zh-Hant) printf '%s' '在選單列裡顯示已配對的藍牙裝置，並連接或中斷它們。' ;;
+    en) printf '%s' 'Shows paired Bluetooth devices in the menu bar, and connects or disconnects them.' ;;
+    es) printf '%s' 'Muestra los dispositivos Bluetooth emparejados en la barra de menús y permite conectarlos o desconectarlos.' ;;
+    ko) printf '%s' '메뉴 막대에서 페어링된 Bluetooth 기기를 보여주고 연결하거나 끊습니다.' ;;
+    ru) printf '%s' 'Показывает сопряжённые устройства Bluetooth в строке меню и позволяет их подключать или отключать.' ;;
+    *) printf '%s' '在菜单栏里显示已配对的蓝牙设备，并连接或断开它们。' ;;
+  esac
+}
 LOCALIZATIONS_XML=""
 for LANG_CODE in $APP_LOCALIZATIONS; do
   mkdir -p "$CONTENTS/Resources/$LANG_CODE.lproj"
   cat > "$CONTENTS/Resources/$LANG_CODE.lproj/InfoPlist.strings" <<STRINGS
 "CFBundleDisplayName" = "$(localized_display_name "$LANG_CODE")";
+"NSBluetoothAlwaysUsageDescription" = "$(bluetooth_usage "$LANG_CODE")";
 STRINGS
   LOCALIZATIONS_XML="$LOCALIZATIONS_XML
         <string>$LANG_CODE</string>"
@@ -358,6 +384,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
     <key>CFBundleVersion</key><string>${VERSION}</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>NSBluetoothAlwaysUsageDescription</key><string>$(bluetooth_usage "$DEVELOPMENT_REGION")</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
     <key>NSHumanReadableCopyright</key><string>GNU GPL-3.0 · Open Source</string>
     <key>MacAssistantBuildKind</key><string>${BUILD_KIND}</string>
@@ -370,6 +397,8 @@ if [[ "$RELEASE_MODE" -eq 1 ]]; then
   # 先签内层可执行文件,再签整个 .app;两层都启用 runtime 加固并写入最小 entitlements。
   codesign --force --options runtime --timestamp \
     --sign "$SIGN_IDENTITY" "$HELPERS/MacAssistantCloneLauncher"
+  codesign --force --options runtime --timestamp \
+    --sign "$SIGN_IDENTITY" "$HELPERS/MacAssistantEnergyHelper"
   codesign --force --options runtime --timestamp \
     --sign "$SIGN_IDENTITY" "$HELPERS/libMacAssistantCloneEnv.dylib"
   codesign --force --options runtime --timestamp \
@@ -416,6 +445,7 @@ elif [[ -n "$LOCAL_SIGN_IDENTITY" ]]; then
     fi
   }
   local_codesign "$HELPERS/MacAssistantCloneLauncher"
+  local_codesign "$HELPERS/MacAssistantEnergyHelper"
   local_codesign "$HELPERS/libMacAssistantCloneEnv.dylib"
   local_codesign "$CONTENTS/MacOS/MacAssistant"
   local_codesign "$APP"
@@ -423,6 +453,7 @@ elif [[ -n "$LOCAL_SIGN_IDENTITY" ]]; then
 else
   echo "==> ad-hoc 开发签名（非 Developer ID、未公证）…"
   codesign --force --sign - "$HELPERS/MacAssistantCloneLauncher"
+  codesign --force --sign - "$HELPERS/MacAssistantEnergyHelper"
   codesign --force --sign - "$HELPERS/libMacAssistantCloneEnv.dylib"
   codesign --force --sign - "$CONTENTS/MacOS/MacAssistant"
   codesign --force --sign - "$APP"

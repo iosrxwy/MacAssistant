@@ -2,7 +2,26 @@
 
 All notable changes to MacAssistant are recorded here.
 
-## [Unreleased]
+## [1.0.5] - 2026-10-30
+
+Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates**.
+
+### Added
+
+- **Menu bar**: one icon shows battery, Wi-Fi, and volume. Connect or disconnect Bluetooth devices, and switch Auto / Low Power / High Power. One admin prompt lasts for the rest of this launch. The icon stays after the window closes.
+- **App uninstall**: move an app and its support files, caches, and preferences in your home library to the Trash. System apps and the running copy of Mac Assistant are left alone.
+- **Desktop icons**: 16 clay stickers, 8 folder costumes, and 9 AI folders (Codex, GPT, Claude, Grok, Grok Bot, DeepSeek, Kimi, GLM, Muse). Original drawings in familiar colors and marks, not official logo files. Picking one replaces the whole icon.
+- **Mac apps**: scan injected third-party plugins, remove the load command, and optionally delete the plugin and re-sign.
+- **Repair**: turn off automatic macOS update checks, downloads, and installs. This does not spoof the system version. System Settings → General → Software Update can still install updates.
+
+### Improved
+
+- **Memory**: freeze an app's main process and helpers together. Paused processes stay in the list and can be resumed.
+
+### Fixed
+
+- Decorative page backgrounds no longer cover the sidebar and content.
+- The close, minimize, and zoom buttons, and the sidebar toggle, stay above the page.
 
 ## [1.0.4] - 2026-09-08
 
@@ -151,6 +170,7 @@ First public prerelease.
 
 This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.5]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.5
 [1.0.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.4
 [1.0.3]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.3
 [1.0.2]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.2

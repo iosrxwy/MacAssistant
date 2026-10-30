@@ -15,15 +15,28 @@ public enum MacAppLibrary {
         ]
     }
 
-    public static func discover(in directories: [URL] = defaultSearchDirectories) -> [URL] {
-        let found = directories.flatMap { directory in
-            (try? FileManager.default.contentsOfDirectory(
-                at: directory,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsHiddenFiles]
-            )) ?? []
-        }.filter { $0.pathExtension.lowercased() == "app" && FileSystemHelper.isDirectory($0) }
-        return Array(Set(found)).sorted { displayName(of: $0).localizedStandardCompare(displayName(of: $1)) == .orderedAscending }
+    public static func discover(
+        in directories: [URL] = defaultSearchDirectories
+    ) -> [URL] {
+        let found = directories.flatMap { directory -> [URL] in
+            apps(in: directory)
+        }
+        return Array(Set(found)).sorted {
+            displayName(of: $0).localizedStandardCompare(displayName(of: $1)) == .orderedAscending
+        }
+    }
+
+    private static func apps(in directory: URL) -> [URL] {
+        let children = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        return children.filter { isAppBundle($0) }
+    }
+
+    private static func isAppBundle(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "app" && FileSystemHelper.isDirectory(url)
     }
 
     public static func displayName(of app: URL) -> String {
@@ -46,15 +59,57 @@ public enum MacAppLibrary {
     }
 
     public static func invalidateCaches(for app: URL? = nil) {
-        DisplayNameCache.invalidate(app?.standardizedFileURL.path)
+        let key = app?.standardizedFileURL.path
+        DisplayNameCache.invalidate(key)
     }
 
     public static func matches(_ app: URL, search: String) -> Bool {
         let query = search.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return true }
-        return TextSearch.matches(displayName(of: app), needle: query)
+        if TextSearch.matches(displayName(of: app), needle: query)
             || TextSearch.matches(app.deletingPathExtension().lastPathComponent, needle: query)
             || TextSearch.matches(app.path, needle: query)
+            || TextSearch.matches(bundleID(of: app) ?? "", needle: query) {
+            return true
+        }
+        return isWeChatQuery(query) && looksLikeWeChat(app)
+    }
+
+    public static func bundleID(of app: URL) -> String? {
+        plistString(app, key: "CFBundleIdentifier")
+    }
+
+    public static func marketingVersion(of app: URL) -> String? {
+        plistString(app, key: "CFBundleShortVersionString")
+    }
+
+    /// 列表和标题用来区分同名副本，例如 `WeChat.app · 4.1.10`。
+    public static func copyLabel(of app: URL) -> String {
+        let folder = app.lastPathComponent
+        guard let version = marketingVersion(of: app) else { return folder }
+        return "\(folder) · \(version)"
+    }
+
+    private static func plistString(_ app: URL, key: String) -> String? {
+        let plist = try? IpaService.infoPlist(appBundle: app)
+        let value = (plist?[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (value?.isEmpty == false) ? value : nil
+    }
+
+    /// 本机常同时装着 `WeChat.app` 和 `微信.app`，显示名却都是 WeChat。
+    private static let wechatQueries: Set<String> = ["微信", "wechat", "weixin"]
+
+    static func isWeChatQuery(_ query: String) -> Bool {
+        wechatQueries.contains(query.lowercased())
+    }
+
+    static func looksLikeWeChat(_ app: URL) -> Bool {
+        let name = displayName(of: app).lowercased()
+        let folder = app.deletingPathExtension().lastPathComponent.lowercased()
+        let identifier = bundleID(of: app)?.lowercased() ?? ""
+        return name.contains("wechat") || name.contains("微信")
+            || folder.contains("wechat") || folder.contains("微信")
+            || identifier.contains("xinwechat") || identifier == "com.tencent.xin"
     }
 
     public static func filtered(_ apps: [URL], search: String) -> [URL] {
@@ -223,16 +278,16 @@ public enum MacAppIconCache {
     private static let lock = NSLock()
     private static var images: [String: NSImage] = [:]
 
-    public static func image(for app: URL) -> NSImage {
-        let key = app.path
+    public static func image(for app: URL, pointSize: CGFloat = 64) -> NSImage {
+        let key = "\(app.path)#\(Int(pointSize.rounded()))"
         lock.lock()
         if let cached = images[key] {
             lock.unlock()
             return cached
         }
         lock.unlock()
-        let image = NSWorkspace.shared.icon(forFile: key)
-        image.size = NSSize(width: 64, height: 64)
+        let image = NSWorkspace.shared.icon(forFile: app.path)
+        image.size = NSSize(width: pointSize, height: pointSize)
         lock.lock()
         images[key] = image
         lock.unlock()

@@ -30,7 +30,13 @@ struct SlimTab: View {
                         }
                         Spacer()
                     }
-                    PathBadge(url: ipaURL, placeholder: L("slimtab.noIPA"))
+                    PathBadge(url: ipaURL, placeholder: L("slimtab.noIPA")) { urls in
+                        guard let url = urls.first else { return }
+                        ipaURL = url
+                        log = ""
+                        ok = nil
+                        summary = ""
+                    }
                 }
             }
 

@@ -94,23 +94,7 @@ struct MemoryView: View {
             terminateRefreshTask = nil
         }
         .alert(item: $pendingSignal) { pending in
-            let force = pending.signal == .kill
-            return Alert(
-                title: Text(force ? L("memoryview.alert.forceQuit") : L("memoryview.alert.quit")),
-                message: Text(
-                    L("memoryview.alert.process", pending.process.displayName, Int(pending.process.pid))
-                    + "\n"
-                    + (force
-                       ? L("memoryview.alert.kill.detail")
-                       : L("memoryview.alert.terminate.detail"))
-                ),
-                primaryButton: .destructive(
-                    Text(force ? L("memoryview.forceQuit") : L("memoryview.quit"))
-                ) {
-                    send(pending.signal, to: pending.process)
-                },
-                secondaryButton: .cancel()
-            )
+            confirmation(for: pending)
         }
         .alert(L("memoryview.purge.confirmTitle"), isPresented: $showPurgeConfirmation) {
             if MemoryService.purgeAvailable {
@@ -221,6 +205,29 @@ struct MemoryView: View {
                         .frame(width: 220)
                         .accessibilityLabel(L("memoryview.search.accessibility"))
                         .accessibilityIdentifier("memory.search")
+                    Button(selectedProcess?.isStopped == true ? L("memoryview.resume") : L("memoryview.freeze")) {
+                        guard let selectedProcess else { return }
+                        let signal: ProcessSignal = selectedProcess.isStopped ? .resume : .suspend
+                        do {
+                            let targets = try MemoryService.suspensionTargets(
+                                for: selectedProcess,
+                                among: processes,
+                                action: signal
+                            )
+                            pendingSignal = PendingSignal(
+                                process: selectedProcess,
+                                signal: signal,
+                                targets: targets
+                            )
+                        } catch {
+                            showingTopProcessHint = false
+                            statusText = error.localizedDescription
+                        }
+                    }
+                    .disabled(selectedProcess == nil || busy)
+                    .help(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
+                    .accessibilityHint(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
+                    .accessibilityIdentifier(selectedProcess?.isStopped == true ? "memory.resume" : "memory.freeze")
                     Button(L("memoryview.quit")) {
                         if let selectedProcess {
                             pendingSignal = PendingSignal(process: selectedProcess, signal: .terminate)
@@ -321,20 +328,91 @@ struct MemoryView: View {
         }
     }
 
-    private func send(_ signal: ProcessSignal, to process: ProcessMemoryInfo) {
+    private func confirmation(for pending: PendingSignal) -> Alert {
+        switch pending.signal {
+        case .suspend:
+            return Alert(
+                title: Text(L("memoryview.alert.freeze")),
+                message: Text(L(
+                    "memoryview.alert.freeze.detail",
+                    pending.process.displayName,
+                    pending.targets.count
+                )),
+                primaryButton: .default(Text(L("memoryview.freeze"))) {
+                    send(pending.signal, to: pending.process, targets: pending.targets)
+                },
+                secondaryButton: .cancel()
+            )
+        case .resume:
+            return Alert(
+                title: Text(L("memoryview.alert.resume")),
+                message: Text(L(
+                    "memoryview.alert.resume.detail",
+                    pending.process.displayName,
+                    pending.targets.count
+                )),
+                primaryButton: .default(Text(L("memoryview.resume"))) {
+                    send(pending.signal, to: pending.process, targets: pending.targets)
+                },
+                secondaryButton: .cancel()
+            )
+        case .terminate, .kill:
+            let force = pending.signal == .kill
+            return Alert(
+                title: Text(force ? L("memoryview.alert.forceQuit") : L("memoryview.alert.quit")),
+                message: Text(
+                    L("memoryview.alert.process", pending.process.displayName, Int(pending.process.pid))
+                    + "\n"
+                    + (force
+                       ? L("memoryview.alert.kill.detail")
+                       : L("memoryview.alert.terminate.detail"))
+                ),
+                primaryButton: .destructive(
+                    Text(force ? L("memoryview.forceQuit") : L("memoryview.quit"))
+                ) {
+                    send(pending.signal, to: pending.process)
+                },
+                secondaryButton: .cancel()
+            )
+        }
+    }
+
+    private func send(
+        _ signal: ProcessSignal,
+        to process: ProcessMemoryInfo,
+        targets: [ProcessMemoryInfo]? = nil
+    ) {
         showingTopProcessHint = false
         busy = true
+        let batch = targets ?? [process]
         Task {
             do {
-                try await Task.detached {
-                    try MemoryService.send(signal, to: process)
-                }.value
-                statusText = L(
-                    "memoryview.signalSent",
-                    process.displayName,
-                    Int(process.pid),
-                    signal == .terminate ? "SIGTERM" : "SIGKILL"
-                )
+                if signal == .suspend || signal == .resume {
+                    let result = await Task.detached {
+                        MemoryService.send(signal, to: batch)
+                    }.value
+                    if result.sent == 0 {
+                        statusText = result.failure ?? L("memoryview.signal.failed")
+                    } else if let failure = result.failure {
+                        statusText = L("memoryview.signal.partial", result.sent, failure)
+                    } else {
+                        statusText = L(
+                            signal == .suspend ? "memoryview.frozen.result" : "memoryview.resumed.result",
+                            process.displayName,
+                            result.sent
+                        )
+                    }
+                } else {
+                    try await Task.detached {
+                        try MemoryService.send(signal, to: process)
+                    }.value
+                    statusText = L(
+                        "memoryview.signalSent",
+                        process.displayName,
+                        Int(process.pid),
+                        signal == .terminate ? "SIGTERM" : "SIGKILL"
+                    )
+                }
                 try? await Task.sleep(nanoseconds: 600_000_000)
                 await refresh(force: true)
             } catch {
@@ -403,8 +481,18 @@ private struct ProcessMemoryRow: View {
                 .frame(width: 24, height: 24)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text(process.displayName)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(process.displayName)
+                        .lineLimit(1)
+                    if process.isStopped {
+                        Text(L("memoryview.frozen"))
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.orange.opacity(0.15), in: Capsule())
+                    }
+                }
                 Text(processRowSubtitle(process))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -421,13 +509,20 @@ private struct ProcessMemoryRow: View {
             }
         }
         .padding(.vertical, 3)
+        .opacity(process.isStopped ? 0.72 : 1)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L(
             "memoryview.row.accessibility",
-            process.remark.map { "\(process.displayName)，\($0)" } ?? process.displayName,
+            rowAccessibilityName(process),
             Int(process.pid),
             MemoryService.formatBytes(process.memoryBytes)
         ))
+    }
+
+    private func rowAccessibilityName(_ process: ProcessMemoryInfo) -> String {
+        let spoken = process.remark.map { "\(process.displayName)，\($0)" } ?? process.displayName
+        guard process.isStopped else { return spoken }
+        return "\(spoken)，\(L("memoryview.frozen"))"
     }
 
     private func processRowSubtitle(_ process: ProcessMemoryInfo) -> String {
@@ -445,7 +540,17 @@ private struct ProcessMemoryRow: View {
 private struct PendingSignal: Identifiable {
     let process: ProcessMemoryInfo
     let signal: ProcessSignal
-    var id: String { "\(process.pid)-\(signal == .terminate ? "term" : "kill")" }
+    var targets: [ProcessMemoryInfo] = []
+    var id: String {
+        let action: String
+        switch signal {
+        case .terminate: action = "term"
+        case .kill: action = "kill"
+        case .suspend: action = "stop"
+        case .resume: action = "cont"
+        }
+        return "\(process.pid)-\(action)"
+    }
 }
 
 /// AppKit 适配层：NSImage 不进入 Sendable core model，滚动时只读取内存缓存。

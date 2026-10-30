@@ -442,6 +442,9 @@ struct IpaWorkbenchTab: View {
                     } label: {
                         Label(L("workbench.recipe.load"), systemImage: "square.and.arrow.up")
                     }
+                    .filePickerDrop { urls in
+                        if let url = urls.first { applyRecipe(url) }
+                    }
                 }
             }
         }
@@ -517,6 +520,10 @@ struct IpaWorkbenchTab: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        applyRecipe(url)
+    }
+
+    private func applyRecipe(_ url: URL) {
         do {
             try controller.loadRecipe(from: url)
             log = L("workbench.recipe.loaded", url.lastPathComponent)

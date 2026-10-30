@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "Глобальную политику безопасности не меняет; замените путь на своё приложение";
 "recipe.gatekeeper-settings.name" = "Открыть «Конфиденциальность и безопасность»";
 "recipe.gatekeeper-settings.detail" = "Используйте официальный поток Apple «Всё равно открыть», чтобы разрешить одно приложение";
+"recipe.software-update-off.name" = "Отключить автообновление системы";
+"recipe.software-update-off.detail" = "Отключает автоматическую проверку, загрузку и установку обновлений macOS. Нужны права администратора. Версия системы не подменяется";
+"recipe.software-update-on.name" = "Восстановить автообновление системы";
+"recipe.software-update-on.detail" = "Снова включает автоматическую проверку, загрузку и установку обновлений macOS. Нужны права администратора";
+"softwareupdate.error.unsupportedKey" = "Запись ключа Software Update запрещена: %@";
 
 /* System information */
 "sysinfo.hostname" = "Имя компьютера";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "Настройте значки файлов, папок и приложений на рабочем столе или восстановите стандартные";
 "toolfinder.feature.appClone.title" = "Клоны приложений";
 "toolfinder.feature.appClone.detail" = "Изолированные клоны WeChat, браузеров и других приложений Mac с отдельными данными";
+"toolfinder.feature.macApp.title" = "Внедрение в локальные приложения";
+"toolfinder.feature.macApp.detail" = "Внедряйте плагины в локальное приложение macOS или сканируйте и удаляйте уже записанные сторонние библиотеки";
+"toolfinder.feature.appUninstall.title" = "Удаление приложений";
+"toolfinder.feature.appUninstall.detail" = "Перемещает обычное приложение и его остатки в библиотеке в Корзину";
 "permission.repair-files.title" = "Файлы и папки";
 "permission.repair-files.usedBy" = "Выбранное приложение — для снятия карантина, сброса xattr и повторной подписи";
 "permission.repair-files.withoutIt" = "Без выбранного приложения эти действия остаются на предпросмотре; остальное на Mac не меняется";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "Сканирование /Applications и любых .app, добавленных вручную";
 "permission.macapp-files.withoutIt" = "Библиотека может быть неполной; одно приложение всё равно можно выбрать";
 "permission.macapp-management.title" = "Управление приложениями";
-"permission.macapp-management.usedBy" = "Может понадобиться при записи плагина в локальное приложение";
-"permission.macapp-management.withoutIt" = "Открытие приложения работает; запись в защищённые приложения отклоняется";
+"permission.macapp-management.usedBy" = "Может понадобиться при записи или удалении плагина в локальном приложении";
+"permission.macapp-management.withoutIt" = "Открытие приложения работает; изменения защищённых приложений отклоняются";
+"permission.appuninstall-fda.title" = "Полный доступ к диску";
+"permission.appuninstall-fda.usedBy" = "Просмотр контейнеров и групповых контейнеров этого приложения";
+"permission.appuninstall-fda.withoutIt" = "Недоступные папки указываются отдельно и не считаются пустыми";
+"permission.appuninstall-management.title" = "Управление приложениями";
+"permission.appuninstall-management.usedBy" = "macOS может спросить разрешение, прежде чем переместить приложение из «Программ»";
+"permission.appuninstall-management.withoutIt" = "Если система отказывает, элемент остаётся, а причина показывается";
 "tweakdraft.error.invalidDirectory" = "Папка назначения черновика недопустима";
 "tweakdraft.error.writeFailed" = "Не удалось записать черновик: %@";
 "macapp.launch.error.notAnApp" = "Выбранный элемент не является приложением macOS";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "Не удалось прочитать сведения о памяти: %@";
 "memory.error.invalid-pid" = "Недопустимый PID";
 "memory.error.protected-process" = "Завершение %@ может дестабилизировать систему, поэтому не разрешено";
-"memory.error.permission-denied" = "Нет права завершить этот процесс";
+"memory.error.protected-freeze" = "Заморозка %@ может дестабилизировать систему, поэтому не разрешена";
+"memory.error.permission-denied" = "Нет права отправить сигнал этому процессу";
 "memory.error.process-not-found" = "Процесс уже завершился";
 "memory.error.signal-failed" = "Не удалось отправить сигнал (errno %d)";
 "memory.error.purge-unavailable" = "Команда purge на этом Mac недоступна";
@@ -793,6 +809,8 @@
 "dylib.error.commandFailed" = "Команда не выполнена: %@";
 "dylib.error.notMachO" = "Недопустимый Mach-O: %@";
 "dylib.error.noExpectedChange" = "Команда правки не дала ожидаемого результата: %@";
+"dylib.error.cannotRemoveInstallName" = "Нельзя удалить install name: %@";
+"dylib.error.dependencyNotRemoved" = "Зависимость не удалена: %@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "Недопустимый файл Mach-O";
@@ -809,6 +827,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "Смещение или длина среза fat переполняется";
 "dylib.macho.unsupported.fatSliceOverlap" = "Диапазоны срезов fat пересекаются";
 "dylib.macho.unsupported.changeMissing" = "Нет load command для переписи: %@";
+"dylib.macho.unsupported.removeMissing" = "Нет load command для удаления: %@";
 "ipaflow.log.substrateStubCopied" = "Встроенная библиотека совместимости скопирована в Frameworks";
 "ipaflow.log.substrateStubWarning" = "На новых iOS, если плагины не загружаются, переключитесь на более новую библиотеку совместимости";
 "ipaflow.error.missingSubstrateStub" = "Требуется встроенный libsubstrate.dylib, но его нет в ресурсах";
@@ -817,6 +836,17 @@
 "dylib.macho.log.replacedWithStrong" = "Существующая команда в срезе %d заменена сильной ссылкой: %@";
 "dylib.macho.log.strippedCodeSignature" = "LC_CODE_SIGNATURE удалён из %@-bit среза, чтобы освободить место";
 "dylib.macho.log.injectedIntoSlice" = "Внедрено в %@-bit срез: %@";
+"injectscan.error.notApp" = "Выберите .app";
+"injectscan.error.systemLibrary" = "Системную библиотеку удалять нельзя: %@";
+"injectscan.error.bundledLibrary" = "Это собственная зависимость приложения, не стороннее внедрение: %@";
+"injectscan.log.alreadyGone" = "Команда загрузки уже отсутствует, пропуск: %@";
+"injectscan.log.removedCommand" = "Удалено %@ (хост %@)";
+"injectscan.log.payloadMissing" = "Файл плагина не найден; снята только команда загрузки";
+"injectscan.log.payloadOutside" = "Путь плагина вне этого приложения, не удалён: %@";
+"injectscan.log.deletedPayload" = "Файл плагина удалён: %@";
+"injectscan.log.payloadPermission" = "Не удалось удалить файл плагина (%@): %@";
+"injectscan.log.signed" = "Переподписано: %@";
+"injectscan.log.signFailed" = "Переподпись не удалась (%@): %@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "Один Mach-O";
@@ -887,15 +917,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "Обзор";
+"sidebar.menuBar" = "Навигация";
 "sidebar.repair" = "Ремонт";
 "sidebar.cleanup" = "Очистка";
+"sidebar.appUninstall" = "Удаление приложений";
 "sidebar.desktopIcons" = "Значки";
 "sidebar.appClone" = "Клоны";
 "sidebar.memory" = "Память";
 "sidebar.network" = "Сеть";
 "sidebar.cheatsheet" = "Команды";
 "sidebar.recipes" = "Переключатели";
-"sidebar.deb" = "Пакеты";
+"sidebar.deb" = "Плагины";
 "sidebar.dylib" = "Dylibs";
 "sidebar.ipa" = "IPA";
 "sidebar.macApp" = "Внедрение";
@@ -1067,6 +1099,41 @@
 "desktopicon.preset.software.symbols" = "Символы";
 "desktopicon.preset.software.plugins" = "Плагины";
 "desktopicon.preset.software.build" = "Сборка";
+"desktopicon.preset.costume.puppy" = "Щенок";
+"desktopicon.preset.costume.kitten" = "Котёнок";
+"desktopicon.preset.costume.pear" = "Груша";
+"desktopicon.preset.costume.fridge" = "Улыбчивый холодильник";
+"desktopicon.preset.costume.moon" = "Луна";
+"desktopicon.preset.costume.spider" = "Паук";
+"desktopicon.preset.costume.berry" = "Клубника";
+"desktopicon.preset.costume.gift" = "Подарок";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "Котёнок";
+"desktopicon.preset.cute.bunny" = "Зайчик";
+"desktopicon.preset.cute.bear" = "Мишка";
+"desktopicon.preset.cute.peach" = "Персик";
+"desktopicon.preset.cute.heart" = "Сердце";
+"desktopicon.preset.cute.star" = "Звезда";
+"desktopicon.preset.cute.cloud" = "Облако";
+"desktopicon.preset.cute.moon" = "Луна";
+"desktopicon.preset.cute.flower" = "Цветок";
+"desktopicon.preset.cute.rainbow" = "Радуга";
+"desktopicon.preset.cute.coffee" = "Кофе";
+"desktopicon.preset.cute.book" = "Книга";
+"desktopicon.preset.cute.music" = "Музыка";
+"desktopicon.preset.cute.camera" = "Камера";
+"desktopicon.preset.cute.gift" = "Подарок";
+"desktopicon.preset.cute.rocket" = "Ракета";
 
 /* App clones */
 "appclone.strategy.hard" = "Жёсткий клон";
@@ -1121,3 +1188,17 @@
 "appearance.system" = "Системный";
 "appearance.light" = "День";
 "appearance.dark" = "Ночь";
+
+/* Библиотека приложений */
+
+/* Удаление приложений */
+"appuninstall.block.notAnApp" = "Это не приложение macOS";
+"appuninstall.block.missing" = "Приложения больше нет на прежнем месте";
+"appuninstall.block.systemLocation" = "Встроенные системные приложения отсюда удалить нельзя";
+"appuninstall.block.appleBundle" = "Системные приложения Apple отсюда удалить нельзя";
+"appuninstall.block.currentApp" = "Mac Assistant не может удалить сам себя, пока он запущен";
+"appuninstall.error.nothingSelected" = "Ничего не выбрано для перемещения в Корзину";
+"appuninstall.error.symlink" = "Это символическая ссылка, элемент пропущен";
+
+/* Диалог прав для режима энергопотребления. Разрешение действует до выхода. */
+"energy.auth.once" = "Для смены режима энергопотребления нужны права администратора. После одного разрешения этот запуск больше не спросит.";

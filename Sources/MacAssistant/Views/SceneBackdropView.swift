@@ -38,6 +38,8 @@ private final class ScenePointerMonitor {
     private var eased = CGPoint(x: 0.5, y: 0.5)
     private var velocity = CGPoint.zero
     private var token: Any?
+    /// 侧栏和内容区各有一条时间线，同一帧里会各取一次样。只推进一次缓动。
+    private var lastSampleTime = -1.0
 
     func start() {
         guard token == nil else { return }
@@ -59,8 +61,13 @@ private final class ScenePointerMonitor {
     }
 
     func sample() -> ScenePointerSample {
+        let now = Date().timeIntervalSinceReferenceDate
         lock.lock()
         defer { lock.unlock() }
+        if now - lastSampleTime < (1.0 / 30.0) {
+            return ScenePointerSample(position: eased, velocity: velocity)
+        }
+        lastSampleTime = now
         let next = CGPoint(
             x: eased.x + (raw.x - eased.x) * 0.16,
             y: eased.y + (raw.y - eased.y) * 0.16
@@ -260,6 +267,13 @@ struct WindowSceneChrome: NSViewRepresentable {
             scheduleApply()
         }
 
+        override func layout() {
+            super.layout()
+            guard let window else { return }
+            // SwiftUI 会在布局后再把整窗 hosting view 放到标题栏前面。
+            raiseTitlebar(in: window)
+        }
+
         func scheduleApply() {
             applyGeneration += 1
             let generation = applyGeneration
@@ -303,6 +317,7 @@ struct WindowSceneChrome: NSViewRepresentable {
 
             installBackdrop(in: window)
             configureSplitItems(in: window)
+            raiseTitlebar(in: window)
 
             if let theme = window.contentView?.superview {
                 neutralize(theme)
@@ -346,6 +361,39 @@ struct WindowSceneChrome: NSViewRepresentable {
             }
         }
 
+        /// SwiftUI 的 hosting view 铺满整窗，并且排在标题栏容器前面。
+        /// 交通灯和侧栏开关都在标题栏里，不抬上来就看不见。
+        private func raiseTitlebar(in window: NSWindow) {
+            guard let theme = window.contentView?.superview else { return }
+            guard let titlebar = theme.subviews.first(where: {
+                String(describing: type(of: $0)).contains("TitlebarContainer")
+            }) else { return }
+            if theme.subviews.last !== titlebar {
+                theme.addSubview(titlebar)
+            }
+            if titlebar.layer?.zPosition != 1000 {
+                titlebar.wantsLayer = true
+                titlebar.layer?.zPosition = 1000
+            }
+            // 页面大标题已经占了内容区。空的标题视图仍横向铺满，会挡住右上角的控件。
+            if window.titleVisibility == .hidden {
+                hideEmptyTitleView(in: titlebar)
+            }
+            for kind: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
+                window.standardWindowButton(kind)?.isHidden = false
+            }
+        }
+
+        private func hideEmptyTitleView(in root: NSView) {
+            var stack = [root]
+            while let view = stack.popLast() {
+                if String(describing: type(of: view)).contains("ToolbarTitleView") {
+                    view.isHidden = true
+                }
+                stack.append(contentsOf: view.subviews)
+            }
+        }
+
         private func installBackdrop(in window: NSWindow) {
             guard let content = window.contentView else { return }
             if immersive, let recipe {
@@ -361,12 +409,18 @@ struct WindowSceneChrome: NSViewRepresentable {
                     let view = NSHostingView(rootView: canvas)
                     view.autoresizingMask = [.width, .height]
                     hosting = view
-                    content.addSubview(view, positioned: .below, relativeTo: nil)
                 }
-                hosting?.frame = content.bounds
-                if let hosting {
-                    content.addSubview(hosting, positioned: .below, relativeTo: nil)
+                guard let hosting else { return }
+                hosting.frame = content.bounds
+                // `relativeTo: nil` 在这套系统上会把视图放到最前，动画底盖住侧栏和内容。
+                // 挂到现有最底层那张视图的后面，才能留在 SwiftUI 内容之下。
+                if let anchor = content.subviews.first(where: { $0 !== hosting }) {
+                    content.addSubview(hosting, positioned: .below, relativeTo: anchor)
+                } else if hosting.superview !== content {
+                    content.addSubview(hosting)
                 }
+                hosting.wantsLayer = true
+                hosting.layer?.zPosition = -1000
             } else {
                 hosting?.removeFromSuperview()
                 hosting = nil
@@ -540,6 +594,130 @@ struct WindowSceneChrome: NSViewRepresentable {
     }
 }
 
+/// 窗口不在前台、被完全挡住或缩进程序坞时，背景动画停掉。
+private struct SceneMotionPauseProbe: NSViewRepresentable {
+    var onPauseChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> ProbeView {
+        let view = ProbeView()
+        view.onPauseChange = onPauseChange
+        return view
+    }
+
+    func updateNSView(_ view: ProbeView, context: Context) {
+        view.onPauseChange = onPauseChange
+    }
+
+    final class ProbeView: NSView {
+        var onPauseChange: ((Bool) -> Void)?
+        private var observers: [NSObjectProtocol] = []
+        private var lastPaused: Bool?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            observers.forEach { NotificationCenter.default.removeObserver($0) }
+            observers.removeAll()
+            observe(NSApplication.didBecomeActiveNotification, object: NSApp)
+            observe(NSApplication.didResignActiveNotification, object: NSApp)
+            if let window {
+                observe(NSWindow.didChangeOcclusionStateNotification, object: window)
+                observe(NSWindow.didMiniaturizeNotification, object: window)
+                observe(NSWindow.didDeminiaturizeNotification, object: window)
+            }
+            publish()
+        }
+
+        deinit {
+            observers.forEach { NotificationCenter.default.removeObserver($0) }
+        }
+
+        private func observe(_ name: Notification.Name, object: Any?) {
+            let token = NotificationCenter.default.addObserver(
+                forName: name,
+                object: object,
+                queue: .main
+            ) { [weak self] _ in
+                self?.publish()
+            }
+            observers.append(token)
+        }
+
+        private func publish() {
+            let paused = Self.shouldPause(window: window)
+            guard paused != lastPaused else { return }
+            lastPaused = paused
+            let callback = onPauseChange
+            DispatchQueue.main.async {
+                callback?(paused)
+            }
+        }
+
+        private static func shouldPause(window: NSWindow?) -> Bool {
+            guard NSApp.isActive else { return true }
+            guard let window else { return false }
+            if window.isMiniaturized { return true }
+            return !window.occlusionState.contains(.visible)
+        }
+    }
+}
+
+/// 背景漂移大约一分半一个来回，12 帧就连续。窗口不在前台时暂停。
+private struct SceneMotionClock<Content: View>: View {
+    var animated: Bool
+    var paused: Bool
+    var reduceTransparency: Bool
+    @ViewBuilder var content: (TimeInterval, ScenePointerSample?) -> Content
+
+    var body: some View {
+        if animated && !reduceTransparency {
+            TimelineView(.animation(minimumInterval: Self.frameInterval, paused: paused)) { timeline in
+                content(
+                    timeline.date.timeIntervalSinceReferenceDate,
+                    ScenePointerMonitor.shared.sample()
+                )
+            }
+            .onAppear { ScenePointerMonitor.shared.start() }
+        } else {
+            content(0, nil)
+        }
+    }
+
+    private static var frameInterval: TimeInterval { 1.0 / 12.0 }
+}
+
+/// 颗粒、网点、横线和圆环不随时间变，从每帧重绘里拆出来。
+private struct SceneOverlayBands {
+    var before: [SceneOverlay] = []
+    var baked: [SceneOverlay] = []
+    var after: [SceneOverlay] = []
+
+    init(_ overlays: [SceneOverlay]) {
+        var index = overlays.startIndex
+        while index < overlays.endIndex, !overlays[index].isBaked {
+            before.append(overlays[index])
+            index = overlays.index(after: index)
+        }
+        while index < overlays.endIndex, overlays[index].isBaked {
+            baked.append(overlays[index])
+            index = overlays.index(after: index)
+        }
+        if index < overlays.endIndex {
+            after.append(contentsOf: overlays[index...])
+        }
+    }
+}
+
+private extension SceneOverlay {
+    var isBaked: Bool {
+        switch self {
+        case .paperLines, .dots, .rings, .grain:
+            return true
+        case .hills, .spotlight, .stars:
+            return false
+        }
+    }
+}
+
 /// 按配方绘制页面背景。macOS 15+ 用 MeshGradient，旧系统退回径向光斑。
 struct SceneBackdropCanvas: View {
     let recipe: SceneBackdropRecipe
@@ -547,38 +725,83 @@ struct SceneBackdropCanvas: View {
     var reduceTransparency = false
     var showsVeil = true
 
-    var body: some View {
-        if animated && !reduceTransparency {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-                layers(
-                    time: timeline.date.timeIntervalSinceReferenceDate,
-                    pointer: ScenePointerMonitor.shared.sample()
-                )
-            }
-            .onAppear { ScenePointerMonitor.shared.start() }
-        } else {
-            layers(time: 0, pointer: nil)
-        }
+    /// 先停着，等探到窗口在前台再动，避免一创建就空转。
+    @State private var motionPaused = true
+
+    private var bands: SceneOverlayBands {
+        SceneOverlayBands(recipe.overlays)
     }
 
-    @ViewBuilder
-    private func layers(time: TimeInterval, pointer: ScenePointerSample?) -> some View {
+    var body: some View {
         ZStack {
-            baseLayer(time: time, pointer: pointer)
-            if !reduceTransparency {
-                Canvas { context, size in
-                    drawBlobs(context: &context, size: size, time: time, pointer: pointer)
-                    if pointer != nil {
-                        drawMotes(context: &context, size: size, time: time, pointer: pointer)
-                        drawWake(context: &context, size: size, pointer: pointer)
+            SceneMotionClock(
+                animated: animated,
+                paused: motionPaused,
+                reduceTransparency: reduceTransparency
+            ) { time, pointer in
+                ZStack {
+                    baseLayer(time: time, pointer: pointer)
+                    if !reduceTransparency {
+                        Canvas { context, size in
+                            drawBlobs(context: &context, size: size, time: time, pointer: pointer)
+                            if pointer != nil {
+                                drawMotes(context: &context, size: size, time: time, pointer: pointer)
+                                drawWake(context: &context, size: size, pointer: pointer)
+                            }
+                            if !bands.before.isEmpty {
+                                drawOverlayList(
+                                    context: &context,
+                                    size: size,
+                                    overlays: bands.before,
+                                    time: time,
+                                    pointer: pointer
+                                )
+                            }
+                        }
                     }
-                    if !recipe.overlays.isEmpty {
-                        drawOverlays(context: &context, size: size, time: time, pointer: pointer)
+                }
+            }
+            if !reduceTransparency, !bands.baked.isEmpty {
+                Canvas { context, size in
+                    drawOverlayList(
+                        context: &context,
+                        size: size,
+                        overlays: bands.baked,
+                        time: 0,
+                        pointer: nil
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .allowsHitTesting(false)
+            }
+            if !reduceTransparency, !bands.after.isEmpty {
+                SceneMotionClock(
+                    animated: animated,
+                    paused: motionPaused,
+                    reduceTransparency: reduceTransparency
+                ) { time, pointer in
+                    Canvas { context, size in
+                        drawOverlayList(
+                            context: &context,
+                            size: size,
+                            overlays: bands.after,
+                            time: time,
+                            pointer: pointer
+                        )
                     }
                 }
             }
             if showsVeil {
                 readabilityVeil
+            }
+        }
+        .background {
+            if animated && !reduceTransparency {
+                SceneMotionPauseProbe { paused in
+                    if motionPaused != paused {
+                        motionPaused = paused
+                    }
+                }
             }
         }
         .clipped()
@@ -740,8 +963,14 @@ struct SceneBackdropCanvas: View {
         )
     }
 
-    private func drawOverlays(context: inout GraphicsContext, size: CGSize, time: TimeInterval, pointer: ScenePointerSample?) {
-        for overlay in recipe.overlays {
+    private func drawOverlayList(
+        context: inout GraphicsContext,
+        size: CGSize,
+        overlays: [SceneOverlay],
+        time: TimeInterval,
+        pointer: ScenePointerSample?
+    ) {
+        for overlay in overlays {
             switch overlay {
             case .hills:
                 drawHills(context: &context, size: size, time: time)

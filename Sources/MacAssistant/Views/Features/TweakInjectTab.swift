@@ -61,7 +61,11 @@ struct TweakInjectTab: View {
                             }
                             Spacer()
                         }
-                        PathBadge(url: ipaURL, placeholder: L("tweaktab.noInput"))
+                        PathBadge(url: ipaURL, placeholder: L("tweaktab.noInput")) { urls in
+                            guard let url = urls.first else { return }
+                            if inputMode == .macOSApp, url.pathExtension.lowercased() != "app" { return }
+                            selectInput(url)
+                        }
                     }
                     Text(L("tweaktab.inputDetail"))
                         .font(.caption).foregroundStyle(.secondary)
@@ -104,7 +108,11 @@ struct TweakInjectTab: View {
                         if elleKit != nil { Button(L("tweaktab.clear")) { elleKit = nil }.buttonStyle(.borderless) }
                         Spacer()
                     }
-                    if let elleKit { PathBadge(url: elleKit) }
+                    if let elleKit {
+                        PathBadge(url: elleKit) { urls in
+                            if let url = urls.first { self.elleKit = url }
+                        }
+                    }
                     Toggle(L("tweaktab.rewriteJailbreakDeps"), isOn: $rewriteJailbreakDependencies)
                     Toggle(L("tweaktab.weak"), isOn: $weak)
                     Toggle(L("tweaktab.stripSignature"), isOn: $stripSignature)

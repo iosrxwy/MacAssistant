@@ -9,6 +9,7 @@ struct AboutView: View {
     @AppStorage(SidebarAppearance.defaultsKey) private var sidebarRaw = SidebarAppearance.material.rawValue
     @AppStorage(IconAppearance.defaultsKey) private var iconRaw = IconAppearance.monochrome.rawValue
     @AppStorage(IconAppearance.customDefaultsKey) private var iconCustomHex = "4f8fd4"
+    @ObservedObject private var duo = DuoStatusBarController.shared
 
     /// 与检查更新用的是同一个版本号来源,避免页面显示和比较结果对不上。
     private var version: String { updates.currentVersion }
@@ -42,6 +43,8 @@ struct AboutView: View {
                     sidebarAppearanceRow
                     Divider().padding(.vertical, 12)
                     iconAppearanceRow
+                    Divider().padding(.vertical, 12)
+                    duoStatusRow
                     Divider().padding(.vertical, 12)
                     updateBlock
                 }
@@ -171,6 +174,35 @@ struct AboutView: View {
                 .accessibilityLabel(L("about.sidebar.title"))
                 .accessibilityHint(L("about.sidebar.detail"))
                 .accessibilityIdentifier("about.sidebar")
+        }
+    }
+
+    private var duoEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { duo.isEnabled },
+            set: { duo.setEnabled($0) }
+        )
+    }
+
+    private var duoStatusRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                settingsLabel(L("duo.title"), systemImage: "wifi")
+                Spacer(minLength: 12)
+                DuoStatusIconView(status: duo.status, pointSize: 26)
+                    .accessibilityIdentifier("about.duo.preview")
+                Toggle("", isOn: duoEnabledBinding)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .accessibilityLabel(L("duo.enabled"))
+                    .accessibilityHint(L("duo.detail"))
+                    .accessibilityIdentifier("about.duo.enabled")
+            }
+            Text(L("duo.detail"))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

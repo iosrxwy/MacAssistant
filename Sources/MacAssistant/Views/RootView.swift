@@ -19,6 +19,7 @@ struct RootView: View {
     @AppStorage(IconAppearance.defaultsKey) private var iconRaw = IconAppearance.monochrome.rawValue
     @AppStorage(IconAppearance.colorSeedDefaultsKey) private var iconColorSeed = 0
     @SwiftUI.Environment(\.colorScheme) private var colorScheme
+    @SwiftUI.Environment(\.openWindow) private var openWindow
     @SwiftUI.Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @SwiftUI.Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -81,7 +82,8 @@ struct RootView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 14)
-                .padding(.top, 4)
+                // 交通灯叠在侧栏左上角，名字要让开这一截。
+                .padding(.top, 36)
                 .padding(.bottom, 8)
 
                 // 不用 List：即使关掉 selection，源列表点下去仍会跟手铺一层非圆角系统蓝。
@@ -89,7 +91,7 @@ struct RootView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         sidebarSection(
                             L("root.section.daily"),
-                            items: [.dashboard, .repair, .cleanup, .desktopIcons, .appClone, .memory, .network, .cheatsheet, .recipes]
+                            items: [.dashboard, .menuBar, .repair, .cleanup, .appUninstall, .desktopIcons, .appClone, .memory, .network, .cheatsheet, .recipes]
                         )
                         sidebarSection(
                             L("root.section.developer"),
@@ -122,7 +124,8 @@ struct RootView: View {
                 immersive: scene.isDecorative,
                 chrome: sidebarChrome,
                 recipe: scene.isDecorative ? recipe : nil,
-                animated: sceneAnimated,
+                // 侧栏和当前页已经各有一层窗口对齐的背景。底层再开时间线等于整窗多画一份。
+                animated: false,
                 reduceTransparency: reduceTransparency
             )
         }
@@ -147,6 +150,16 @@ struct RootView: View {
         }
         .environment(\.sceneBackdrop, scene)
         .preferredColorScheme(preferredScheme)
+        .onAppear {
+            let opener = openWindow
+            DuoStatusBarController.shared.openMainWindow = {
+                opener(id: "main")
+            }
+            pullDuoDestination()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .duoOpenDestination)) { _ in
+            pullDuoDestination()
+        }
         .id(language)
     }
 
@@ -160,6 +173,12 @@ struct RootView: View {
                 showsVeil: false
             )
         }
+    }
+
+    private func pullDuoDestination() {
+        guard let destination = DuoNavigation.pending else { return }
+        DuoNavigation.pending = nil
+        selection = destination.sidebarItem
     }
 
     private func row(_ item: SidebarItem) -> some View {
@@ -234,8 +253,10 @@ struct RootView: View {
     private var detail: some View {
         switch (selection ?? .dashboard).destination {
         case .dashboard: DashboardView(workspace: workspace)
+        case .menuBar: MenuBarStatusView()
         case .repair: RepairView(workspace: workspace)
         case .cleanup: CleanupView()
+        case .appUninstall: AppUninstallView()
         case .desktopIcons: DesktopIconView()
         case .appClone: AppCloneView(workspace: workspace)
         case .memory: MemoryView()

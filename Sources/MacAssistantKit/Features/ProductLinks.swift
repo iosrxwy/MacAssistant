@@ -41,4 +41,6 @@ public enum ProductLinks {
     public static let zsignProject = URL(string: "https://github.com/zhlynn/zsign")!
     /// 开源致谢：应用分身隔离思路参考 ATBClone（GPL-3.0），不捆绑其 Python 运行时。
     public static let atbCloneProject = URL(string: "https://github.com/aitobox/ATBClone")!
+    /// 菜单栏三合一图标的构图参考 Status Trio（Apache-2.0），在本应用内重绘，不捆绑其程序。
+    public static let statusTrioProject = URL(string: "https://github.com/lingyired/status-trio")!
 }

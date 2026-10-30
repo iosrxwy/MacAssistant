@@ -212,6 +212,20 @@ public enum DylibService {
         return try changeLoadDependency(from: old, to: new, fileAt: url)
     }
 
+    /// 删掉真正的 `LC_LOAD_*`，不碰 `LC_ID_DYLIB`。
+    @discardableResult
+    public static func removeDependency(_ path: String, fileAt url: URL) throws -> CommandResult {
+        if (try? analyze(fileAt: url).installName) == path {
+            throw DylibError.noExpectedChange(L("dylib.error.cannotRemoveInstallName", path))
+        }
+        try DylibInjector.removeLoadCommand(dylibPath: path, fileAt: url)
+        let leftover = try loadDependencyPaths(fileAt: url)
+        guard !leftover.contains(path) else {
+            throw DylibError.noExpectedChange(L("dylib.error.dependencyNotRemoved", path))
+        }
+        return CommandResult(exitCode: 0, stdout: "DylibInjector.removeLoadCommand", stderr: "")
+    }
+
     /// 真正的 `LC_LOAD_*` 路径。走原生 inspect，不拉起 otool、也不哈希整文件。
     public static func loadDependencyPaths(fileAt url: URL) throws -> [String] {
         var seen = Set<String>()

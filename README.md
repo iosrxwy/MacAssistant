@@ -58,7 +58,7 @@
       <img src="docs/assets/screenshots/desktop-icons.png" alt="Desktop icons" width="430">
       <br>
       <b>Desktop icons</b><br>
-      Recolor Finder icons for files, folders, and apps, with type presets.
+      Recolor Finder icons, or replace them with clay stickers, folder costumes, and AI folders.
     </td>
     <td align="center" width="50%" valign="top">
       <img src="docs/assets/screenshots/ipa-workbench.png" alt="IPA workbench" width="430">
@@ -87,8 +87,10 @@
 
 | Daily | Developer |
 | --- | --- |
-| App repair (“damaged” launches, quarantine, signatures) | DEB create, inspect, convert, rebuild |
-| Live memory pressure and process management | DYLIB dependencies, install names, rpaths |
+| App repair (“damaged” launches, quarantine, signatures, automatic update checks) | DEB create, inspect, convert, rebuild |
+| Menu bar: battery, Wi-Fi, volume, Bluetooth, energy mode | Scan and remove injected plugins from a Mac app |
+| Uninstall an app to the Trash (system apps stay) | DYLIB dependencies, install names, rpaths |
+| Live memory pressure, process list, freeze and resume | |
 | Network: throughput, ports, ping, DNS, public IP | IPA install / extract as-is (no FairPlay dump) |
 | Searchable command library with risk labels | Mach-O inspection and class-dump |
 | Quick toggles for Finder, screenshots, hidden files | Layered signing and Apple ID signing |

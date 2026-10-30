@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "不會更改全域安全策略；把路徑替換為目標 App";
 "recipe.gatekeeper-settings.name" = "開啟隱私與安全性";
 "recipe.gatekeeper-settings.detail" = "按 Apple 官方流程使用“仍要開啟”授予單個 App 例外";
+"recipe.software-update-off.name" = "停用系統自動更新";
+"recipe.software-update-off.detail" = "關閉 macOS 自動檢查、下載和安裝；需管理員權限。不會偽裝版本號";
+"recipe.software-update-on.name" = "恢復系統自動更新";
+"recipe.software-update-on.detail" = "重新打開 macOS 自動檢查、下載和安裝；需管理員權限";
+"softwareupdate.error.unsupportedKey" = "不允許寫入軟體更新鍵：%@";
 
 /* 系統資訊 */
 "sysinfo.hostname" = "主機名";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "自定義桌面檔案、資料夾和應用圖示，也可恢復預設";
 "toolfinder.feature.appClone.title" = "應用分身";
 "toolfinder.feature.appClone.detail" = "為微信、瀏覽器等應用建立獨立資料目錄的分身，互不登入";
+"toolfinder.feature.macApp.title" = "本機 App 注入";
+"toolfinder.feature.macApp.detail" = "向本機 macOS App 注入外掛，或掃描並卸除已寫入的第三方庫";
+"toolfinder.feature.appUninstall.title" = "應用程式解除安裝";
+"toolfinder.feature.appUninstall.detail" = "把一般應用程式和個人資料庫裡的殘留移到廢紙簍";
 "permission.repair-files.title" = "檔案與資料夾";
 "permission.repair-files.usedBy" = "你選中的 App，用來去隔離、清擴充套件屬性和重籤";
 "permission.repair-files.withoutIt" = "選不到目標時，這些動作會停在預覽，不會改系統別處";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "應用庫掃描 /Applications 與你手動新增的 .app";
 "permission.macapp-files.withoutIt" = "列表可能不完整；仍可手動選擇單個 App";
 "permission.macapp-management.title" = "App 管理";
-"permission.macapp-management.usedBy" = "向本機 App 寫入外掛時可能需要";
-"permission.macapp-management.withoutIt" = "開啟仍可用；寫入受保護 App 會被系統拒絕";
+"permission.macapp-management.usedBy" = "向本機 App 寫入或卸除外掛時可能需要";
+"permission.macapp-management.withoutIt" = "開啟仍可用；改受保護 App 會被系統拒絕";
+"permission.appuninstall-fda.title" = "完全磁碟取用";
+"permission.appuninstall-fda.usedBy" = "掃描容器、群組容器裡對應這個應用程式的資料";
+"permission.appuninstall-fda.withoutIt" = "掃不到的目錄會另外標出，不會當成沒有殘留";
+"permission.appuninstall-management.title" = "App 管理";
+"permission.appuninstall-management.usedBy" = "把「應用程式」裡的 App 移到廢紙簍時，系統可能會詢問";
+"permission.appuninstall-management.withoutIt" = "系統拒絕時，該項目會留在清單裡並寫明原因";
 "tweakdraft.error.invalidDirectory" = "草稿輸出目錄無效";
 "tweakdraft.error.writeFailed" = "無法寫入草稿：%@";
 "macapp.launch.error.notAnApp" = "所選專案不是 macOS App";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "讀取記憶體資訊失敗：%@";
 "memory.error.invalid-pid" = "PID 無效";
 "memory.error.protected-process" = "為避免系統不穩定，不能結束 %@";
-"memory.error.permission-denied" = "沒有許可權結束該程序";
+"memory.error.protected-freeze" = "為避免系統不穩定，不能凍結 %@";
+"memory.error.permission-denied" = "沒有許可權向該程序傳送訊號";
 "memory.error.process-not-found" = "程序已經退出";
 "memory.error.signal-failed" = "傳送訊號失敗（errno %d）";
 "memory.error.purge-unavailable" = "當前系統沒有可用的 purge 命令";
@@ -810,6 +826,8 @@
 "dylib.error.commandFailed" = "命令執行失敗:%@";
 "dylib.error.notMachO" = "不是有效的 Mach-O：%@";
 "dylib.error.noExpectedChange" = "修改命令未產生預期結果：%@";
+"dylib.error.cannotRemoveInstallName" = "不能刪除 install name：%@";
+"dylib.error.dependencyNotRemoved" = "未能刪除依賴：%@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "不是有效的 Mach-O 檔案";
@@ -826,6 +844,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "fat 切片偏移或長度溢位";
 "dylib.macho.unsupported.fatSliceOverlap" = "fat 切片範圍重疊";
 "dylib.macho.unsupported.changeMissing" = "找不到要改寫的 load command：%@";
+"dylib.macho.unsupported.removeMissing" = "找不到要刪除的 load command：%@";
 "ipaflow.log.substrateStubCopied" = "已放入相容庫";
 "ipaflow.log.substrateStubWarning" = "新系統上若外掛打不開，再換相容庫即可";
 "ipaflow.error.missingSubstrateStub" = "需要內建 libsubstrate.dylib，但資源缺失";
@@ -834,6 +853,17 @@
 "dylib.macho.log.replacedWithStrong" = "已把切片 %d 的現有命令替換為強引用：%@";
 "dylib.macho.log.strippedCodeSignature" = "已移除 %@-bit 切片的 LC_CODE_SIGNATURE 以騰出空間";
 "dylib.macho.log.injectedIntoSlice" = "已向 %@-bit 切片注入:%@";
+"injectscan.error.notApp" = "請選擇一個 .app";
+"injectscan.error.systemLibrary" = "拒絕刪除系統庫：%@";
+"injectscan.error.bundledLibrary" = "這是 App 自帶依賴，未當作第三方注入：%@";
+"injectscan.log.alreadyGone" = "載入命令已不存在，跳過：%@";
+"injectscan.log.removedCommand" = "已刪除 %@（宿主 %@）";
+"injectscan.log.payloadMissing" = "未找到對應的外掛檔案，只卸了載入命令";
+"injectscan.log.payloadOutside" = "外掛路徑不在本 App 內，未刪除：%@";
+"injectscan.log.deletedPayload" = "已刪除外掛檔案：%@";
+"injectscan.log.payloadPermission" = "外掛檔案未能刪除（%@）：%@";
+"injectscan.log.signed" = "已重簽：%@";
+"injectscan.log.signFailed" = "重簽未通過（%@）：%@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "單個 Mach-O";
@@ -904,15 +934,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "系統概覽";
+"sidebar.menuBar" = "導覽優化";
 "sidebar.repair" = "應用修復";
 "sidebar.cleanup" = "系統清理";
+"sidebar.appUninstall" = "應用程式解除安裝";
 "sidebar.desktopIcons" = "桌面圖示";
 "sidebar.appClone" = "應用分身";
 "sidebar.memory" = "記憶體工具";
 "sidebar.network" = "網路工具";
 "sidebar.cheatsheet" = "命令速查";
 "sidebar.recipes" = "快捷開關";
-"sidebar.deb" = "軟體打包";
+"sidebar.deb" = "外掛功能";
 "sidebar.dylib" = "動態連結";
 "sidebar.ipa" = "應用封裝";
 "sidebar.macApp" = "注入工具";
@@ -1084,6 +1116,41 @@
 "desktopicon.preset.software.symbols" = "符號";
 "desktopicon.preset.software.plugins" = "外掛";
 "desktopicon.preset.software.build" = "構建";
+"desktopicon.preset.costume.puppy" = "毛絨小狗";
+"desktopicon.preset.costume.kitten" = "毛絨小貓";
+"desktopicon.preset.costume.pear" = "梨子";
+"desktopicon.preset.costume.fridge" = "笑臉冰箱";
+"desktopicon.preset.costume.moon" = "月球";
+"desktopicon.preset.costume.spider" = "蜘蛛";
+"desktopicon.preset.costume.berry" = "草莓";
+"desktopicon.preset.costume.gift" = "禮物";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "小貓";
+"desktopicon.preset.cute.bunny" = "兔子";
+"desktopicon.preset.cute.bear" = "小熊";
+"desktopicon.preset.cute.peach" = "桃子";
+"desktopicon.preset.cute.heart" = "愛心";
+"desktopicon.preset.cute.star" = "星星";
+"desktopicon.preset.cute.cloud" = "雲朵";
+"desktopicon.preset.cute.moon" = "月亮";
+"desktopicon.preset.cute.flower" = "花朵";
+"desktopicon.preset.cute.rainbow" = "彩虹";
+"desktopicon.preset.cute.coffee" = "咖啡";
+"desktopicon.preset.cute.book" = "書本";
+"desktopicon.preset.cute.music" = "音樂";
+"desktopicon.preset.cute.camera" = "相機";
+"desktopicon.preset.cute.gift" = "禮物";
+"desktopicon.preset.cute.rocket" = "火箭";
 
 /* 應用分身 */
 "appclone.strategy.hard" = "硬分身";
@@ -1138,3 +1205,17 @@
 "appearance.system" = "跟隨系統";
 "appearance.light" = "日間";
 "appearance.dark" = "夜間";
+
+/* 軟體庫 */
+
+/* 應用程式解除安裝 */
+"appuninstall.block.notAnApp" = "這不是 macOS 應用程式";
+"appuninstall.block.missing" = "應用程式已經不在原位置";
+"appuninstall.block.systemLocation" = "系統內建應用程式不能從這裡解除安裝";
+"appuninstall.block.appleBundle" = "Apple 系統應用程式不能從這裡解除安裝";
+"appuninstall.block.currentApp" = "不能解除安裝正在使用的 Mac小助手";
+"appuninstall.error.nothingSelected" = "還沒有選擇要移到廢紙簍的項目";
+"appuninstall.error.symlink" = "這是符號連結，已跳過";
+
+/* 能耗模式授權框。授權會保持到結束應用，所以提示只在第一次切換出現。 */
+"energy.auth.once" = "切換能耗模式需要管理者權限。授權這一次後，本次開啟不用再確認。";

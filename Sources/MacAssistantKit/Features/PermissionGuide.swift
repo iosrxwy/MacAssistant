@@ -197,6 +197,29 @@ public enum PermissionGuide {
         ]
     }
 
+    public static var appUninstall: [PermissionNeed] {
+        [
+            PermissionNeed(
+                id: "appuninstall-fda",
+                kind: .fullDiskAccess,
+                title: L("permission.appuninstall-fda.title"),
+                usedBy: L("permission.appuninstall-fda.usedBy"),
+                withoutIt: L("permission.appuninstall-fda.withoutIt"),
+                settingsAnchor: fullDiskAccessAnchor,
+                isOptional: true
+            ),
+            PermissionNeed(
+                id: "appuninstall-management",
+                kind: .appManagement,
+                title: L("permission.appuninstall-management.title"),
+                usedBy: L("permission.appuninstall-management.usedBy"),
+                withoutIt: L("permission.appuninstall-management.withoutIt"),
+                settingsAnchor: "Privacy_AppBundles",
+                isOptional: true
+            )
+        ]
+    }
+
     public static var macApp: [PermissionNeed] {
         [
             PermissionNeed(

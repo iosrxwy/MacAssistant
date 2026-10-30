@@ -16,6 +16,7 @@ struct DylibView: View {
     @State private var changeOld = ""
     @State private var changeNew = ""
     @State private var newRPath = "@executable_path/Frameworks"
+    @State private var pendingDeleteDep: DylibDependency?
 
     // 从 app/deb/目录提取
     @State private var extractSources: [URL] = []
@@ -36,7 +37,8 @@ struct DylibView: View {
                     Text(L("dylibview.chooseMachO")).font(.headline)
                     HStack {
                         FilePickerButton(title: L("dylibview.chooseFile"), systemImage: "link",
-                                         types: [.dylibFile, .unixExecutable, .executable, .item]) { url in
+                                         types: [.dylibFile, .unixExecutable, .executable, .item],
+                                         acceptsDrop: false) { url in
                             acceptMachO(url)
                         }
                         Spacer()
@@ -98,6 +100,15 @@ struct DylibView: View {
                                 } label: { Image(systemName: "arrow.right.circle") }
                                     .buttonStyle(.borderless)
                                     .help(L("dylibview.fillOldPath"))
+                                if snapshot?.installName != dep.path {
+                                    Button {
+                                        pendingDeleteDep = dep
+                                    } label: { Image(systemName: "trash") }
+                                        .buttonStyle(.borderless)
+                                        .foregroundStyle(.red)
+                                        .help(L("dylibview.removeDependency"))
+                                        .disabled(busy)
+                                }
                             }
                         }
                     }
@@ -215,6 +226,27 @@ struct DylibView: View {
                     }
                 }
             }
+        }
+        .confirmationDialog(
+            L("dylibview.confirm.deleteDependency"),
+            isPresented: Binding(
+                get: { pendingDeleteDep != nil },
+                set: { if !$0 { pendingDeleteDep = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(L("dylibview.removeDependency"), role: .destructive) {
+                guard let url = fileURL, let dep = pendingDeleteDep else { return }
+                pendingDeleteDep = nil
+                run(L("dylibview.done.deleteDependency")) {
+                    try DylibService.removeDependency(dep.path, fileAt: url).combinedOutput
+                }
+            }
+            Button(L("dylibview.cancel"), role: .cancel) {
+                pendingDeleteDep = nil
+            }
+        } message: {
+            Text(pendingDeleteDep?.path ?? "")
         }
         .onAppear { acceptPendingWorkspaceItem() }
         .onReceive(workspace.$pendingDylibItemID) { itemID in

@@ -66,6 +66,11 @@
 "recipe.gatekeeper-assess.detail" = "전역 보안 정책을 바꾸지 않습니다. 경로를 대상 앱으로 바꾸세요";
 "recipe.gatekeeper-settings.name" = "개인정보 보호 및 보안 열기";
 "recipe.gatekeeper-settings.detail" = "Apple의 ‘확인 없이 열기’ 절차로 개별 앱을 허용합니다";
+"recipe.software-update-off.name" = "시스템 자동 업데이트 끄기";
+"recipe.software-update-off.detail" = "macOS 자동 확인·다운로드·설치를 끕니다. 관리자 권한이 필요합니다. 시스템 버전을 위장하지 않습니다";
+"recipe.software-update-on.name" = "시스템 자동 업데이트 복원";
+"recipe.software-update-on.detail" = "macOS 자동 확인·다운로드·설치를 다시 켭니다. 관리자 권한이 필요합니다";
+"softwareupdate.error.unsupportedKey" = "소프트웨어 업데이트 키를 쓸 수 없습니다: %@";
 
 /* System information */
 "sysinfo.hostname" = "호스트 이름";
@@ -102,6 +107,10 @@
 "toolfinder.feature.desktopIcons.detail" = "데스크탑 파일, 폴더, 앱 아이콘을 사용자화하거나 기본값으로 복원합니다";
 "toolfinder.feature.appClone.title" = "앱 복제";
 "toolfinder.feature.appClone.detail" = "WeChat, 브라우저 등 Mac 앱의 데이터를 분리한 복제본을 만듭니다";
+"toolfinder.feature.macApp.title" = "로컬 앱 주입";
+"toolfinder.feature.macApp.detail" = "로컬 macOS 앱에 플러그인을 주입하거나, 이미 쓰인 서드파티 라이브러리를 스캔해 제거합니다";
+"toolfinder.feature.appUninstall.title" = "앱 제거";
+"toolfinder.feature.appUninstall.detail" = "일반 앱과 개인 라이브러리에 남은 파일을 휴지통으로 옮깁니다";
 "permission.repair-files.title" = "파일 및 폴더";
 "permission.repair-files.usedBy" = "선택한 앱. 격리 제거, xattr 초기화, 재서명에 사용";
 "permission.repair-files.withoutIt" = "앱을 선택하지 않으면 미리보기만 하고 Mac의 다른 곳은 바꾸지 않습니다";
@@ -136,8 +145,14 @@
 "permission.macapp-files.usedBy" = "/Applications 스캔과 직접 추가한 .app";
 "permission.macapp-files.withoutIt" = "라이브러리가 불완전할 수 있습니다. 앱을 하나만 고를 수는 있습니다";
 "permission.macapp-management.title" = "앱 관리";
-"permission.macapp-management.usedBy" = "로컬 앱에 플러그인을 쓸 때 필요할 수 있음";
-"permission.macapp-management.withoutIt" = "앱 열기는 됩니다. 보호된 앱에 쓰기는 거부됩니다";
+"permission.macapp-management.usedBy" = "로컬 앱에 플러그인을 쓰거나 제거할 때 필요할 수 있음";
+"permission.macapp-management.withoutIt" = "앱 열기는 됩니다. 보호된 앱을 고치는 작업은 거부됩니다";
+"permission.appuninstall-fda.title" = "전체 디스크 접근";
+"permission.appuninstall-fda.usedBy" = "이 앱의 컨테이너와 그룹 컨테이너 데이터를 살펴봅니다";
+"permission.appuninstall-fda.withoutIt" = "읽지 못한 폴더는 따로 표시하며, 잔여 파일이 없다고 보지 않습니다";
+"permission.appuninstall-management.title" = "앱 관리";
+"permission.appuninstall-management.usedBy" = "응용 프로그램 폴더의 앱을 휴지통으로 옮길 때 시스템이 물어볼 수 있습니다";
+"permission.appuninstall-management.withoutIt" = "시스템이 거부하면 해당 항목은 남고 이유가 표시됩니다";
 "tweakdraft.error.invalidDirectory" = "초안 출력 폴더가 유효하지 않습니다";
 "tweakdraft.error.writeFailed" = "초안을 쓸 수 없음: %@";
 "macapp.launch.error.notAnApp" = "선택한 항목은 macOS 앱이 아닙니다";
@@ -151,7 +166,8 @@
 "memory.error.command-failed" = "메모리 정보를 읽을 수 없음: %@";
 "memory.error.invalid-pid" = "잘못된 PID";
 "memory.error.protected-process" = "%@을(를) 종료하면 시스템이 불안정해질 수 있어 허용하지 않습니다";
-"memory.error.permission-denied" = "이 프로세스를 종료할 권한이 없습니다";
+"memory.error.protected-freeze" = "%@을(를) 정지하면 시스템이 불안정해질 수 있어 허용하지 않습니다";
+"memory.error.permission-denied" = "이 프로세스에 시그널을 보낼 권한이 없습니다";
 "memory.error.process-not-found" = "프로세스가 이미 종료되었습니다";
 "memory.error.signal-failed" = "시그널을 보낼 수 없음(errno %d)";
 "memory.error.purge-unavailable" = "이 Mac에는 purge 명령이 없습니다";
@@ -793,6 +809,8 @@
 "dylib.error.commandFailed" = "명령 실패: %@";
 "dylib.error.notMachO" = "유효한 Mach-O가 아님: %@";
 "dylib.error.noExpectedChange" = "편집 명령이 기대한 결과를 내지 않음: %@";
+"dylib.error.cannotRemoveInstallName" = "install name은 제거할 수 없음: %@";
+"dylib.error.dependencyNotRemoved" = "의존성을 제거하지 못함: %@";
 
 /* DylibInjector */
 "dylib.macho.error.notMachO" = "유효한 Mach-O 파일이 아닙니다";
@@ -809,6 +827,7 @@
 "dylib.macho.unsupported.fatSliceOverflow" = "fat 슬라이스 오프셋 또는 길이가 넘칩니다";
 "dylib.macho.unsupported.fatSliceOverlap" = "fat 슬라이스 범위가 겹칩니다";
 "dylib.macho.unsupported.changeMissing" = "다시 쓸 load command가 없음: %@";
+"dylib.macho.unsupported.removeMissing" = "제거할 load command가 없음: %@";
 "ipaflow.log.substrateStubCopied" = "포함된 호환 라이브러리를 Frameworks에 복사함";
 "ipaflow.log.substrateStubWarning" = "최신 iOS에서 플러그인이 로드되지 않으면 더 새 호환 라이브러리로 바꾸세요";
 "ipaflow.error.missingSubstrateStub" = "포함된 libsubstrate.dylib가 필요하지만 리소스에 없습니다";
@@ -817,6 +836,17 @@
 "dylib.macho.log.replacedWithStrong" = "슬라이스 %d의 기존 명령을 강한 참조로 교체함: %@";
 "dylib.macho.log.strippedCodeSignature" = "공간을 위해 %@-bit 슬라이스에서 LC_CODE_SIGNATURE를 제거함";
 "dylib.macho.log.injectedIntoSlice" = "%@-bit 슬라이스에 주입함: %@";
+"injectscan.error.notApp" = ".app을 선택하세요";
+"injectscan.error.systemLibrary" = "시스템 라이브러리는 제거하지 않음: %@";
+"injectscan.error.bundledLibrary" = "앱 자체 의존성이라 서드파티 주입으로 보지 않음: %@";
+"injectscan.log.alreadyGone" = "로드 명령이 이미 없어 건너뜀: %@";
+"injectscan.log.removedCommand" = "%@ 제거함 (호스트 %@)";
+"injectscan.log.payloadMissing" = "플러그인 파일을 찾지 못해 로드 명령만 제거함";
+"injectscan.log.payloadOutside" = "플러그인 경로가 이 앱 밖이라 삭제하지 않음: %@";
+"injectscan.log.deletedPayload" = "플러그인 파일 삭제함: %@";
+"injectscan.log.payloadPermission" = "플러그인 파일을 삭제하지 못함 (%@): %@";
+"injectscan.log.signed" = "다시 서명함: %@";
+"injectscan.log.signFailed" = "재서명이 완료되지 않음 (%@): %@";
 
 /* BundleMachOWorkflow */
 "machobundle.kind.standalone" = "단일 Mach-O";
@@ -887,15 +917,17 @@
 
 /* Sidebar */
 "sidebar.dashboard" = "개요";
+"sidebar.menuBar" = "탐색 최적화";
 "sidebar.repair" = "복구";
 "sidebar.cleanup" = "정리";
+"sidebar.appUninstall" = "앱 제거";
 "sidebar.desktopIcons" = "데스크탑 아이콘";
 "sidebar.appClone" = "앱 복제";
 "sidebar.memory" = "메모리";
 "sidebar.network" = "네트워크";
 "sidebar.cheatsheet" = "명령어";
 "sidebar.recipes" = "빠른 전환";
-"sidebar.deb" = "패키징";
+"sidebar.deb" = "플러그인";
 "sidebar.dylib" = "Dylib";
 "sidebar.ipa" = "IPA";
 "sidebar.macApp" = "주입";
@@ -1067,6 +1099,41 @@
 "desktopicon.preset.software.symbols" = "심볼";
 "desktopicon.preset.software.plugins" = "플러그인";
 "desktopicon.preset.software.build" = "빌드";
+"desktopicon.preset.costume.puppy" = "강아지";
+"desktopicon.preset.costume.kitten" = "고양이";
+"desktopicon.preset.costume.pear" = "배";
+"desktopicon.preset.costume.fridge" = "웃는 냉장고";
+"desktopicon.preset.costume.moon" = "달";
+"desktopicon.preset.costume.spider" = "거미";
+"desktopicon.preset.costume.berry" = "딸기";
+"desktopicon.preset.costume.gift" = "선물";
+
+"desktopicon.preset.ai.codex" = "Codex";
+"desktopicon.preset.ai.gpt" = "GPT";
+"desktopicon.preset.ai.claude" = "Claude";
+"desktopicon.preset.ai.grok" = "Grok";
+"desktopicon.preset.ai.grokBot" = "Grok Bot";
+"desktopicon.preset.ai.deepseek" = "DeepSeek";
+"desktopicon.preset.ai.kimi" = "Kimi";
+"desktopicon.preset.ai.glm" = "GLM";
+"desktopicon.preset.ai.muse" = "Muse";
+
+"desktopicon.preset.cute.cat" = "고양이";
+"desktopicon.preset.cute.bunny" = "토끼";
+"desktopicon.preset.cute.bear" = "곰";
+"desktopicon.preset.cute.peach" = "복숭아";
+"desktopicon.preset.cute.heart" = "하트";
+"desktopicon.preset.cute.star" = "별";
+"desktopicon.preset.cute.cloud" = "구름";
+"desktopicon.preset.cute.moon" = "달";
+"desktopicon.preset.cute.flower" = "꽃";
+"desktopicon.preset.cute.rainbow" = "무지개";
+"desktopicon.preset.cute.coffee" = "커피";
+"desktopicon.preset.cute.book" = "책";
+"desktopicon.preset.cute.music" = "음악";
+"desktopicon.preset.cute.camera" = "카메라";
+"desktopicon.preset.cute.gift" = "선물";
+"desktopicon.preset.cute.rocket" = "로켓";
 
 /* App clones */
 "appclone.strategy.hard" = "하드 복제";
@@ -1121,3 +1188,17 @@
 "appearance.system" = "시스템";
 "appearance.light" = "주간";
 "appearance.dark" = "야간";
+
+/* 앱 보관함 */
+
+/* 앱 제거 */
+"appuninstall.block.notAnApp" = "macOS 앱이 아닙니다";
+"appuninstall.block.missing" = "앱이 원래 위치에 없습니다";
+"appuninstall.block.systemLocation" = "기본 제공 시스템 앱은 여기서 제거할 수 없습니다";
+"appuninstall.block.appleBundle" = "Apple 시스템 앱은 여기서 제거할 수 없습니다";
+"appuninstall.block.currentApp" = "실행 중인 Mac 도우미는 스스로 제거할 수 없습니다";
+"appuninstall.error.nothingSelected" = "휴지통으로 옮길 항목이 선택되지 않았습니다";
+"appuninstall.error.symlink" = "심볼릭 링크라서 건너뛰었습니다";
+
+/* 에너지 모드 권한 대화상자. 권한은 종료할 때까지 유지된다. */
+"energy.auth.once" = "에너지 모드를 바꾸려면 관리자 권한이 필요합니다. 한 번 허용하면 이번 실행에서는 다시 묻지 않습니다.";

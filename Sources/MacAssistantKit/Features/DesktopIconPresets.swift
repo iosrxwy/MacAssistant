@@ -6,12 +6,16 @@ import Foundation
 import UniformTypeIdentifiers
 
 public enum DesktopIconPresetGroup: String, Sendable {
+    case ai
+    case costume
+    case cute
     case color
     case type
     case software
 }
 
-/// 文件夹配色与常用类型预设。图标按系统文件夹上色后再叠符号，不打包位图。
+/// 文件夹配色、常用类型，以及内置的 AI 文件夹、造型和粘土风贴纸。
+/// 配色和类型仍按系统文件夹上色后叠符号；AI、造型和贴纸用整张透明图替换图标。
 public struct DesktopIconPreset: Identifiable, Hashable, Sendable {
     public let group: DesktopIconPresetGroup
     public let key: String
@@ -24,6 +28,9 @@ public struct DesktopIconPreset: Identifiable, Hashable, Sendable {
     public var id: String { "\(group.rawValue).\(key)" }
 
     public var title: String {
+        if group == .ai || group == .cute || group == .costume {
+            return L("desktopicon.preset.\(group.rawValue).\(key)")
+        }
         switch id {
         case "color.system": return L("desktopicon.preset.color.system")
         case "color.red": return L("desktopicon.preset.color.red")
@@ -107,6 +114,51 @@ public struct DesktopIconPreset: Identifiable, Hashable, Sendable {
 }
 
 public enum DesktopIconPresets {
+    /// 常见 AI 产品配色的文件夹。资源在 `Resources/AIIcons/<key>.png`，原创绘制，不是官方标志文件。
+    public static let ai: [DesktopIconPreset] = [
+        ai("codex", 0.22, 0.22, 0.24),
+        ai("gpt", 0.96, 0.96, 0.97),
+        ai("claude", 0.96, 0.91, 0.84),
+        ai("grok", 0.12, 0.12, 0.13),
+        ai("grokBot", 0.91, 0.91, 0.93),
+        ai("deepseek", 0.95, 0.95, 0.96),
+        ai("kimi", 0.10, 0.10, 0.11),
+        ai("glm", 0.18, 0.18, 0.18),
+        ai("muse", 0.45, 0.50, 0.86)
+    ]
+
+    /// 文件夹外形的造型。资源在 `Resources/FolderCostumes/<key>.png`。
+    public static let costumes: [DesktopIconPreset] = [
+        costume("puppy", 0.86, 0.68, 0.36),
+        costume("kitten", 0.93, 0.88, 0.78),
+        costume("pear", 0.72, 0.78, 0.28),
+        costume("fridge", 0.78, 0.80, 0.82),
+        costume("moon", 0.62, 0.64, 0.66),
+        costume("spider", 0.12, 0.10, 0.12),
+        costume("berry", 0.86, 0.28, 0.32),
+        costume("gift", 0.94, 0.72, 0.78)
+    ]
+
+    /// 原创粘土风贴纸。资源在 `Resources/CuteIcons/<key>.png`，透明底，点选后整张替换图标。
+    public static let cute: [DesktopIconPreset] = [
+        cute("cat", 0.96, 0.90, 0.82),
+        cute("bunny", 0.96, 0.90, 0.84),
+        cute("bear", 0.80, 0.55, 0.28),
+        cute("peach", 0.95, 0.62, 0.45),
+        cute("heart", 0.95, 0.62, 0.70),
+        cute("star", 0.93, 0.75, 0.28),
+        cute("cloud", 0.86, 0.80, 0.95),
+        cute("moon", 0.96, 0.90, 0.78),
+        cute("flower", 0.98, 0.68, 0.76),
+        cute("rainbow", 0.98, 0.74, 0.72),
+        cute("coffee", 0.95, 0.88, 0.80),
+        cute("book", 0.78, 0.70, 0.90),
+        cute("music", 0.96, 0.74, 0.78),
+        cute("camera", 0.55, 0.82, 0.72),
+        cute("gift", 0.98, 0.72, 0.76),
+        cute("rocket", 0.96, 0.90, 0.82)
+    ]
+
     public static let colors: [DesktopIconPreset] = [
         .init(group: .color, key: "system", red: 0.31, green: 0.56, blue: 0.83, keepOriginalColor: true),
         .init(group: .color, key: "red", red: 0.83, green: 0.33, blue: 0.31),
@@ -160,7 +212,19 @@ public enum DesktopIconPresets {
         .init(group: .software, key: "build", red: 0.88, green: 0.48, blue: 0.37, symbolName: "hammer.fill")
     ]
 
-    public static var all: [DesktopIconPreset] { colors + types + software }
+    public static var all: [DesktopIconPreset] { ai + costumes + cute + colors + types + software }
+
+    private static func ai(_ key: String, _ red: Double, _ green: Double, _ blue: Double) -> DesktopIconPreset {
+        .init(group: .ai, key: key, red: red, green: green, blue: blue)
+    }
+
+    private static func costume(_ key: String, _ red: Double, _ green: Double, _ blue: Double) -> DesktopIconPreset {
+        .init(group: .costume, key: key, red: red, green: green, blue: blue)
+    }
+
+    private static func cute(_ key: String, _ red: Double, _ green: Double, _ blue: Double) -> DesktopIconPreset {
+        .init(group: .cute, key: key, red: red, green: green, blue: blue)
+    }
 
     /// 颜色行末尾「自选颜色」按钮的预览：当前色文件夹 + 调色板符号。
     public static func customPicker(red: Double, green: Double, blue: Double) -> DesktopIconPreset {
@@ -349,6 +413,10 @@ enum DesktopIconPresetLayout {
 
 private enum DesktopIconPresetRenderer {
     static func render(_ preset: DesktopIconPreset, pixelSize: Int) -> NSImage {
+        if let directory = artworkDirectory(for: preset.group),
+           let artwork = renderArtwork(named: preset.key, directory: directory, pixelSize: pixelSize) {
+            return artwork
+        }
         let folder = rasterizeFolder(pixelSize: pixelSize)
         let tinted = preset.keepOriginalColor
             ? folder
@@ -360,6 +428,24 @@ private enum DesktopIconPresetRenderer {
             ink: preset.badgeInk,
             pixelSize: pixelSize
         )
+    }
+
+    private static func artworkDirectory(for group: DesktopIconPresetGroup) -> String? {
+        switch group {
+        case .ai: return "AIIcons"
+        case .costume: return "FolderCostumes"
+        case .cute: return "CuteIcons"
+        case .color, .type, .software: return nil
+        }
+    }
+
+    private static func renderArtwork(named name: String, directory: String, pixelSize: Int) -> NSImage? {
+        let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: directory)
+            ?? Bundle.module.url(forResource: name, withExtension: "png")
+        guard let url, let source = NSImage(contentsOf: url), source.isValid else { return nil }
+        let canvas = makeCanvas(pixelSize: pixelSize)
+        draw(source, in: canvas, pixelSize: pixelSize)
+        return image(from: canvas, pixelSize: pixelSize)
     }
 
     private static func rasterizeFolder(pixelSize: Int) -> NSBitmapImageRep {

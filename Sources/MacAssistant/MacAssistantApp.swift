@@ -8,7 +8,7 @@ struct MacAssistantApp: App {
     @AppStorage(SceneBackdropSettings.defaultsKey) private var sceneRaw = SceneBackdropID.system.rawValue
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             RootView(initialSelection: initialRoute)
                 .frame(minWidth: 940, minHeight: 620)
                 .tint(.appAccent)
@@ -68,13 +68,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        DuoStatusBarController.shared.install()
+
         Task.detached(priority: .utility) {
             _ = AppleIDSigningService.renewDueJobs()
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        DuoStatusBarController.shared.prepareForTermination()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        true
+        !DuoStatusBarController.shared.isEnabled
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            DuoStatusBarController.shared.showMainWindow()
+        }
+        return true
     }
 }
 

@@ -59,7 +59,7 @@
       <img src="assets/screenshots/desktop-icons.png" alt="桌面图标" width="430">
       <br>
       <b>桌面图标</b><br>
-      给文件、文件夹、应用换色，含类型预设。
+      给文件、文件夹、应用换色，也可换成粘土贴纸、文件夹造型和 AI 文件夹。
     </td>
     <td align="center" width="50%" valign="top">
       <img src="assets/screenshots/ipa-workbench.png" alt="IPA 工作台" width="430">
@@ -89,8 +89,10 @@
 
 | 日常工具 | 开发者工具 |
 | --- | --- |
-| 应用修复（已损坏、隔离属性、签名） | DEB 制作、检查、转换、重新打包 |
-| 实时内存压力与进程管理 | DYLIB 依赖、安装名、rpath |
+| 应用修复（已损坏、隔离属性、签名、关闭自动更新） | DEB 制作、检查、转换、重新打包 |
+| 菜单栏：电量、Wi-Fi、音量、蓝牙、能耗模式 | 扫描并卸除 Mac 应用里注入的插件 |
+| 把应用移到废纸篓（系统应用不动） | DYLIB 依赖、安装名、rpath |
+| 实时内存压力、进程列表、冻结与恢复 | |
 | 网络：速率、端口、Ping、DNS、公网 IP | IPA 安装 / 原样提取（不脱壳） |
 | 可搜索的命令速查，带风险标识 | Mach-O 检查与 class-dump |
 | 访达、截图、隐藏文件等快捷开关 | 逐层签名与 Apple ID 签名 |

@@ -279,8 +279,10 @@ extension SidebarItem {
     var iconColor: Color {
         switch self {
         case .dashboard: return .teal
+        case .menuBar: return .green
         case .repair: return .orange
         case .cleanup: return .red
+        case .appUninstall: return .pink
         case .desktopIcons: return .blue
         case .appClone: return .indigo
         case .memory: return .purple
@@ -514,11 +516,23 @@ struct FilePickerButton: View {
     var systemImage: String = "folder"
     var types: [UTType] = [.item]
     var chooseDirectory: Bool = false
+    /// 外层卡片已经接收拖放、并且处理逻辑和这个按钮不一样时关掉，避免按钮把拖放抢走。
+    var acceptsDrop: Bool = true
     let onPick: (URL) -> Void
 
     @State private var presented = false
 
     var body: some View {
+        if acceptsDrop {
+            button.filePickerDrop { urls in
+                if let url = urls.first { onPick(url) }
+            }
+        } else {
+            button
+        }
+    }
+
+    private var button: some View {
         Button {
             presented = true
         } label: {
@@ -565,6 +579,7 @@ struct MultiFilePickerButton: View {
                 onPick(urls)
             }
         }
+        .filePickerDrop(multiple: true, onPick: onPick)
     }
 }
 
@@ -637,14 +652,21 @@ struct PathBadge: View {
     /// 与 IPA 工作台拖放区一致:悬停时加粗虚线+强调色。
     var isDropTargeted = false
     var showsDropChrome = false
+    /// 设置后，这条路径本身也能接收访达拖入，并画出虚线框。
+    var onDropFiles: (([URL]) -> Void)? = nil
+
+    @State private var localDropTargeted = false
+
+    private var highlighted: Bool { isDropTargeted || localDropTargeted }
+    private var chrome: Bool { showsDropChrome || onDropFiles != nil }
 
     var body: some View {
-        HStack(spacing: 6) {
+        let row = HStack(spacing: 6) {
             Image(systemName: "doc")
-                .foregroundStyle(isDropTargeted ? Color.accentColor : .secondary)
+                .foregroundStyle(highlighted ? Color.accentColor : .secondary)
             Text(url?.path ?? placeholder)
                 .font(.footnote)
-                .foregroundStyle(url == nil && !isDropTargeted ? .secondary : (isDropTargeted ? Color.accentColor : .primary))
+                .foregroundStyle(url == nil && !highlighted ? .secondary : (highlighted ? Color.accentColor : .primary))
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
@@ -654,17 +676,56 @@ struct PathBadge: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .insetSurfaceBackground(
             RoundedRectangle(cornerRadius: 8),
-            legacyFill: Color.primary.opacity(isDropTargeted ? 0.10 : 0.05)
+            legacyFill: Color.primary.opacity(highlighted ? 0.10 : 0.05)
         )
         .overlay {
-            if showsDropChrome || isDropTargeted {
+            if chrome || highlighted {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(
-                        isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.35),
+                        highlighted ? Color.accentColor : Color.secondary.opacity(0.35),
                         style: StrokeStyle(lineWidth: 1.5, dash: [7])
                     )
+                    .allowsHitTesting(false)
             }
         }
+
+        if let onDropFiles {
+            row
+                .fileURLsDropTarget(isTargeted: $localDropTargeted, onDrop: onDropFiles)
+                .help(L("theme.dropHint"))
+        } else {
+            row
+        }
+    }
+}
+
+extension View {
+    /// 让选择文件的按钮接收访达拖入。单选只取第一项；拖到按钮上时画出虚线。
+    func filePickerDrop(multiple: Bool = false, onPick: @escaping ([URL]) -> Void) -> some View {
+        modifier(FilePickerDropModifier(multiple: multiple, onPick: onPick))
+    }
+}
+
+private struct FilePickerDropModifier: ViewModifier {
+    var multiple: Bool
+    let onPick: ([URL]) -> Void
+    @State private var targeted = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if targeted {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                        .allowsHitTesting(false)
+                }
+            }
+            .fileURLsDropTarget(isTargeted: $targeted) { urls in
+                let accepted = multiple ? urls : Array(urls.prefix(1))
+                guard !accepted.isEmpty else { return }
+                onPick(accepted)
+            }
+            .help(L("theme.dropHint"))
     }
 }
 
