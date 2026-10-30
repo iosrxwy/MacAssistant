@@ -21,6 +21,7 @@ struct OpenSourceView: View {
             Credit(id: "classDump", title: L("about.thirdParty.classDump"), url: ProductLinks.classDumpProject),
             Credit(id: "dsdump", title: L("about.thirdParty.dsdump"), url: ProductLinks.dsdumpProject),
             Credit(id: "statusTrio", title: L("about.thirdParty.statusTrio"), url: ProductLinks.statusTrioProject),
+            Credit(id: "moonvy", title: L("about.thirdParty.moonvy"), url: ProductLinks.moonvyFolderDressing),
         ]
     }
 

@@ -114,7 +114,8 @@ public struct DesktopIconPreset: Identifiable, Hashable, Sendable {
 }
 
 public enum DesktopIconPresets {
-    /// 常见 AI 产品配色的文件夹。资源在 `Resources/AIIcons/<key>.png`，原创绘制，不是官方标志文件。
+    /// 常见 AI 产品配色的文件夹。资源在 `Resources/AIIcons/<key>.png`。
+    /// 按公开配色和符号原创绘制，不是官方标志文件。
     public static let ai: [DesktopIconPreset] = [
         ai("codex", 0.22, 0.22, 0.24),
         ai("gpt", 0.96, 0.96, 0.97),
@@ -128,6 +129,7 @@ public enum DesktopIconPresets {
     ]
 
     /// 文件夹外形的造型。资源在 `Resources/FolderCostumes/<key>.png`。
+    /// 灵感来自月维「文件夹换装」（https://moonvy.com/apps/dir-hz/），重新绘制，不收录对方的图。
     public static let costumes: [DesktopIconPreset] = [
         costume("puppy", 0.86, 0.68, 0.36),
         costume("kitten", 0.93, 0.88, 0.78),

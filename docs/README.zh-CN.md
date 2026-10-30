@@ -162,6 +162,8 @@ open "dist/Mac小助手.app"
 
 [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign) · [ATBClone](https://github.com/aitobox/ATBClone)
 
+文件夹造型的灵感来自[月维「文件夹换装」](https://moonvy.com/apps/dir-hz/)，重新绘制，未收录对方的图。粘土贴纸和 AI 文件夹为原创绘制。推荐这个站点。
+
 
 
 ## 许可证

@@ -379,6 +379,19 @@ struct DesktopIconView: View {
                 Text(L("desktopicon.preset.costume.detail"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Button {
+                    NSWorkspace.shared.open(ProductLinks.moonvyFolderDressing)
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(L("desktopicon.preset.costume.credit"))
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption2.weight(.semibold))
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("desktopicon.preset.costume.credit")
                 LazyVGrid(columns: Self.presetColumns, spacing: 10) {
                     ForEach(DesktopIconPresets.costumes) { preset in
                         presetButton(preset, showsTitle: true)

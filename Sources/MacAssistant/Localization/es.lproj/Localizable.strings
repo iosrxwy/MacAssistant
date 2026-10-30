@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "Software e ingeniería";
 "desktopicon.preset.software.detail" = "Los nombres y símbolos coinciden con las herramientas de la barra lateral, para carpetas de proyecto";
 "desktopicon.preset.ai" = "Carpetas de IA";
-"desktopicon.preset.ai.detail" = "Carpetas con los colores y símbolos de productos de IA conocidos. Sustituye el icono entero";
+"desktopicon.preset.ai.detail" = "Carpetas originales con los colores y símbolos de productos de IA conocidos, no son logotipos oficiales. Sustituye el icono entero";
 "desktopicon.preset.costume" = "Aspectos de carpeta";
-"desktopicon.preset.costume.detail" = "Sigue siendo una carpeta, con otro material y cara. Sustituye el icono entero";
+"desktopicon.preset.costume.detail" = "Sigue siendo una carpeta. El estilo se inspira en Moonvy Folder Dressing y está redibujado, no es su material";
+"desktopicon.preset.costume.credit" = "Moonvy Folder Dressing";
 "desktopicon.preset.cute" = "Stickers bonitos";
-"desktopicon.preset.cute.detail" = "Stickers de arcilla que sustituyen el icono entero, no solo tiñen la carpeta";
+"desktopicon.preset.cute.detail" = "Stickers de arcilla originales que sustituyen el icono entero, no solo tiñen la carpeta";
 "desktopicon.preset.selected" = "Preajuste: %@";
 "desktopicon.preset.color.custom" = "Color personalizado";
 "desktopicon.preset.color.custom.help" = "Abrir el selector de color. El color elegido se guarda como preajuste";
@@ -1361,6 +1362,7 @@
 "duo.hideIcon" = "Desactivar navegación";
 "duo.quit" = "Salir de Mac Assistant";
 "about.thirdParty.statusTrio" = "Status Trio (lingyired, Apache-2.0)";
+"about.thirdParty.moonvy" = "Moonvy · Folder Dressing (referencia visual, redibujado)";
 "duo.page" = "El anillo es la batería, el centro es el Wi-Fi y los cuatro puntos son el volumen.";
 "duo.battery" = "Batería";
 "duo.where.title" = "El icono está a la derecha de la barra de menús";

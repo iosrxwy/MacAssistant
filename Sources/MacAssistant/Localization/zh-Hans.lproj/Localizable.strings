@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "软件与工程";
 "desktopicon.preset.software.detail" = "命名和符号与侧栏功能一致，适合工程目录";
 "desktopicon.preset.ai" = "AI 文件夹";
-"desktopicon.preset.ai.detail" = "按常见 AI 产品的配色和符号画的文件夹，点选后整张替换图标";
+"desktopicon.preset.ai.detail" = "按常见 AI 产品的配色和符号原创绘制，不是官方标志。点选后整张替换图标";
 "desktopicon.preset.costume" = "文件夹造型";
-"desktopicon.preset.costume.detail" = "还是文件夹的外形，换上材质和表情，点选后整张替换图标";
+"desktopicon.preset.costume.detail" = "还是文件夹的外形。造型灵感来自月维「文件夹换装」，这里是重新画的，不是他们的图";
+"desktopicon.preset.costume.credit" = "推荐：月维文件夹换装";
 "desktopicon.preset.cute" = "可爱贴纸";
-"desktopicon.preset.cute.detail" = "粘土可爱风，整张替换图标，不再只给文件夹上色";
+"desktopicon.preset.cute.detail" = "原创粘土贴纸，整张替换图标，不再只给文件夹上色";
 "desktopicon.preset.selected" = "预设：%@";
 "desktopicon.preset.color.custom" = "自选颜色";
 "desktopicon.preset.color.custom.help" = "打开颜色选择器，选中的颜色会留在预设里";
@@ -1359,6 +1360,7 @@
 "duo.hideIcon" = "关闭导航优化";
 "duo.quit" = "退出 Mac小助手";
 "about.thirdParty.statusTrio" = "Status Trio（lingyired，Apache-2.0）";
+"about.thirdParty.moonvy" = "月维 · 文件夹换装（造型灵感，重新绘制）";
 "duo.page" = "外圈是电量，中间是 Wi-Fi，底部四个点是音量。";
 "duo.battery" = "电池";
 "duo.where.title" = "图标在菜单栏右侧";

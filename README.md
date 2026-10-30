@@ -152,6 +152,8 @@ open "dist/Mac小助手.app"
 
 [AltSign](https://github.com/rileytestut/AltSign) / [AltStore](https://github.com/altstoreio/AltStore) · [xtool](https://github.com/xtool-org/xtool) · [libimobiledevice](https://libimobiledevice.org) · [Theos](https://github.com/theos/theos) · [zsign](https://github.com/zhlynn/zsign) · [ATBClone](https://github.com/aitobox/ATBClone)
 
+Folder looks are redrawn from the idea of [Moonvy Folder Dressing](https://moonvy.com/apps/dir-hz/). Their artwork is not included. Clay stickers and AI folders are original drawings.
+
 ## License
 
 [GNU GPL-3.0](LICENSE). Distributed modifications must remain free software under the same license, with complete corresponding source.

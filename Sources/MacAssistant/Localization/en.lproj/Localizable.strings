@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "Software & engineering";
 "desktopicon.preset.software.detail" = "Names and symbols match the sidebar tools, for project folders";
 "desktopicon.preset.ai" = "AI folders";
-"desktopicon.preset.ai.detail" = "Folders drawn in the colors and marks of familiar AI products. Replaces the whole icon";
+"desktopicon.preset.ai.detail" = "Original folders in the colors and marks of familiar AI products, not official logo files. Replaces the whole icon";
 "desktopicon.preset.costume" = "Folder looks";
-"desktopicon.preset.costume.detail" = "Still a folder shape, with a new material and face. Replaces the whole icon";
+"desktopicon.preset.costume.detail" = "Still a folder shape. The looks are inspired by Moonvy Folder Dressing and redrawn here, not their artwork";
+"desktopicon.preset.costume.credit" = "Moonvy Folder Dressing";
 "desktopicon.preset.cute" = "Cute stickers";
-"desktopicon.preset.cute.detail" = "Clay stickers replace the whole icon, instead of only tinting a folder";
+"desktopicon.preset.cute.detail" = "Original clay stickers replace the whole icon, instead of only tinting a folder";
 "desktopicon.preset.selected" = "Preset: %@";
 "desktopicon.preset.color.custom" = "Custom Color";
 "desktopicon.preset.color.custom.help" = "Open the color picker. The chosen color is saved as a preset";
@@ -1361,6 +1362,7 @@
 "duo.hideIcon" = "Turn off navigation";
 "duo.quit" = "Quit Mac Assistant";
 "about.thirdParty.statusTrio" = "Status Trio (lingyired, Apache-2.0)";
+"about.thirdParty.moonvy" = "Moonvy · Folder Dressing (look reference, redrawn)";
 "duo.page" = "The ring is battery, the center is Wi-Fi, and the four dots are volume.";
 "duo.battery" = "Battery";
 "duo.where.title" = "The icon sits on the right of the menu bar";

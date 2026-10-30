@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "ПО и инженерия";
 "desktopicon.preset.software.detail" = "Имена и символы совпадают с инструментами боковой панели, удобно для папок проектов";
 "desktopicon.preset.ai" = "Папки ИИ";
-"desktopicon.preset.ai.detail" = "Папки в цветах и знаках знакомых продуктов ИИ. Заменяет значок целиком";
+"desktopicon.preset.ai.detail" = "Оригинальные папки в цветах и знаках знакомых продуктов ИИ, не официальные логотипы. Заменяет значок целиком";
 "desktopicon.preset.costume" = "Облики папок";
-"desktopicon.preset.costume.detail" = "Это по-прежнему папка, с другим материалом и лицом. Заменяет значок целиком";
+"desktopicon.preset.costume.detail" = "Это по-прежнему папка. Образы вдохновлены Moonvy Folder Dressing и перерисованы, это не их файлы";
+"desktopicon.preset.costume.credit" = "Moonvy Folder Dressing";
 "desktopicon.preset.cute" = "Милые стикеры";
-"desktopicon.preset.cute.detail" = "Глиняные стикеры заменяют весь значок, а не только красят папку";
+"desktopicon.preset.cute.detail" = "Оригинальные глиняные стикеры заменяют весь значок, а не только красят папку";
 "desktopicon.preset.selected" = "Пресет: %@";
 "desktopicon.preset.color.custom" = "Свой цвет";
 "desktopicon.preset.color.custom.help" = "Открыть выбор цвета. Выбранный цвет сохраняется как пресет";
@@ -1361,6 +1362,7 @@
 "duo.hideIcon" = "Выключить навигацию";
 "duo.quit" = "Завершить Mac Assistant";
 "about.thirdParty.statusTrio" = "Status Trio (lingyired, Apache-2.0)";
+"about.thirdParty.moonvy" = "Moonvy · Folder Dressing (образец облика, перерисовано)";
 "duo.page" = "Кольцо — батарея, центр — Wi-Fi, четыре точки — громкость.";
 "duo.battery" = "Батарея";
 "duo.where.title" = "Значок справа в строке меню";

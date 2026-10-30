@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "소프트웨어 및 엔지니어링";
 "desktopicon.preset.software.detail" = "이름과 기호가 사이드바 도구와 같아 프로젝트 폴더에 맞습니다";
 "desktopicon.preset.ai" = "AI 폴더";
-"desktopicon.preset.ai.detail" = "익숙한 AI 제품의 색과 상징으로 그린 폴더입니다. 아이콘 전체를 교체합니다";
+"desktopicon.preset.ai.detail" = "익숙한 AI 제품의 색과 상징으로 직접 그린 폴더이며, 공식 로고 파일이 아닙니다. 아이콘 전체를 교체합니다";
 "desktopicon.preset.costume" = "폴더 모양";
-"desktopicon.preset.costume.detail" = "폴더 모양은 유지하고 재질과 표정만 바꿉니다. 아이콘 전체를 교체합니다";
+"desktopicon.preset.costume.detail" = "폴더 모양은 그대로입니다. Moonvy 폴더 꾸미기에서 아이디어를 얻어 다시 그렸고, 그 그림 파일은 넣지 않았습니다";
+"desktopicon.preset.costume.credit" = "Moonvy 폴더 꾸미기";
 "desktopicon.preset.cute" = "귀여운 스티커";
-"desktopicon.preset.cute.detail" = "클레이 스타일 스티커로 아이콘 전체를 바꿉니다. 폴더 색만 바꾸는 방식이 아닙니다";
+"desktopicon.preset.cute.detail" = "직접 그린 클레이 스티커로 아이콘 전체를 바꿉니다. 폴더 색만 바꾸는 방식이 아닙니다";
 "desktopicon.preset.selected" = "프리셋: %@";
 "desktopicon.preset.color.custom" = "사용자 색상";
 "desktopicon.preset.color.custom.help" = "색상 선택기를 엽니다. 고른 색은 프리셋으로 저장됩니다";
@@ -1361,6 +1362,7 @@
 "duo.hideIcon" = "탐색 최적화 끄기";
 "duo.quit" = "Mac Assistant 종료";
 "about.thirdParty.statusTrio" = "Status Trio (lingyired, Apache-2.0)";
+"about.thirdParty.moonvy" = "Moonvy · 폴더 꾸미기 (모양 참고, 다시 그림)";
 "duo.page" = "바깥 고리는 배터리, 가운데는 Wi-Fi, 아래 점 네 개는 음량입니다.";
 "duo.battery" = "배터리";
 "duo.where.title" = "아이콘은 메뉴 막대 오른쪽에 있습니다";

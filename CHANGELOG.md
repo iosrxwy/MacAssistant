@@ -10,7 +10,7 @@ Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates
 
 - **Menu bar**: one icon shows battery, Wi-Fi, and volume. Connect or disconnect Bluetooth devices, and switch Auto / Low Power / High Power. One admin prompt lasts for the rest of this launch. The icon stays after the window closes.
 - **App uninstall**: move an app and its support files, caches, and preferences in your home library to the Trash. System apps and the running copy of Mac Assistant are left alone.
-- **Desktop icons**: 16 clay stickers, 8 folder costumes, and 9 AI folders (Codex, GPT, Claude, Grok, Grok Bot, DeepSeek, Kimi, GLM, Muse). Original drawings in familiar colors and marks, not official logo files. Picking one replaces the whole icon.
+- **Desktop icons**: 16 original clay stickers, 8 folder costumes, and 9 AI folders (Codex, GPT, Claude, Grok, Grok Bot, DeepSeek, Kimi, GLM, Muse). Folder looks are inspired by [Moonvy Folder Dressing](https://moonvy.com/apps/dir-hz/) and redrawn, not their artwork. AI folders use familiar colors and marks and are not official logo files. Picking one replaces the whole icon.
 - **Mac apps**: scan injected third-party plugins, remove the load command, and optionally delete the plugin and re-sign.
 - **Repair**: turn off automatic macOS update checks, downloads, and installs. This does not spoof the system version. System Settings → General → Software Update can still install updates.
 

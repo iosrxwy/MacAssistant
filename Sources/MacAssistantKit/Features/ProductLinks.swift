@@ -43,4 +43,6 @@ public enum ProductLinks {
     public static let atbCloneProject = URL(string: "https://github.com/aitobox/ATBClone")!
     /// 菜单栏三合一图标的构图参考 Status Trio（Apache-2.0），在本应用内重绘，不捆绑其程序。
     public static let statusTrioProject = URL(string: "https://github.com/lingyired/status-trio")!
+    /// 文件夹造型的灵感来自月维「文件夹换装」。重新绘制，不收录对方的图。
+    public static let moonvyFolderDressing = URL(string: "https://moonvy.com/apps/dir-hz/")!
 }

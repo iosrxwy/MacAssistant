@@ -1215,11 +1215,12 @@
 "desktopicon.preset.software" = "軟體與工程";
 "desktopicon.preset.software.detail" = "命名和符號與側欄功能一致，適合工程目錄";
 "desktopicon.preset.ai" = "AI 資料夾";
-"desktopicon.preset.ai.detail" = "依常見 AI 產品的配色和符號畫的資料夾，點選後整張替換圖示";
+"desktopicon.preset.ai.detail" = "依常見 AI 產品的配色和符號原創繪製，不是官方標誌。點選後整張替換圖示";
 "desktopicon.preset.costume" = "資料夾造型";
-"desktopicon.preset.costume.detail" = "還是資料夾的外形，換上材質和表情，點選後整張替換圖示";
+"desktopicon.preset.costume.detail" = "還是資料夾的外形。造型靈感來自月維「資料夾換裝」，這裡是重新畫的，不是他們的圖";
+"desktopicon.preset.costume.credit" = "推薦：月維資料夾換裝";
 "desktopicon.preset.cute" = "可愛貼紙";
-"desktopicon.preset.cute.detail" = "黏土可愛風，整張替換圖示，不再只給資料夾上色";
+"desktopicon.preset.cute.detail" = "原創黏土貼紙，整張替換圖示，不再只給資料夾上色";
 "desktopicon.preset.selected" = "預設：%@";
 "desktopicon.preset.color.custom" = "自選顏色";
 "desktopicon.preset.color.custom.help" = "開啟顏色選擇器，選中的顏色會留在預設裡";
@@ -1361,6 +1362,7 @@
 "duo.hideIcon" = "關閉導覽優化";
 "duo.quit" = "結束 Mac小助手";
 "about.thirdParty.statusTrio" = "Status Trio（lingyired，Apache-2.0）";
+"about.thirdParty.moonvy" = "月維 · 資料夾換裝（造型靈感，重新繪製）";
 "duo.page" = "外圈是電量，中間是 Wi-Fi，底部四個點是音量。";
 "duo.battery" = "電池";
 "duo.where.title" = "圖示在選單列右側";
