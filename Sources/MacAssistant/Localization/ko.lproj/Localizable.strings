@@ -1414,6 +1414,12 @@
 "duo.bluetooth.disconnect" = "%@ 연결 해제";
 "duo.shortcut.clean" = "화면 청소";
 "duo.shortcut.clean.hint" = "Esc를 눌러 끝냅니다";
+"duo.shortcut.clean.color.black" = "검정";
+"duo.shortcut.clean.color.white" = "흰색";
+"duo.shortcut.clean.color.red" = "빨강";
+"duo.shortcut.clean.color.green" = "초록";
+"duo.shortcut.clean.color.blue" = "파랑";
+"duo.shortcut.clean.color.yellow" = "노랑";
 "duo.shortcut.derived" = "Xcode 캐시 정리";
 "duo.shortcut.derived.size" = "DerivedData: %@";
 "duo.shortcut.derived.missing" = "DerivedData 없음";
@@ -1422,6 +1428,7 @@
 "duo.shortcut.eject" = "디스크 꺼내기";
 "duo.shortcut.eject.none" = "꺼낼 디스크 없음";
 "duo.shortcut.eject.count" = "디스크 %d개";
+"duo.shortcut.eject.run" = "꺼내기";
 "duo.shortcut.mic.unavailable" = "마이크 없음";
 
 

@@ -2,6 +2,20 @@
 
 [English](CHANGELOG.md)
 
+## [1.0.6] - 2026-11-08
+
+ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版升上来。
+
+### 新增
+
+- **桌面图标**：豆包和 WorkBuddy 头像文件夹。按公开配色和形象原创绘制，不是官方标志文件。
+- **菜单栏**：屏幕清洁可选黑、白、红、绿、蓝、黄。
+
+### 修复
+
+- **菜单栏**：「重新启动」会重启这台 Mac。
+- 快捷操作名称改为「清空废纸篓」。
+
 ## [1.0.5] - 2026-10-30
 
 ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版升上来。
@@ -87,6 +101,7 @@ ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版
 
 更早的测试版说明见 [英文 Changelog](CHANGELOG.md)。
 
+[1.0.6]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.6
 [1.0.5]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.5
 [1.0.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.4
 [1.0.3]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.3

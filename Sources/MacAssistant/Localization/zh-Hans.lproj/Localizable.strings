@@ -1412,6 +1412,12 @@
 "duo.bluetooth.disconnect" = "断开 %@";
 "duo.shortcut.clean" = "屏幕清洁";
 "duo.shortcut.clean.hint" = "按 Esc 退出";
+"duo.shortcut.clean.color.black" = "黑色";
+"duo.shortcut.clean.color.white" = "白色";
+"duo.shortcut.clean.color.red" = "红色";
+"duo.shortcut.clean.color.green" = "绿色";
+"duo.shortcut.clean.color.blue" = "蓝色";
+"duo.shortcut.clean.color.yellow" = "黄色";
 "duo.shortcut.derived" = "Xcode 缓存清理";
 "duo.shortcut.derived.size" = "DerivedData：%@";
 "duo.shortcut.derived.missing" = "没有 DerivedData";
@@ -1420,6 +1426,7 @@
 "duo.shortcut.eject" = "推出磁盘";
 "duo.shortcut.eject.none" = "没有可推出的磁盘";
 "duo.shortcut.eject.count" = "%d 个磁盘";
+"duo.shortcut.eject.run" = "推出";
 "duo.shortcut.mic.unavailable" = "没有麦克风";
 
 
@@ -1442,7 +1449,7 @@
 "duo.shortcut.keyboard.access" = "需要辅助功能权限才能锁定键盘";
 "duo.shortcut.menuBar" = "菜单栏自动隐藏";
 "duo.shortcut.hiddenFiles" = "显示隐藏文件";
-"duo.shortcut.trash" = "空废纸篓";
+"duo.shortcut.trash" = "清空废纸篓";
 "duo.shortcut.trash.detail" = "清空废纸篓里的文件";
 "duo.shortcut.trash.run" = "清空";
 "duo.shortcut.trash.failed" = "没有清空";
@@ -1467,7 +1474,7 @@
 "duo.shortcut.sleep.run" = "睡眠";
 "duo.shortcut.restart" = "重新启动";
 "duo.shortcut.restart.detail" = "重新启动这台 Mac";
-"duo.shortcut.restart.run" = "重新启动";
+"duo.shortcut.restart.run" = "重启";
 "duo.shortcut.restart.confirm" = "未保存的工作会丢失。确定要重新启动吗？";
 "duo.shortcut.logout" = "注销";
 "duo.shortcut.logout.detail" = "注销当前用户";

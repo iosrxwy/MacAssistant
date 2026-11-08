@@ -51,6 +51,7 @@ final class DuoQuickActions: ObservableObject {
     @Published private(set) var awakeSpan: DuoAwakeSpan = .twoHours
     @Published private(set) var preventLidSleep = false
     @Published private(set) var screenClean = false
+    @Published private(set) var cleanColor: DuoCleanColor = .black
     @Published private(set) var energyMode: DuoEnergyMode?
     @Published private(set) var supportsHighPower = false
     @Published private(set) var energyFailed = false
@@ -81,7 +82,7 @@ final class DuoQuickActions: ObservableObject {
     private var awakeTimer: Timer?
     private var lastEnergyRead = Date.distantPast
     private var lastNetworkRead = Date.distantPast
-    private var cleanWindows: [NSWindow] = []
+    private var cleanWindows: [DuoCleanWindow] = []
     private var cleanMonitor: Any?
     private var wifiDeviceName: String?
 
@@ -89,6 +90,7 @@ final class DuoQuickActions: ObservableObject {
     private let dockSnapshotKey = "MacAssistant.DuoQuick.dockSnapshot"
     private let awakeSpanKey = "MacAssistant.DuoQuick.awakeMinutes"
     private let awakeLidKey = "MacAssistant.DuoQuick.awakeLid"
+    private let cleanColorKey = "MacAssistant.DuoQuick.cleanColor"
 
     init() {
         dockHidden = UserDefaults.standard.bool(forKey: dockFlagKey)
@@ -97,6 +99,10 @@ final class DuoQuickActions: ObservableObject {
             awakeSpan = span
         }
         preventLidSleep = UserDefaults.standard.bool(forKey: awakeLidKey)
+        if let raw = UserDefaults.standard.string(forKey: cleanColorKey),
+           let stored = DuoCleanColor(rawValue: raw) {
+            cleanColor = stored
+        }
         refreshToggles()
         scanDerivedData()
     }
@@ -208,6 +214,19 @@ final class DuoQuickActions: ObservableObject {
         } else {
             hideCleanCover()
         }
+    }
+
+    func setCleanColor(_ color: DuoCleanColor) {
+        cleanColor = color
+        UserDefaults.standard.set(color.rawValue, forKey: cleanColorKey)
+        cleanWindows.forEach { $0.apply(color) }
+    }
+
+    func cycleCleanColor(forward: Bool) {
+        let all = DuoCleanColor.allCases
+        let index = all.firstIndex(of: cleanColor) ?? 0
+        let step = forward ? 1 : all.count - 1
+        setCleanColor(all[(index + step) % all.count])
     }
 
     func setEnergy(_ mode: DuoEnergyMode, onBattery: Bool) {
@@ -529,10 +548,14 @@ final class DuoQuickActions: ObservableObject {
     private func showCleanCover() {
         hideCleanCover()
         let hint = L("duo.shortcut.clean.hint")
-        let windows: [NSWindow] = NSScreen.screens.map { screen in
-            let window = DuoCleanWindow(screen: screen, hint: hint)
+        let color = cleanColor
+        let windows: [DuoCleanWindow] = NSScreen.screens.map { screen in
+            let window = DuoCleanWindow(screen: screen, hint: hint, color: color)
             window.onEscape = { [weak self] in
                 self?.hideCleanCover()
+            }
+            window.onPick = { [weak self] color in
+                self?.setCleanColor(color)
             }
             window.orderFrontRegardless()
             return window
@@ -544,6 +567,10 @@ final class DuoQuickActions: ObservableObject {
             guard self?.screenClean == true || self?.cleanWindows.isEmpty == false else { return event }
             if event.keyCode == 53 {
                 self?.hideCleanCover()
+            } else if event.keyCode == 123 {
+                self?.cycleCleanColor(forward: false)
+            } else if event.keyCode == 124 {
+                self?.cycleCleanColor(forward: true)
             }
             return nil
         }
@@ -836,10 +863,86 @@ private enum DuoInputMute {
     }
 }
 
+/// 清洁层用的纯色。浅色用深色提示，深色用浅色提示。
+enum DuoCleanColor: String, CaseIterable, Identifiable {
+    case black, white, red, green, blue, yellow
+
+    var id: String { rawValue }
+
+    var nsColor: NSColor {
+        switch self {
+        case .black: return NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1)
+        case .white: return NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
+        case .red: return NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
+        case .green: return NSColor(srgbRed: 0, green: 1, blue: 0, alpha: 1)
+        case .blue: return NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1)
+        case .yellow: return NSColor(srgbRed: 1, green: 1, blue: 0, alpha: 1)
+        }
+    }
+
+    var hintNSColor: NSColor {
+        switch self {
+        case .white, .yellow, .green:
+            return NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.72)
+        case .black, .red, .blue:
+            return NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.85)
+        }
+    }
+}
+
+private final class DuoCleanSwatch: NSView {
+    let cleanColor: DuoCleanColor
+    var onPick: (() -> Void)?
+    var selected = false {
+        didSet { needsDisplay = true }
+    }
+
+    init(cleanColor: DuoCleanColor) {
+        self.cleanColor = cleanColor
+        super.init(frame: NSRect(x: 0, y: 0, width: 44, height: 44))
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    override var intrinsicContentSize: NSSize { NSSize(width: 44, height: 44) }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let ring = cleanColor.hintNSColor
+        if selected {
+            ring.setStroke()
+            let outer = NSBezierPath(ovalIn: bounds.insetBy(dx: 1.5, dy: 1.5))
+            outer.lineWidth = 2
+            outer.stroke()
+        }
+        let dot = bounds.insetBy(dx: selected ? 7 : 8, dy: selected ? 7 : 8)
+        cleanColor.nsColor.setFill()
+        NSBezierPath(ovalIn: dot).fill()
+        ring.withAlphaComponent(selected ? 0.95 : 0.55).setStroke()
+        let edge = NSBezierPath(ovalIn: dot.insetBy(dx: 0.6, dy: 0.6))
+        edge.lineWidth = 1.5
+        edge.stroke()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onPick?()
+    }
+}
+
 private final class DuoCleanWindow: NSWindow {
     var onEscape: (() -> Void)?
+    var onPick: ((DuoCleanColor) -> Void)?
+    private let hintLabel: NSTextField
+    private var swatches: [DuoCleanSwatch] = []
 
-    init(screen: NSScreen, hint: String) {
+    init(screen: NSScreen, hint: String, color: DuoCleanColor) {
+        let label = NSTextField(labelWithString: hint)
+        label.font = .systemFont(ofSize: 15, weight: .medium)
+        label.alignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        hintLabel = label
         super.init(
             contentRect: screen.frame,
             styleMask: [.borderless],
@@ -848,25 +951,52 @@ private final class DuoCleanWindow: NSWindow {
         )
         setFrame(screen.frame, display: false)
         isOpaque = true
-        backgroundColor = .black
         level = .screenSaver
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
-        let label = NSTextField(labelWithString: hint)
-        label.textColor = NSColor.white.withAlphaComponent(0.85)
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.alignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
         let content = NSView(frame: screen.frame)
         content.wantsLayer = true
-        content.layer?.backgroundColor = NSColor.black.cgColor
+        let row = NSStackView()
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 18
+        row.translatesAutoresizingMaskIntoConstraints = false
+        for item in DuoCleanColor.allCases {
+            let swatch = DuoCleanSwatch(cleanColor: item)
+            swatch.translatesAutoresizingMaskIntoConstraints = false
+            swatch.widthAnchor.constraint(equalToConstant: 44).isActive = true
+            swatch.heightAnchor.constraint(equalToConstant: 44).isActive = true
+            swatch.setAccessibilityElement(true)
+            swatch.setAccessibilityRole(.button)
+            swatch.setAccessibilityLabel(L("duo.shortcut.clean.color.\(item.rawValue)"))
+            swatch.setAccessibilityIdentifier("duo.clean.color.\(item.rawValue)")
+            swatch.onPick = { [weak self] in
+                self?.onPick?(item)
+            }
+            row.addArrangedSubview(swatch)
+            swatches.append(swatch)
+        }
+        content.addSubview(row)
         content.addSubview(label)
         contentView = content
         NSLayoutConstraint.activate([
+            row.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            row.bottomAnchor.constraint(equalTo: label.topAnchor, constant: -18),
             label.centerXAnchor.constraint(equalTo: content.centerXAnchor),
-            label.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -48)
+            label.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -36)
         ])
+        apply(color)
+    }
+
+    func apply(_ color: DuoCleanColor) {
+        let fill = color.nsColor
+        backgroundColor = fill
+        contentView?.layer?.backgroundColor = fill.cgColor
+        hintLabel.textColor = color.hintNSColor
+        for swatch in swatches {
+            swatch.selected = swatch.cleanColor == color
+        }
     }
 
     override var canBecomeKey: Bool { true }
@@ -875,11 +1005,8 @@ private final class DuoCleanWindow: NSWindow {
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 {
             onEscape?()
-            return
         }
     }
-
-    override func mouseDown(with event: NSEvent) {}
 }
 
 enum DuoToolID: String, CaseIterable, Identifiable {
@@ -920,12 +1047,14 @@ enum DuoToolPrefs {
         return result
     }
 
-    /// 默认按使用频率分组。已保存的顺序排在前面，新工具按这个顺序补到后面。
+    /// 默认按标题从短到长。已保存的顺序排在前面，新工具按这个顺序补到后面。
     static let preferredOrder: [DuoToolID] = [
-        .bluetooth,
-        .darkMode, .dock, .desktop, .widgets, .stageManager, .menuBar, .hiddenFiles, .extensions, .pathbar,
-        .mic, .keyboard,
-        .clean, .clipboard, .emptyTrash, .derived, .eject, .awake, .sleep, .logout, .restart
+        .bluetooth, .sleep, .logout,
+        .darkMode, .desktop, .stageManager, .awake, .clean, .keyboard, .emptyTrash, .eject, .restart,
+        .widgets, .mic, .pathbar, .clipboard,
+        .hiddenFiles,
+        .dock, .menuBar, .extensions,
+        .derived
     ]
 
     /// 没改过自定义时，第一屏只留这几项，其余到「自定义」里再打开。

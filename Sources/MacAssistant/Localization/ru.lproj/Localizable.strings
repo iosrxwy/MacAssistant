@@ -1414,6 +1414,12 @@
 "duo.bluetooth.disconnect" = "Отключить %@";
 "duo.shortcut.clean" = "Очистка экрана";
 "duo.shortcut.clean.hint" = "Нажмите Esc, чтобы выйти";
+"duo.shortcut.clean.color.black" = "Чёрный";
+"duo.shortcut.clean.color.white" = "Белый";
+"duo.shortcut.clean.color.red" = "Красный";
+"duo.shortcut.clean.color.green" = "Зелёный";
+"duo.shortcut.clean.color.blue" = "Синий";
+"duo.shortcut.clean.color.yellow" = "Жёлтый";
 "duo.shortcut.derived" = "Очистка кэша Xcode";
 "duo.shortcut.derived.size" = "DerivedData: %@";
 "duo.shortcut.derived.missing" = "Нет DerivedData";
@@ -1422,6 +1428,7 @@
 "duo.shortcut.eject" = "Извлечь диски";
 "duo.shortcut.eject.none" = "Нет дисков для извлечения";
 "duo.shortcut.eject.count" = "%d диск.";
+"duo.shortcut.eject.run" = "Извлечь";
 "duo.shortcut.mic.unavailable" = "Нет микрофона";
 
 

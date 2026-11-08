@@ -2,6 +2,20 @@
 
 All notable changes to MacAssistant are recorded here.
 
+## [1.0.6] - 2026-11-08
+
+Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates**.
+
+### Added
+
+- **Desktop icons**: Doubao and WorkBuddy avatar folders. Original drawings from each product's public colors and motif, not official logo files.
+- **Menu bar**: screen cleaning can use black, white, red, green, blue, or yellow.
+
+### Fixed
+
+- **Menu bar**: Restart restarts this Mac.
+- The Trash shortcut is named 清空废纸篓.
+
 ## [1.0.5] - 2026-10-30
 
 Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates**.
@@ -170,6 +184,7 @@ First public prerelease.
 
 This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.6]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.6
 [1.0.5]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.5
 [1.0.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.4
 [1.0.3]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.3

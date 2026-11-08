@@ -124,6 +124,8 @@ public enum DesktopIconPresets {
         ai("grokBot", 0.91, 0.91, 0.93),
         ai("deepseek", 0.95, 0.95, 0.96),
         ai("kimi", 0.10, 0.10, 0.11),
+        ai("doubao", 0.78, 0.88, 0.96),
+        ai("workbuddy", 0.98, 0.95, 0.82),
         ai("glm", 0.18, 0.18, 0.18),
         ai("muse", 0.45, 0.50, 0.86)
     ]

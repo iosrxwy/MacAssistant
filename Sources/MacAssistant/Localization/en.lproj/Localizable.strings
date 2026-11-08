@@ -1414,6 +1414,12 @@
 "duo.bluetooth.disconnect" = "Disconnect %@";
 "duo.shortcut.clean" = "Clean Screen";
 "duo.shortcut.clean.hint" = "Press Esc to exit";
+"duo.shortcut.clean.color.black" = "Black";
+"duo.shortcut.clean.color.white" = "White";
+"duo.shortcut.clean.color.red" = "Red";
+"duo.shortcut.clean.color.green" = "Green";
+"duo.shortcut.clean.color.blue" = "Blue";
+"duo.shortcut.clean.color.yellow" = "Yellow";
 "duo.shortcut.derived" = "Xcode Cache Cleanup";
 "duo.shortcut.derived.size" = "DerivedData: %@";
 "duo.shortcut.derived.missing" = "No DerivedData";
@@ -1422,6 +1428,7 @@
 "duo.shortcut.eject" = "Eject Disks";
 "duo.shortcut.eject.none" = "No disks to eject";
 "duo.shortcut.eject.count" = "%d disks";
+"duo.shortcut.eject.run" = "Eject";
 "duo.shortcut.mic.unavailable" = "No microphone";
 
 

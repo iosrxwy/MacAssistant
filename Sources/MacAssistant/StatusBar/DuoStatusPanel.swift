@@ -64,9 +64,10 @@ final class DuoStatusPanelController: NSObject {
             origin.x = buttonFrame.midX - size.width / 2
             origin.y = buttonFrame.minY - size.height - 8
             if let visible = screen?.visibleFrame {
-                if origin.x < visible.minX + 8 { origin.x = visible.minX + 8 }
-                if origin.x + size.width > visible.maxX - 8 {
-                    origin.x = visible.maxX - 8 - size.width
+                let margin = DuoPanelMetrics.screenMargin
+                if origin.x < visible.minX + margin { origin.x = visible.minX + margin }
+                if origin.x + size.width > visible.maxX - margin {
+                    origin.x = visible.maxX - margin - size.width
                 }
                 if origin.y < visible.minY + 8 {
                     origin.y = visible.minY + 8
@@ -129,6 +130,8 @@ final class DuoStatusPanelController: NSObject {
 
 private enum DuoPanelMetrics {
     static let cornerRadius: CGFloat = 22
+    /// 离屏幕左右缘留出空隙，窗口阴影才不会被屏幕边裁掉。
+    static let screenMargin: CGFloat = 20
 }
 
 private enum DuoRowMetrics {
@@ -810,7 +813,7 @@ struct DuoStatusDetail: View {
     }
 
     private func shortcutsBlock(onlyVisible: Bool) -> some View {
-        let tools = actions.toolsInOrder().filter { !onlyVisible || actions.toolIsShown($0) }
+        let tools = shortcutTools(onlyVisible: onlyVisible)
         return VStack(alignment: .leading, spacing: 2) {
             Text(L("duo.shortcuts"))
                 .font(DuoRowMetrics.section)
@@ -884,7 +887,6 @@ struct DuoStatusDetail: View {
             DuoSwitchRow(
                 symbol: "sparkles",
                 title: L("duo.shortcut.clean"),
-                subtitle: L("duo.shortcut.clean.hint"),
                 isOn: actions.screenClean,
                 identifier: "duo.shortcut.clean"
             ) { actions.setScreenClean($0) }
@@ -952,7 +954,7 @@ struct DuoStatusDetail: View {
             actionRow(
                 symbol: "arrow.clockwise",
                 title: L("duo.shortcut.restart"),
-                subtitle: actions.sessionFailed ? L("duo.shortcut.session.failed") : L("duo.shortcut.restart.detail"),
+                subtitle: actions.sessionFailed ? L("duo.shortcut.session.failed") : nil,
                 button: L("duo.shortcut.restart.run"),
                 identifier: "duo.shortcut.restart"
             ) { confirmSession(L("duo.shortcut.restart"), L("duo.shortcut.restart.confirm")) { actions.restartNow() } }
@@ -968,7 +970,7 @@ struct DuoStatusDetail: View {
             actionRow(
                 symbol: "trash",
                 title: L("duo.shortcut.trash"),
-                subtitle: actions.trashFailed ? L("duo.shortcut.trash.failed") : L("duo.shortcut.trash.detail"),
+                subtitle: actions.trashFailed ? L("duo.shortcut.trash.failed") : nil,
                 button: L("duo.shortcut.trash.run"),
                 identifier: "duo.shortcut.trash"
             ) { actions.emptyTrash() }
@@ -984,8 +986,8 @@ struct DuoStatusDetail: View {
             actionRow(
                 symbol: "eject",
                 title: L("duo.shortcut.eject"),
-                subtitle: ejectSubtitle,
-                button: L("duo.shortcut.eject"),
+                subtitle: actions.disks.isEmpty ? nil : ejectSubtitle,
+                button: L("duo.shortcut.eject.run"),
                 enabled: !actions.disks.isEmpty,
                 identifier: "duo.shortcut.eject"
             ) { actions.ejectDisks() }
@@ -1236,10 +1238,21 @@ struct DuoStatusDetail: View {
         .accessibilityIdentifier(identifier)
     }
 
+    /// 标题按字数从短到长。字数相同的保持原来的先后。
+    private func shortcutTools(onlyVisible: Bool) -> [DuoToolID] {
+        let tools = actions.toolsInOrder().filter { !onlyVisible || actions.toolIsShown($0) }
+        return tools.enumerated().sorted { lhs, rhs in
+            let left = toolTitle(lhs.element).count
+            let right = toolTitle(rhs.element).count
+            if left != right { return left < right }
+            return lhs.offset < rhs.offset
+        }.map(\.element)
+    }
+
     private func actionRow(
         symbol: String,
         title: String,
-        subtitle: String,
+        subtitle: String?,
         button: String,
         enabled: Bool = true,
         identifier: String,
@@ -1252,21 +1265,27 @@ struct DuoStatusDetail: View {
                     .font(DuoRowMetrics.title)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                Text(subtitle)
-                    .font(DuoRowMetrics.subtitle)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(DuoRowMetrics.subtitle)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button(button, action: action)
-                .font(.system(size: 12, weight: .medium))
-                .controlSize(.small)
-                .disabled(!enabled)
-                .lineLimit(1)
-                .accessibilityIdentifier(identifier)
+            Button(action: action) {
+                Text(button)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+                    .padding(.horizontal, 4)
+            }
+            .controlSize(.small)
+            .fixedSize(horizontal: true, vertical: false)
+            .disabled(!enabled)
+            .accessibilityIdentifier(identifier)
         }
-        .frame(minHeight: 34)
+        .frame(minHeight: 32)
     }
 }
 
