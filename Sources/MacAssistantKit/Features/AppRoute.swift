@@ -1,5 +1,5 @@
 public enum SidebarItem: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case dashboard, menuBar, repair, cleanup, appUninstall, desktopIcons, appClone, memory, network, cheatsheet, recipes
+    case dashboard, menuBar, repair, cleanup, appUninstall, desktopIcons, defaultApps, appClone, memory, aiQuota, network, cheatsheet, recipes
     case deb, dylib, ipa, macApp, binary
     case environment, about, opensource
 
@@ -17,8 +17,10 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable, Sendable 
         case .cleanup: return "trash"
         case .appUninstall: return "xmark.app"
         case .desktopIcons: return "paintpalette"
+        case .defaultApps: return "arrow.up.forward.app"
         case .appClone: return "rectangle.on.rectangle"
         case .memory: return "memorychip"
+        case .aiQuota: return "gauge.with.dots.needle.33percent"
         case .network: return "network"
         case .cheatsheet: return "terminal"
         case .recipes: return "switch.2"
@@ -41,8 +43,10 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable, Sendable 
         case .cleanup: return .cleanup
         case .appUninstall: return .appUninstall
         case .desktopIcons: return .desktopIcons
+        case .defaultApps: return .defaultApps
         case .appClone: return .appClone
         case .memory: return .memory
+        case .aiQuota: return .aiQuota
         case .network: return .network
         case .cheatsheet: return .cheatsheet
         case .recipes: return .recipes
@@ -59,7 +63,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable, Sendable 
 }
 
 public enum AppDestination: String, CaseIterable, Hashable, Sendable {
-    case dashboard, menuBar, repair, cleanup, appUninstall, desktopIcons, appClone, memory, network, cheatsheet, recipes
+    case dashboard, menuBar, repair, cleanup, appUninstall, desktopIcons, defaultApps, appClone, memory, aiQuota, network, cheatsheet, recipes
     case deb, dylib, ipa, macApp, binary
     case environment, about, opensource
 
@@ -71,8 +75,10 @@ public enum AppDestination: String, CaseIterable, Hashable, Sendable {
         case .cleanup: return .cleanup
         case .appUninstall: return .appUninstall
         case .desktopIcons: return .desktopIcons
+        case .defaultApps: return .defaultApps
         case .appClone: return .appClone
         case .memory: return .memory
+        case .aiQuota: return .aiQuota
         case .network: return .network
         case .cheatsheet: return .cheatsheet
         case .recipes: return .recipes

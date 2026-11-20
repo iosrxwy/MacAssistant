@@ -40,6 +40,7 @@ private final class ScenePointerMonitor {
     private var token: Any?
     /// 侧栏和内容区各有一条时间线，同一帧里会各取一次样。只推进一次缓动。
     private var lastSampleTime = -1.0
+    private var lastActivityPost = -1.0
 
     func start() {
         guard token == nil else { return }
@@ -53,9 +54,18 @@ private final class ScenePointerMonitor {
                 x: min(1, max(0, loc.x / size.width)),
                 y: min(1, max(0, 1 - loc.y / size.height))
             )
+            var shouldPost = false
             self?.lock.lock()
             self?.raw = point
+            let now = Date().timeIntervalSinceReferenceDate
+            if let self, now - self.lastActivityPost > 0.25 {
+                self.lastActivityPost = now
+                shouldPost = true
+            }
             self?.lock.unlock()
+            if shouldPost {
+                NotificationCenter.default.post(name: .scenePointerActivity, object: nil)
+            }
             return event
         }
     }
@@ -64,18 +74,23 @@ private final class ScenePointerMonitor {
         let now = Date().timeIntervalSinceReferenceDate
         lock.lock()
         defer { lock.unlock() }
-        if now - lastSampleTime < (1.0 / 30.0) {
+        let elapsed = now - lastSampleTime
+        if elapsed < (1.0 / 30.0) {
             return ScenePointerSample(position: eased, velocity: velocity)
         }
         lastSampleTime = now
+        // 12 帧时每步约 0.16。帧率降下来后按同样的时间常数跟上指针。
+        let steps = min(8, max(elapsed, 0) / (1.0 / 12.0))
+        let alpha = 1 - pow(0.84, steps)
+        let retain = pow(0.72, steps)
         let next = CGPoint(
-            x: eased.x + (raw.x - eased.x) * 0.16,
-            y: eased.y + (raw.y - eased.y) * 0.16
+            x: eased.x + (raw.x - eased.x) * alpha,
+            y: eased.y + (raw.y - eased.y) * alpha
         )
         let inst = CGPoint(x: next.x - eased.x, y: next.y - eased.y)
         velocity = CGPoint(
-            x: velocity.x * 0.72 + inst.x * 0.28,
-            y: velocity.y * 0.72 + inst.y * 0.28
+            x: velocity.x * retain + inst.x * (1 - retain),
+            y: velocity.y * retain + inst.y * (1 - retain)
         )
         eased = next
         return ScenePointerSample(position: eased, velocity: velocity)
@@ -112,7 +127,18 @@ private final class ScenePointerMonitor {
     }
 }
 
+/// 这块视图在窗口里的位置。画布只分配可见区域那么大，再用窗口坐标对齐。
+struct SceneCanvasFrame: Equatable {
+    var windowSize: CGSize
+    var origin: CGPoint
+}
+
+private extension Notification.Name {
+    static let scenePointerActivity = Notification.Name("MacAssistant.scenePointerActivity")
+}
+
 /// 按窗口坐标系切片绘制，侧栏和内容区是同一张背景，而不是各自缩略一遍。
+/// 画布尺寸是可见切片，不是整窗再偏移，避免每块都留一张全窗口 IOSurface。
 struct WindowAlignedBackdrop: View {
     let recipe: SceneBackdropRecipe
     var animated = false
@@ -125,16 +151,16 @@ struct WindowAlignedBackdrop: View {
     var body: some View {
         GeometryReader { geo in
             let aligned = windowSize.width > 8 && windowSize.height > 8
-            let size = aligned ? windowSize : geo.size
-            let origin = aligned ? originInWindow : .zero
             SceneBackdropCanvas(
                 recipe: recipe,
                 animated: animated,
                 reduceTransparency: reduceTransparency,
-                showsVeil: showsVeil
+                showsVeil: showsVeil,
+                canvasFrame: aligned
+                    ? SceneCanvasFrame(windowSize: windowSize, origin: originInWindow)
+                    : nil
             )
-            .frame(width: size.width, height: size.height, alignment: .topLeading)
-            .offset(x: -origin.x, y: -origin.y)
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
         }
         .clipped()
         .allowsHitTesting(false)
@@ -260,8 +286,6 @@ struct WindowSceneChrome: NSViewRepresentable {
         var didApplyOnce = false
         private var applying = false
         private var applyGeneration = 0
-        private var hosting: NSHostingView<SceneBackdropCanvas>?
-
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             scheduleApply()
@@ -315,7 +339,7 @@ struct WindowSceneChrome: NSViewRepresentable {
                 window.backgroundColor = recipe?.base.nsColor ?? .clear
             }
 
-            installBackdrop(in: window)
+            removeFullWindowBackdrop()
             configureSplitItems(in: window)
             raiseTitlebar(in: window)
 
@@ -394,43 +418,18 @@ struct WindowSceneChrome: NSViewRepresentable {
             }
         }
 
-        private func installBackdrop(in window: NSWindow) {
-            guard let content = window.contentView else { return }
-            if immersive, let recipe {
-                let canvas = SceneBackdropCanvas(
-                    recipe: recipe,
-                    animated: animated && !reduceTransparency,
-                    reduceTransparency: reduceTransparency,
-                    showsVeil: false
-                )
-                if let hosting {
-                    hosting.rootView = canvas
-                } else {
-                    let view = NSHostingView(rootView: canvas)
-                    view.autoresizingMask = [.width, .height]
-                    hosting = view
-                }
-                guard let hosting else { return }
-                hosting.frame = content.bounds
-                // `relativeTo: nil` 在这套系统上会把视图放到最前，动画底盖住侧栏和内容。
-                // 挂到现有最底层那张视图的后面，才能留在 SwiftUI 内容之下。
-                if let anchor = content.subviews.first(where: { $0 !== hosting }) {
-                    content.addSubview(hosting, positioned: .below, relativeTo: anchor)
-                } else if hosting.superview !== content {
-                    content.addSubview(hosting)
-                }
-                hosting.wantsLayer = true
-                hosting.layer?.zPosition = -1000
-            } else {
-                hosting?.removeFromSuperview()
-                hosting = nil
+        /// 侧栏和内容区已经按可见切片画背景。再挂一张整窗 SwiftUI 画布会多留一份
+        /// MeshGradient 和 IOSurface。缝隙用配方底色补，见 `window.backgroundColor`。
+        private func removeFullWindowBackdrop() {
+            guard let content = window?.contentView else { return }
+            for subview in content.subviews where subview is NSHostingView<SceneBackdropCanvas> {
+                subview.removeFromSuperview()
             }
         }
 
         private func neutralize(_ root: NSView) {
             var stack = [root]
             while let view = stack.popLast() {
-                if view === hosting { continue }
                 if let effect = view as? NSVisualEffectView {
                     tuneVisualEffect(effect)
                 }
@@ -668,133 +667,166 @@ private struct SceneMotionPauseProbe: NSViewRepresentable {
     }
 }
 
-/// 背景漂移大约一分半一个来回，12 帧就连续。窗口不在前台时暂停。
+private struct ScenePaceFastKey: PreferenceKey {
+    static var defaultValue = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
+/// 鼠标停着时不重绘。星空和远山才保持大约 1 帧的慢动作，指针划过时升到 8 帧。
+/// 窗口不在前台时暂停。
 private struct SceneMotionClock<Content: View>: View {
     var animated: Bool
     var paused: Bool
     var reduceTransparency: Bool
+    var ambient = false
     @ViewBuilder var content: (TimeInterval, ScenePointerSample?) -> Content
+    @State private var fast = false
+
+    private var frameInterval: TimeInterval { fast ? (1.0 / 8.0) : 1.0 }
+    private var timelinePaused: Bool { paused || (!fast && !ambient) }
 
     var body: some View {
         if animated && !reduceTransparency {
-            TimelineView(.animation(minimumInterval: Self.frameInterval, paused: paused)) { timeline in
-                content(
-                    timeline.date.timeIntervalSinceReferenceDate,
-                    ScenePointerMonitor.shared.sample()
-                )
+            TimelineView(.animation(minimumInterval: frameInterval, paused: timelinePaused)) { timeline in
+                let sample = ScenePointerMonitor.shared.sample()
+                let moving = hypot(sample.velocity.x, sample.velocity.y) > 0.0035
+                content(timeline.date.timeIntervalSinceReferenceDate, sample)
+                    .preference(key: ScenePaceFastKey.self, value: moving)
+            }
+            .onPreferenceChange(ScenePaceFastKey.self) { moving in
+                if fast != moving { fast = moving }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .scenePointerActivity)) { _ in
+                if !fast { fast = true }
             }
             .onAppear { ScenePointerMonitor.shared.start() }
         } else {
             content(0, nil)
         }
     }
-
-    private static var frameInterval: TimeInterval { 1.0 / 12.0 }
 }
 
-/// 颗粒、网点、横线和圆环不随时间变，从每帧重绘里拆出来。
-private struct SceneOverlayBands {
-    var before: [SceneOverlay] = []
-    var baked: [SceneOverlay] = []
-    var after: [SceneOverlay] = []
+/// 把 3×3 配方色插成一张小图。各页面共用，不按窗口尺寸分配。
+private enum SkyBitmap {
+    private static let width = 64
+    private static let height = 40
+    private static let lock = NSLock()
+    private static var cache: [String: CGImage] = [:]
 
-    init(_ overlays: [SceneOverlay]) {
-        var index = overlays.startIndex
-        while index < overlays.endIndex, !overlays[index].isBaked {
-            before.append(overlays[index])
-            index = overlays.index(after: index)
+    static func image(for mesh: [SceneColor]) -> CGImage? {
+        guard mesh.count == 9 else { return nil }
+        let key = mesh.map { "\($0.red),\($0.green),\($0.blue)" }.joined(separator: ";")
+        lock.lock()
+        if let cached = cache[key] {
+            lock.unlock()
+            return cached
         }
-        while index < overlays.endIndex, overlays[index].isBaked {
-            baked.append(overlays[index])
-            index = overlays.index(after: index)
+        lock.unlock()
+        guard let created = make(mesh) else { return nil }
+        lock.lock()
+        cache[key] = created
+        lock.unlock()
+        return created
+    }
+
+    private static func make(_ mesh: [SceneColor]) -> CGImage? {
+        var pixels = [UInt8](repeating: 255, count: width * height * 4)
+        func at(_ column: Int, _ row: Int) -> SceneColor {
+            mesh[row * 3 + column]
         }
-        if index < overlays.endIndex {
-            after.append(contentsOf: overlays[index...])
+        func channel(_ a: Double, _ b: Double, _ t: Double) -> Double {
+            a + (b - a) * t
         }
+        for y in 0..<height {
+            let v = Double(y) / Double(height - 1) * 2
+            let row = min(1, Int(v))
+            let ty = v - Double(row)
+            for x in 0..<width {
+                let u = Double(x) / Double(width - 1) * 2
+                let column = min(1, Int(u))
+                let tx = u - Double(column)
+                let c00 = at(column, row)
+                let c10 = at(column + 1, row)
+                let c01 = at(column, row + 1)
+                let c11 = at(column + 1, row + 1)
+                let red = channel(channel(c00.red, c10.red, tx), channel(c01.red, c11.red, tx), ty)
+                let green = channel(channel(c00.green, c10.green, tx), channel(c01.green, c11.green, tx), ty)
+                let blue = channel(channel(c00.blue, c10.blue, tx), channel(c01.blue, c11.blue, tx), ty)
+                let index = (y * width + x) * 4
+                pixels[index] = UInt8((min(1, max(0, red)) * 255).rounded())
+                pixels[index + 1] = UInt8((min(1, max(0, green)) * 255).rounded())
+                pixels[index + 2] = UInt8((min(1, max(0, blue)) * 255).rounded())
+            }
+        }
+        let data = Data(pixels) as CFData
+        guard let provider = CGDataProvider(data: data) else { return nil }
+        return CGImage(
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bitsPerPixel: 32,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider,
+            decode: nil,
+            shouldInterpolate: true,
+            intent: .defaultIntent
+        )
     }
 }
 
-private extension SceneOverlay {
-    var isBaked: Bool {
-        switch self {
-        case .paperLines, .dots, .rings, .grain:
-            return true
-        case .hills, .spotlight, .stars:
-            return false
-        }
-    }
-}
-
-/// 按配方绘制页面背景。macOS 15+ 用 MeshGradient，旧系统退回径向光斑。
+/// 按配方绘制页面背景。天空是一张很小的双线性色卡，放大到窗口上，避免 MeshGradient 的整窗曲面。
 struct SceneBackdropCanvas: View {
     let recipe: SceneBackdropRecipe
     var animated = false
     var reduceTransparency = false
     var showsVeil = true
+    var canvasFrame: SceneCanvasFrame? = nil
 
     /// 先停着，等探到窗口在前台再动，避免一创建就空转。
     @State private var motionPaused = true
-
-    private var bands: SceneOverlayBands {
-        SceneOverlayBands(recipe.overlays)
-    }
 
     var body: some View {
         ZStack {
             SceneMotionClock(
                 animated: animated,
                 paused: motionPaused,
-                reduceTransparency: reduceTransparency
+                reduceTransparency: reduceTransparency,
+                ambient: recipe.overlays.contains(.stars) || recipe.overlays.contains(.hills)
             ) { time, pointer in
-                ZStack {
-                    baseLayer(time: time, pointer: pointer)
-                    if !reduceTransparency {
-                        Canvas { context, size in
-                            drawBlobs(context: &context, size: size, time: time, pointer: pointer)
+                if reduceTransparency {
+                    LinearGradient(
+                        colors: [recipe.base.color, recipe.secondary.color],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                } else {
+                    Canvas { context, size in
+                        drawInWindow(&context, viewSize: size) { context, drawSize, visible in
+                            drawSky(
+                                context: &context,
+                                size: drawSize,
+                                visible: visible
+                            )
+                            drawBlobs(context: &context, size: drawSize, time: time, pointer: pointer)
                             if pointer != nil {
-                                drawMotes(context: &context, size: size, time: time, pointer: pointer)
-                                drawWake(context: &context, size: size, pointer: pointer)
+                                drawMotes(context: &context, size: drawSize, time: time, pointer: pointer)
+                                drawWake(context: &context, size: drawSize, pointer: pointer)
                             }
-                            if !bands.before.isEmpty {
+                            if !recipe.overlays.isEmpty {
                                 drawOverlayList(
                                     context: &context,
-                                    size: size,
-                                    overlays: bands.before,
+                                    size: drawSize,
+                                    overlays: recipe.overlays,
                                     time: time,
-                                    pointer: pointer
+                                    pointer: pointer,
+                                    visible: visible
                                 )
                             }
                         }
-                    }
-                }
-            }
-            if !reduceTransparency, !bands.baked.isEmpty {
-                Canvas { context, size in
-                    drawOverlayList(
-                        context: &context,
-                        size: size,
-                        overlays: bands.baked,
-                        time: 0,
-                        pointer: nil
-                    )
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .allowsHitTesting(false)
-            }
-            if !reduceTransparency, !bands.after.isEmpty {
-                SceneMotionClock(
-                    animated: animated,
-                    paused: motionPaused,
-                    reduceTransparency: reduceTransparency
-                ) { time, pointer in
-                    Canvas { context, size in
-                        drawOverlayList(
-                            context: &context,
-                            size: size,
-                            overlays: bands.after,
-                            time: time,
-                            pointer: pointer
-                        )
                     }
                 }
             }
@@ -816,39 +848,23 @@ struct SceneBackdropCanvas: View {
         .accessibilityHidden(true)
     }
 
-    @ViewBuilder
-    private func baseLayer(time: TimeInterval, pointer: ScenePointerSample?) -> some View {
-        if reduceTransparency {
-            LinearGradient(
-                colors: [recipe.base.color, recipe.secondary.color],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+    /// 把绘制挪到窗口坐标系，位图仍只有这块切片那么大。
+    private func drawInWindow(
+        _ context: inout GraphicsContext,
+        viewSize: CGSize,
+        _ body: (inout GraphicsContext, CGSize, CGRect) -> Void
+    ) {
+        let drawSize: CGSize
+        let visible: CGRect
+        if let frame = canvasFrame, frame.windowSize.width > 1, frame.windowSize.height > 1 {
+            context.translateBy(x: -frame.origin.x, y: -frame.origin.y)
+            drawSize = frame.windowSize
+            visible = CGRect(origin: frame.origin, size: viewSize)
         } else {
-            meshOrFallback(time: time, pointer: pointer)
+            drawSize = viewSize
+            visible = CGRect(origin: .zero, size: viewSize)
         }
-    }
-
-    @ViewBuilder
-    private func meshOrFallback(time: TimeInterval, pointer: ScenePointerSample?) -> some View {
-#if compiler(>=6.0)
-        if #available(macOS 15.0, *), recipe.mesh.count == 9 {
-            MeshGradient(
-                width: 3,
-                height: 3,
-                points: meshPoints(time: time, pointer: pointer),
-                colors: recipe.mesh.map(\.color)
-            )
-        } else {
-            Canvas { context, size in
-                drawFallback(context: &context, size: size, time: time, pointer: pointer)
-            }
-        }
-#else
-        Canvas { context, size in
-            drawFallback(context: &context, size: size, time: time, pointer: pointer)
-        }
-#endif
+        body(&context, drawSize, visible)
     }
 
     private var readabilityVeil: some View {
@@ -863,38 +879,22 @@ struct SceneBackdropCanvas: View {
         )
     }
 
-#if compiler(>=6.0)
-    @available(macOS 15.0, *)
-    private func meshPoints(time: TimeInterval, pointer: ScenePointerSample?) -> [SIMD2<Float>] {
-        let dx = sin(time * 0.07) * 0.028
-        let dy = cos(time * 0.055) * 0.022
-        let parted = ScenePointerMonitor.part(CGPoint(x: 0.5 + dx, y: 0.5 + dy), around: pointer)
-        func clamp(_ value: Double) -> Float { Float(min(1, max(0, value))) }
-        return [
-            [0, 0],
-            [clamp(0.5 + dx * 0.35), 0],
-            [1, 0],
-            [0, clamp(0.5 + dy * 0.3)],
-            [clamp(parted.x), clamp(parted.y)],
-            [1, clamp(0.5 - dy * 0.2)],
-            [0, 1],
-            [clamp(0.5 - dx * 0.25), 1],
-            [1, 1]
-        ]
-    }
-#endif
-
-    private func drawFallback(context: inout GraphicsContext, size: CGSize, time: TimeInterval, pointer: ScenePointerSample?) {
-        let bounds = CGRect(origin: .zero, size: size)
+    /// 3×3 色卡先画成小图再放大。鼠标不动时这层不重绘。
+    private func drawSky(context: inout GraphicsContext, size: CGSize, visible: CGRect) {
+        let patch = visible.intersection(CGRect(origin: .zero, size: size))
+        guard patch.width > 1, patch.height > 1 else { return }
+        if recipe.mesh.count == 9, let image = SkyBitmap.image(for: recipe.mesh) {
+            context.draw(Image(decorative: image, scale: 1), in: CGRect(origin: .zero, size: size))
+            return
+        }
         context.fill(
-            Path(bounds),
+            Path(patch),
             with: .linearGradient(
                 Gradient(colors: [recipe.base.color, recipe.secondary.color]),
-                startPoint: CGPoint(x: 0, y: 0),
+                startPoint: .zero,
                 endPoint: CGPoint(x: 0, y: size.height)
             )
         )
-        drawBlobs(context: &context, size: size, time: time, pointer: pointer)
     }
 
     private func drawBlobs(context: inout GraphicsContext, size: CGSize, time: TimeInterval, pointer: ScenePointerSample?) {
@@ -975,24 +975,25 @@ struct SceneBackdropCanvas: View {
         size: CGSize,
         overlays: [SceneOverlay],
         time: TimeInterval,
-        pointer: ScenePointerSample?
+        pointer: ScenePointerSample?,
+        visible: CGRect
     ) {
         for overlay in overlays {
             switch overlay {
             case .hills:
                 drawHills(context: &context, size: size, time: time)
             case .paperLines:
-                drawPaperLines(context: &context, size: size)
+                drawPaperLines(context: &context, size: size, visible: visible)
             case .dots:
-                drawDots(context: &context, size: size)
+                drawDots(context: &context, size: size, visible: visible)
             case .rings:
                 drawRings(context: &context, size: size)
             case .grain:
-                drawGrain(context: &context, size: size)
+                drawGrain(context: &context, size: size, visible: visible)
             case .spotlight:
-                drawSpotlight(context: &context, size: size, pointer: pointer)
+                drawSpotlight(context: &context, size: size, pointer: pointer, visible: visible)
             case .stars:
-                drawStars(context: &context, size: size, time: time, pointer: pointer)
+                drawStars(context: &context, size: size, time: time, pointer: pointer, visible: visible)
             }
         }
     }
@@ -1024,9 +1025,16 @@ struct SceneBackdropCanvas: View {
         }
     }
 
-    private func drawStars(context: inout GraphicsContext, size: CGSize, time: TimeInterval, pointer: ScenePointerSample?) {
+    private func drawStars(
+        context: inout GraphicsContext,
+        size: CGSize,
+        time: TimeInterval,
+        pointer: ScenePointerSample?,
+        visible: CGRect
+    ) {
         let columns = max(18, Int(size.width / 28))
         let rows = max(12, Int(size.height / 28))
+        let bounds = visible.insetBy(dx: -8, dy: -8)
         for row in 0..<rows {
             for column in 0..<columns {
                 let jitter = grainHash(column &* 3, row &* 7)
@@ -1038,6 +1046,7 @@ struct SceneBackdropCanvas: View {
                 let parted = ScenePointerMonitor.part(rest, around: pointer)
                 let x = size.width * parted.x
                 let y = size.height * parted.y
+                guard bounds.contains(CGPoint(x: x, y: y)) else { continue }
                 let twinkle = 0.55 + 0.45 * sin(time * (0.6 + jitter) + Double(column + row))
                 let radius = 0.6 + jitter * 1.4
                 let glow = jitter > 0.92 ? 2.8 : (jitter > 0.82 ? 1.6 : 0)
@@ -1055,25 +1064,31 @@ struct SceneBackdropCanvas: View {
         }
     }
 
-    private func drawPaperLines(context: inout GraphicsContext, size: CGSize) {
+    private func drawPaperLines(context: inout GraphicsContext, size: CGSize, visible: CGRect) {
         let ink = recipe.looksDark ? Color.white.opacity(0.06) : Color.brown.opacity(0.10)
-        var y: CGFloat = 0
-        while y < size.height {
+        let minX = max(0, visible.minX)
+        let maxX = min(size.width, visible.maxX)
+        guard maxX > minX else { return }
+        var y = max(0, floor(visible.minY / 28) * 28)
+        let limit = min(size.height, visible.maxY + 28)
+        while y < limit {
             var line = Path()
-            line.move(to: CGPoint(x: 0, y: y))
-            line.addLine(to: CGPoint(x: size.width, y: y))
+            line.move(to: CGPoint(x: minX, y: y))
+            line.addLine(to: CGPoint(x: maxX, y: y))
             context.stroke(line, with: .color(ink), lineWidth: 0.6)
             y += 28
         }
     }
 
-    private func drawDots(context: inout GraphicsContext, size: CGSize) {
+    private func drawDots(context: inout GraphicsContext, size: CGSize, visible: CGRect) {
         let ink = recipe.looksDark ? Color.white.opacity(0.10) : Color.black.opacity(0.10)
         let step: CGFloat = 22
-        var x: CGFloat = 12
-        while x < size.width {
-            var y: CGFloat = 12
-            while y < size.height {
+        var x = max(12, floor(visible.minX / step) * step)
+        let maxX = min(size.width, visible.maxX + step)
+        let maxY = min(size.height, visible.maxY + step)
+        while x < maxX {
+            var y = max(12, floor(visible.minY / step) * step)
+            while y < maxY {
                 context.fill(
                     Path(ellipseIn: CGRect(x: x, y: y, width: 2.1, height: 2.1)),
                     with: .color(ink)
@@ -1101,16 +1116,18 @@ struct SceneBackdropCanvas: View {
         }
     }
 
-    private func drawGrain(context: inout GraphicsContext, size: CGSize) {
+    private func drawGrain(context: inout GraphicsContext, size: CGSize, visible: CGRect) {
         let ink = recipe.looksDark ? Color.white.opacity(0.05) : Color.black.opacity(0.045)
         let columns = max(24, Int(size.width / 18))
         let rows = max(16, Int(size.height / 18))
+        let bounds = visible.insetBy(dx: -16, dy: -16)
         for row in 0..<rows {
             for column in 0..<columns {
                 let jitter = grainHash(column, row)
                 guard jitter > 0.35 else { continue }
                 let x = CGFloat(column) / CGFloat(columns) * size.width + CGFloat(jitter - 0.5) * 14
                 let y = CGFloat(row) / CGFloat(rows) * size.height + CGFloat(grainHash(row, column) - 0.5) * 14
+                guard bounds.contains(CGPoint(x: x, y: y)) else { continue }
                 context.fill(
                     Path(ellipseIn: CGRect(x: x, y: y, width: 1.2, height: 1.2)),
                     with: .color(ink.opacity(0.4 + jitter * 0.6))
@@ -1119,7 +1136,12 @@ struct SceneBackdropCanvas: View {
         }
     }
 
-    private func drawSpotlight(context: inout GraphicsContext, size: CGSize, pointer: ScenePointerSample?) {
+    private func drawSpotlight(
+        context: inout GraphicsContext,
+        size: CGSize,
+        pointer: ScenePointerSample?,
+        visible: CGRect
+    ) {
         let px = pointer?.position.x ?? 0.5
         let py = pointer?.position.y ?? 0.5
         let center = CGPoint(
@@ -1127,8 +1149,10 @@ struct SceneBackdropCanvas: View {
             y: size.height * (0.06 + py * 0.08)
         )
         let radius = max(size.width, size.height) * 0.72
+        let patch = visible.intersection(CGRect(origin: .zero, size: size))
+        guard !patch.isNull else { return }
         context.fill(
-            Path(CGRect(origin: .zero, size: size)),
+            Path(patch),
             with: .radialGradient(
                 Gradient(colors: [
                     Color.white.opacity(recipe.looksDark ? 0.10 : 0.18),
@@ -1140,7 +1164,7 @@ struct SceneBackdropCanvas: View {
             )
         )
         context.fill(
-            Path(CGRect(origin: .zero, size: size)),
+            Path(patch),
             with: .radialGradient(
                 Gradient(colors: [
                     Color.clear,

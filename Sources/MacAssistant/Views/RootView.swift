@@ -89,23 +89,15 @@ struct RootView: View {
                 // 不用 List：即使关掉 selection，源列表点下去仍会跟手铺一层非圆角系统蓝。
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        sidebarSection(
-                            L("root.section.daily"),
-                            items: [.dashboard, .menuBar, .repair, .cleanup, .appUninstall, .desktopIcons, .appClone, .memory, .network, .cheatsheet, .recipes]
-                        )
-                        sidebarSection(
-                            L("root.section.developer"),
-                            items: [.deb, .dylib, .ipa, .macApp, .binary]
-                        )
-                        sidebarSection(
-                            L("root.section.support"),
-                            items: [.environment, .about, .opensource]
-                        )
+                        sidebarSection(L("root.section.daily"), items: Self.dailyItems)
+                        sidebarSection(L("root.section.developer"), items: Self.developerItems)
+                        sidebarSection(L("root.section.support"), items: Self.supportItems)
                     }
                     .padding(.horizontal, 8)
                     .padding(.bottom, 10)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .scrollContentBackground(scene.isDecorative ? .hidden : .automatic)
                 .focused($sidebarFocused)
                 .onMoveCommand(perform: moveSidebarSelection)
                 .modifier(SidebarFocusChrome())
@@ -124,7 +116,7 @@ struct RootView: View {
                 immersive: scene.isDecorative,
                 chrome: sidebarChrome,
                 recipe: scene.isDecorative ? recipe : nil,
-                // 侧栏和当前页已经各有一层窗口对齐的背景。底层再开时间线等于整窗多画一份。
+                // 整窗只留 RootView 背景里的一张画布。这里不再挂第二份。
                 animated: false,
                 reduceTransparency: reduceTransparency
             )
@@ -220,8 +212,19 @@ struct RootView: View {
         .accessibilityIdentifier("sidebar.\(item.rawValue)")
     }
 
+    /// 侧栏只露出日常里的默认方式和额度速查。分身、内存、网络、命令和快捷开关仍能从内部跳转打开。
+    private static let dailyItems: [SidebarItem] = [
+        .dashboard, .menuBar, .repair, .cleanup, .appUninstall, .desktopIcons, .defaultApps, .aiQuota
+    ]
+    private static let developerItems: [SidebarItem] = [.deb, .dylib, .ipa, .macApp, .binary]
+    private static let supportItems: [SidebarItem] = [.environment, .about, .opensource]
+
+    private static var visibleSidebarItems: [SidebarItem] {
+        dailyItems + developerItems + supportItems
+    }
+
     private func moveSidebarSelection(_ direction: MoveCommandDirection) {
-        let items = SidebarItem.allCases
+        let items = Self.visibleSidebarItems
         let current = selection ?? .dashboard
         guard let index = items.firstIndex(of: current) else { return }
         switch direction {
@@ -258,8 +261,10 @@ struct RootView: View {
         case .cleanup: CleanupView()
         case .appUninstall: AppUninstallView()
         case .desktopIcons: DesktopIconView()
+        case .defaultApps: DefaultAppView()
         case .appClone: AppCloneView(workspace: workspace)
         case .memory: MemoryView()
+        case .aiQuota: AIQuotaView()
         case .network: NetworkView()
         case .cheatsheet: CheatsheetView(workspace: workspace)
         case .recipes: RecipesView(workspace: workspace)

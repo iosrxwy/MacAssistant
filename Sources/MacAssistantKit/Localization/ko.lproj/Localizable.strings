@@ -111,6 +111,8 @@
 "toolfinder.feature.macApp.detail" = "로컬 macOS 앱에 플러그인을 주입하거나, 이미 쓰인 서드파티 라이브러리를 스캔해 제거합니다";
 "toolfinder.feature.appUninstall.title" = "앱 제거";
 "toolfinder.feature.appUninstall.detail" = "일반 앱과 개인 라이브러리에 남은 파일을 휴지통으로 옮깁니다";
+"toolfinder.feature.defaultApps.title" = "기본 방식";
+"toolfinder.feature.defaultApps.detail" = "png, pdf, md, ai 등 확장자의 기본 앱을 지정하고 되돌립니다";
 "permission.repair-files.title" = "파일 및 폴더";
 "permission.repair-files.usedBy" = "선택한 앱. 격리 제거, xattr 초기화, 재서명에 사용";
 "permission.repair-files.withoutIt" = "앱을 선택하지 않으면 미리보기만 하고 Mac의 다른 곳은 바꾸지 않습니다";
@@ -373,6 +375,22 @@
 "cleanup.vm-vmware-item.name" = "VMware · %@";
 "cleanup.slack-cache.name" = "Slack 캐시";
 "cleanup.slack-cache.detail" = "메시지·파일 미리보기. Slack을 쓰면 다시 만들어집니다";
+"cleanup.project-artifact.name" = "%@ · %@";
+"cleanup.project-artifact.detail" = "%@. 다시 설치: %@";
+"cleanup.project-artifact.removes" = "이 프로젝트가 다시 만들 수 있는 폴더";
+"cleanup.project-artifact.keeps" = "소스, 잠금 파일, 프로젝트 설정";
+"cleanup.project-artifact.kind.node" = "의존성";
+"cleanup.project-artifact.kind.cargo" = "빌드 결과";
+"cleanup.project-artifact.kind.pods" = "Pods";
+"cleanup.project-artifact.kind.gradle" = "Gradle 캐시";
+"cleanup.project-artifact.kind.venv" = "가상 환경";
+"cleanup.project-artifact.kind.flutter" = "도구 캐시";
+"cleanup.project-artifact.reinstall.node" = "npm ci / pnpm install / yarn / bun install";
+"cleanup.project-artifact.reinstall.cargo" = "cargo build";
+"cleanup.project-artifact.reinstall.pods" = "pod install";
+"cleanup.project-artifact.reinstall.gradle" = "./gradlew build";
+"cleanup.project-artifact.reinstall.venv" = "python -m venv .venv";
+"cleanup.project-artifact.reinstall.flutter" = "flutter pub get";
 "cleanup.discord-cache.name" = "Discord 캐시";
 "cleanup.discord-cache.detail" = "미디어 미리보기. Discord를 쓰면 다시 만들어집니다";
 "cleanup.spotify-cache.name" = "Spotify 캐시";
@@ -438,6 +456,10 @@
 "cleanup.message.denied-skipped" = "%@: 내장 안전 거부 목록에서 차단됨";
 "cleanup.message.process-running" = "%@이(가) 실행 중이어서 건너뜀";
 "cleanup.message.process-unknown" = "프로세스 목록을 읽을 수 없어 건너뜀";
+"cleanup.message.project-in-use" = "프로젝트를 사용 중이라 건너뜀";
+"cleanup.snapshots.none-removable" = "지울 스냅샷이 없습니다. 가장 최근 것과 마지막 백업은 남습니다.";
+"cleanup.snapshots.preview.policy" = "가장 최근 스냅샷과 이름이 .backup으로 끝나는 마지막 백업은 남깁니다";
+"cleanup.snapshots.preview.none" = "지울 스냅샷이 없습니다. 가장 최근 것과 마지막 백업은 남습니다.";
 "cleanup.message.sqlite-busy" = "%@: SQLite/WAL 사용 중이어서 건너뜀";
 "cleanup.message.sqlite-unknown" = "%@: SQLite/WAL 사용 여부를 확인할 수 없어 건너뜀";
 
@@ -690,7 +712,10 @@
 "classdump.skip.emptyClassList" = "Objective-C 클래스 목록이 비었거나 형식이 잘못됨";
 "classdump.skip.unresolvableClassPointer" = "클래스 메타데이터 포인터를 해석할 수 없음";
 "classdump.skip.unresolvableMethodListPointer" = "메서드 목록 포인터를 해석할 수 없음";
-"classdump.skip.relativeMethodList" = "relative method list는 내장 실험 파서 범위를 벗어남";
+"classdump.skip.relativeMethodList" = "relative method list의 일부 항목을 해석하지 못함";
+"classdump.skip.malformedFixups" = "chained fixups 헤더가 손상되었거나 지원하지 않는 버전이라 원시 워드를 주소로 보지 않음";
+"classdump.skip.compressedFixupSymbols" = "chained fixups 심볼 테이블이 압축되어 외부 심볼 이름을 복원하지 못함";
+"classdump.skip.unknownFixupFormat" = "지원하지 않는 chained fixups 포인터 형식: %@";
 "classdump.skip.partialTraditionalMethods" = "일부 전통 메서드 항목을 해석할 수 없음";
 "classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1: 법적으로 인가된 환경에서 비암호화 바이너리를 먼저 얻어야 합니다";
 "classdump.reason.arm64eMayNeedExternal" = "arm64e 포인터 인증에는 외부 강화가 필요할 수 있습니다";
@@ -883,8 +908,8 @@
 "tool.error.installFailed" = "설치 실패: %@";
 "tool.homebrew.guidance.legacy" = "brew.sh의 공식 설치 안내 또는 서명된 설치 프로그램을 보세요. Homebrew 지원 범위는 바뀌며, 이 앱은 macOS 13이 여전히 지원된다고 약속하지 않습니다.";
 "tool.homebrew.guidance.current" = "brew.sh에서 Homebrew 공식 설치 안내, 시스템 요구 사항, 서명된 설치 프로그램을 보세요. 이 앱은 curl | bash를 실행하지 않습니다.";
-"tool.classDump.builtInFallback" = "내장 Class Dump는 바로 사용할 수 있습니다. 외부 class-dump는 복잡한 형식 지원만 더합니다";
-"tool.dsdump.builtInFallback" = "내장 분석에는 dsdump가 필요 없습니다. 저장소에 LICENSE가 없고 소스에 All rights reserved가 있어 포함하거나 대신 설치하지 않습니다";
+"tool.classDump.builtInFallback" = "내장 Class Dump가 chained fixups와 relative method list를 처리합니다. 외부 class-dump는 GPL이며 선택적 대조일 뿐, 앱과 함께 배포하지 않습니다";
+"tool.dsdump.builtInFallback" = "내장 분석이 chained fixups와 relative method list를 포함해 ObjC 헤더를 내보냅니다. dsdump 저장소에는 LICENSE가 없고 소스에 All rights reserved가 있어 포함하거나 대신 설치하지 않습니다";
 "tool.xtool.builtInFallback" = "선택 사항. 이 앱은 이미 Apple ID로 서명·설치합니다. xtool은 대체 경로일 뿐입니다";
 "tool.installHint.openProjectPage" = "프로젝트 페이지 열기";
 
@@ -922,6 +947,7 @@
 "sidebar.cleanup" = "정리";
 "sidebar.appUninstall" = "앱 제거";
 "sidebar.desktopIcons" = "데스크탑 아이콘";
+"sidebar.defaultApps" = "기본 방식";
 "sidebar.appClone" = "앱 복제";
 "sidebar.memory" = "메모리";
 "sidebar.network" = "네트워크";
@@ -1204,3 +1230,17 @@
 
 /* 에너지 모드 권한 대화상자. 권한은 종료할 때까지 유지된다. */
 "energy.auth.once" = "에너지 모드를 바꾸려면 관리자 권한이 필요합니다. 한 번 허용하면 이번 실행에서는 다시 묻지 않습니다.";
+
+"sidebar.aiQuota" = "한도 조회";
+
+/* Default apps */
+"defaultapp.error.invalidExtension" = "확장자가 올바르지 않습니다. 경로 없이 png 같은 접미사만 입력하세요.";
+"defaultapp.error.unknownType" = "시스템이 이 확장자의 파일 유형을 주지 않았습니다";
+"defaultapp.error.unsafeType" = "%@ 유형은 범위가 너무 넓어 많은 파일에 영향을 줍니다";
+"defaultapp.error.sharedType" = "%@ 유형은 이 확장자만의 것이 아닙니다";
+"defaultapp.error.appMissing" = "그 앱을 찾을 수 없습니다";
+"defaultapp.error.notAnApp" = ".app을 선택하세요";
+"defaultapp.error.nothingToRestore" = "되돌릴 기본 앱이 없습니다";
+"defaultapp.error.originalMissing" = "이전 앱이 더 이상 없습니다";
+"defaultapp.error.historyUnreadable" = "기본 앱 기록을 읽지 못했습니다";
+"defaultapp.error.applyFailed" = "바꾸지 못했습니다: %@";

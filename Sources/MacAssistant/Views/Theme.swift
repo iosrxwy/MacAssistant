@@ -284,8 +284,10 @@ extension SidebarItem {
         case .cleanup: return .red
         case .appUninstall: return .pink
         case .desktopIcons: return .blue
+        case .defaultApps: return .yellow
         case .appClone: return .indigo
         case .memory: return .purple
+        case .aiQuota: return .orange
         case .network: return .cyan
         case .cheatsheet: return Color(nsColor: .secondaryLabelColor)
         case .recipes: return .mint

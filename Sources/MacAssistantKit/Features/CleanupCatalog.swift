@@ -3,10 +3,11 @@ import Foundation
 /// 用户级清理目录。只列可再生或需单独确认的路径，不扫家目录、不碰 Application Support 整棵。
 enum CleanupCatalog {
     /// Application Support 下只允许这些叶目录名进入可删目标。
+    /// `Service Worker` 里的 CacheStorage / ScriptCache 不在此列：清掉会丢掉网页推送和离线应用。
     static let allowedApplicationSupportLeaves: Set<String> = [
         "Cache", "Code Cache", "GPUCache", "htmlcache", "CachedData", "CachedExtensionVSIXs", "logs",
         "cache2", "startupCache", "ShaderCache", "GrShaderCache", "GraphiteDawnCache",
-        "CacheStorage", "PersistentCache", "Media Cache Files", "Backup",
+        "PersistentCache", "Media Cache Files", "Backup",
         "vm_bundles", "OptGuideOnDeviceModel"
     ]
 
@@ -383,8 +384,7 @@ enum CleanupCatalog {
                 name: L("cleanup.slack-cache.name"),
                 detail: L("cleanup.slack-cache.detail"),
                 paths: [
-                    h("Library/Application Support/Slack/Cache"),
-                    h("Library/Application Support/Slack/Service Worker/CacheStorage")
+                    h("Library/Application Support/Slack/Cache")
                 ],
                 category: .systemData,
                 systemImage: "bubble.left.and.bubble.right",

@@ -22,7 +22,8 @@ var targets: [Target] = [
         ],
         linkerSettings: [
             .linkedFramework("IOKit"),
-            .linkedFramework("AppKit")
+            .linkedFramework("AppKit"),
+            .linkedFramework("Security")
         ]
     ),
     .executableTarget(

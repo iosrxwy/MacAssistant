@@ -2,13 +2,31 @@
 
 All notable changes to MacAssistant are recorded here.
 
+## [1.0.7] - 2026-11-20
+
+Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates**.
+
+### Added
+
+- AI quota: the menu bar and Dock can show remaining quota for signed-in apps such as Cursor, Codex, Gemini, Claude, Grok, Grok Bot, and Muse
+  - Hovering a Dock icon can show the remaining quota
+  - Turning on Navigation can also show quota in its menu
+- Default apps: choose or restore the app that opens common extensions
+- Memory: show CPU, group processes by app, and inspect a process or its stack
+- Cleanup: remove regenerable dependency and build folders inside projects
+
+### Improved
+
+- Binary: export Objective-C headers with the built-in parser
+- Cleanup: Docker cleanup leaves images and volumes; local snapshots keep the newest and the last backup
+
 ## [1.0.6] - 2026-11-08
 
 Ad-hoc signed; not notarized by Apple. Update from **About → Check for updates**.
 
 ### Added
 
-- **Desktop icons**: Doubao and WorkBuddy avatar folders. Original drawings from each product's public colors and motif, not official logo files.
+- **Desktop icons**: Doubao and WorkBuddy avatar folders. Doubao is the short-haired portrait in a pale blue circle. WorkBuddy is the white cat face on a mint-green folder. Redrawn from the public look, not official logo files.
 - **Menu bar**: screen cleaning can use black, white, red, green, blue, or yellow.
 
 ### Fixed
@@ -184,6 +202,7 @@ First public prerelease.
 
 This prerelease is ad-hoc signed and not notarized. macOS may block the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. Full steps: [README](README.md#first-launch-blocked-by-macos).
 
+[1.0.7]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.7
 [1.0.6]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.6
 [1.0.5]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.5
 [1.0.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.4

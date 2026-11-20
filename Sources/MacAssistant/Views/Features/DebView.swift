@@ -2004,10 +2004,10 @@ private struct DebArtifactRow: View {
 
             Spacer(minLength: 12)
 
-            Button("在 DYLIB 工具中打开", action: openInDylib)
+            Button("在依赖工具中打开", action: openInDylib)
                 .buttonStyle(.borderless)
                 .font(.caption)
-                .accessibilityLabel("在 DYLIB 工具中打开 \(artifact.relativePath)")
+                .accessibilityLabel("在依赖工具中打开 \(artifact.relativePath)")
 
             statusColumn
         }

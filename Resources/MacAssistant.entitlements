@@ -17,6 +17,8 @@
       因此派生子进程无需任何 entitlement。这些工具各自带着自己的签名与权限运行。
     * 读取钥匙串里的签名身份:通过 `security find-identity` 子进程完成(见 signingtab),
       不走本进程的 Security API;即便直接用 API,非沙盒 App 访问登录钥匙串也不需要 entitlement。
+    * AI 额度读取用户已经登录的 Cursor / Claude 钥匙串项,同样是非沙盒进程的普通钥匙串访问,
+      系统会按该项自己的 ACL 决定要不要弹一次授权,不需要额外 entitlement。
     * 清理缓存目录、读系统信息、向 GitHub 查询版本号:都是非沙盒进程的常规文件/网络/系统调用,
       不需要 entitlement。
 

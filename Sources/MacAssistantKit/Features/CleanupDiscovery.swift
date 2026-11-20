@@ -57,7 +57,8 @@ enum CleanupDiscovery {
         seed: [CleanupTargetDefinition],
         homeDirectory: URL,
         packageResolver: CleanupPackageCacheResolver,
-        fullDiskAccessProbe: CleanupFullDiskAccessProbe
+        fullDiskAccessProbe: CleanupFullDiskAccessProbe,
+        projectActivity: CleanupProjectArtifacts.Activity = .live
     ) -> CleanupScanPlan {
         let home = homeDirectory.standardizedFileURL
         let fda = fullDiskAccessProbe.probe(homeDirectory: home)
@@ -79,7 +80,8 @@ enum CleanupDiscovery {
         let rest = expanded.filter {
             $0.category != .systemData && $0.category != .system && $0.category != .apps
         }
-        let definitions = systemData + userCaches + containers.definitions + apps + system + rest
+        let projects = CleanupProjectArtifacts.definitions(home: home, activity: projectActivity)
+        let definitions = systemData + userCaches + containers.definitions + apps + system + rest + projects
         return CleanupScanPlan(
             definitions: definitions,
             policy: CleanupService.makePolicy(definitions: definitions, homeDirectory: home),
@@ -533,7 +535,8 @@ enum CleanupDiscovery {
             defaultSelected: false,
             category: definition.category,
             systemImage: definition.systemImage,
-            safetyDetails: definition.safetyDetails
+            safetyDetails: definition.safetyDetails,
+            activityRoot: definition.activityRoot
         )
     }
 

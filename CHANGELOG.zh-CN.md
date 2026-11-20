@@ -2,13 +2,31 @@
 
 [English](CHANGELOG.md)
 
+## [1.0.7] - 2026-11-20
+
+ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版升上来。
+
+### 新增
+
+- 额度速查：菜单栏与程序坞可显示 Cursor、Codex、Gemini、Claude、Grok、Grok Bot、Muse 等已登录应用的剩余额度
+  - 鼠标悬停程序坞图标时可显示剩余额度
+  - 开启导航优化也可以在导航菜单显示额度
+- 默认方式：为常见扩展名选择或恢复默认打开的应用
+- 内存工具：显示 CPU，可按应用分组，并查看进程详情和调用栈
+- 系统清理：可清理工程里能重新生成的依赖和构建目录
+
+### 优化
+
+- 程序解析：内置导出 Objective-C 头文件
+- 系统清理：Docker 清理留下镜像和数据卷；本地快照保留最新一张和上次备份
+
 ## [1.0.6] - 2026-11-08
 
 ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版升上来。
 
 ### 新增
 
-- **桌面图标**：豆包和 WorkBuddy 头像文件夹。按公开配色和形象原创绘制，不是官方标志文件。
+- **桌面图标**：豆包和 WorkBuddy 头像文件夹。豆包是浅蓝色圆里的短发头像，WorkBuddy 是薄荷绿文件夹上的白猫脸。按公开形象重新绘制，不是官方标志文件。
 - **菜单栏**：屏幕清洁可选黑、白、红、绿、蓝、黄。
 
 ### 修复
@@ -101,6 +119,7 @@ ad-hoc 签名，未经苹果公证。**关于 → 检查更新** 可从上一版
 
 更早的测试版说明见 [英文 Changelog](CHANGELOG.md)。
 
+[1.0.7]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.7
 [1.0.6]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.6
 [1.0.5]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.5
 [1.0.4]: https://github.com/iosrxwy/MacAssistant/releases/tag/v1.0.4

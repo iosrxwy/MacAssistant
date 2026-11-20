@@ -8,13 +8,17 @@ public struct CleanupRuntimeGuard: Sendable {
     public var runningProcessNames: @Sendable () -> Set<String>?
     /// 目标下 SQLite/WAL 是否被占用。`true` 占用，`false` 空闲，`nil` 未知。
     public var isSQLiteFamilyBusy: @Sendable (URL) -> Bool?
+    /// 进程工作目录。`nil` 表示读不清，调用方应按正在使用处理。
+    public var workingDirectories: @Sendable () -> Set<String>?
 
     public init(
         runningProcessNames: @escaping @Sendable () -> Set<String>?,
-        isSQLiteFamilyBusy: @escaping @Sendable (URL) -> Bool?
+        isSQLiteFamilyBusy: @escaping @Sendable (URL) -> Bool?,
+        workingDirectories: @escaping @Sendable () -> Set<String>? = { [] }
     ) {
         self.runningProcessNames = runningProcessNames
         self.isSQLiteFamilyBusy = isSQLiteFamilyBusy
+        self.workingDirectories = workingDirectories
     }
 
     /// 默认：进程表可读、没有 SQLite 占用。用于只测路径逻辑的夹具。
@@ -23,13 +27,24 @@ public struct CleanupRuntimeGuard: Sendable {
         isSQLiteFamilyBusy: { _ in false }
     )
 
-    public static let live = CleanupRuntimeGuard(
-        runningProcessNames: { CleanupProcessTable.runningNames() },
-        isSQLiteFamilyBusy: { CleanupProcessTable.isSQLiteFamilyBusy(at: $0) }
-    )
+    public static var live: CleanupRuntimeGuard {
+        CleanupRuntimeGuard(
+            runningProcessNames: { CleanupProcessTable.runningNames() },
+            isSQLiteFamilyBusy: { CleanupProcessTable.isSQLiteFamilyBusy(at: $0) },
+            workingDirectories: { CleanupProcessTable.workingDirectories() }
+        )
+    }
 
     /// 若该项此刻不该删，返回已本地化的跳过原因。
     public func skipReason(for definition: CleanupTargetDefinition) -> String? {
+        if let root = definition.activityRoot {
+            guard let directories = workingDirectories() else {
+                return L("cleanup.message.process-unknown")
+            }
+            if CleanupProjectArtifacts.isInUse(projectRoot: root, workingDirectories: directories) {
+                return L("cleanup.message.project-in-use")
+            }
+        }
         let watched = Self.watchedProcessNames(for: definition)
         guard !watched.isEmpty else { return nil }
         guard let running = runningProcessNames() else {
@@ -140,6 +155,48 @@ enum CleanupProcessTable {
             names.insert(String(cString: buffer))
         }
         return names
+    }
+
+    static func workingDirectories() -> Set<String>? {
+        let bytesNeeded = proc_listpids(UInt32(PROC_ALL_PIDS), 0, nil, 0)
+        guard bytesNeeded > 0 else { return nil }
+        var pids = [pid_t](repeating: 0, count: Int(bytesNeeded) / MemoryLayout<pid_t>.stride + 8)
+        let filled = pids.withUnsafeMutableBufferPointer { buffer in
+            proc_listpids(
+                UInt32(PROC_ALL_PIDS),
+                0,
+                buffer.baseAddress,
+                Int32(buffer.count * MemoryLayout<pid_t>.stride)
+            )
+        }
+        guard filled > 0 else { return nil }
+
+        var directories = Set<String>()
+        let count = Int(filled) / MemoryLayout<pid_t>.stride
+        for pid in pids.prefix(count) where pid > 0 {
+            guard let cwd = currentDirectory(pid: pid), !cwd.isEmpty else { continue }
+            directories.insert(cwd)
+        }
+        return directories.isEmpty ? nil : directories
+    }
+
+    private static func currentDirectory(pid: pid_t) -> String? {
+        var info = proc_vnodepathinfo()
+        let size = Int32(MemoryLayout<proc_vnodepathinfo>.size)
+        let written = withUnsafeMutablePointer(to: &info) { pointer in
+            proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, pointer, size)
+        }
+        guard written == size else { return nil }
+        return cString(from: info.pvi_cdir.vip_path)
+    }
+
+    private static func cString<T>(from path: T) -> String {
+        withUnsafePointer(to: path) { pointer in
+            pointer.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) { bytes in
+                guard bytes.pointee != 0 else { return "" }
+                return String(cString: bytes)
+            }
+        }
     }
 
     static func isSQLiteFamilyBusy(at url: URL) -> Bool? {

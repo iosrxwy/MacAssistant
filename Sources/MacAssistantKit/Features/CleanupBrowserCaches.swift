@@ -148,7 +148,8 @@ enum CleanupBrowserCaches {
             defaultSelected: false,
             category: definition.category,
             systemImage: definition.systemImage,
-            safetyDetails: definition.safetyDetails
+            safetyDetails: definition.safetyDetails,
+            activityRoot: definition.activityRoot
         )
     }
 

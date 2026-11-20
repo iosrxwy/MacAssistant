@@ -208,12 +208,24 @@ bluetooth_usage() {
     *) printf '%s' '在菜单栏里显示已配对的蓝牙设备，并连接或断开它们。' ;;
   esac
 }
+# 程序坞额度悬停要读图标位置。这句会出现在辅助功能的授权说明里。
+accessibility_usage() {
+  case "$1" in
+    zh-Hant) printf '%s' '在程式塢圖示上顯示 AI 剩餘額度。只讀取程式塢圖示的位置，不會操作其他 App。' ;;
+    en) printf '%s' 'Shows remaining AI quota on Dock icons. It only reads Dock icon positions and does not control other apps.' ;;
+    es) printf '%s' 'Muestra la cuota de IA restante en los iconos del Dock. Solo lee su posición y no controla otras apps.' ;;
+    ko) printf '%s' 'Dock 아이콘에 남은 AI 사용량을 표시합니다. 아이콘 위치만 읽으며 다른 앱은 조작하지 않습니다.' ;;
+    ru) printf '%s' 'Показывает остаток квоты ИИ на значках Dock. Читает только их положение и не управляет другими программами.' ;;
+    *) printf '%s' '在程序坞图标上显示 AI 剩余额度。只读取程序坞图标的位置，不会操作其他 App。' ;;
+  esac
+}
 LOCALIZATIONS_XML=""
 for LANG_CODE in $APP_LOCALIZATIONS; do
   mkdir -p "$CONTENTS/Resources/$LANG_CODE.lproj"
   cat > "$CONTENTS/Resources/$LANG_CODE.lproj/InfoPlist.strings" <<STRINGS
 "CFBundleDisplayName" = "$(localized_display_name "$LANG_CODE")";
 "NSBluetoothAlwaysUsageDescription" = "$(bluetooth_usage "$LANG_CODE")";
+"NSAccessibilityUsageDescription" = "$(accessibility_usage "$LANG_CODE")";
 STRINGS
   LOCALIZATIONS_XML="$LOCALIZATIONS_XML
         <string>$LANG_CODE</string>"
@@ -385,6 +397,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSBluetoothAlwaysUsageDescription</key><string>$(bluetooth_usage "$DEVELOPMENT_REGION")</string>
+    <key>NSAccessibilityUsageDescription</key><string>$(accessibility_usage "$DEVELOPMENT_REGION")</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
     <key>NSHumanReadableCopyright</key><string>GNU GPL-3.0 · Open Source</string>
     <key>MacAssistantBuildKind</key><string>${BUILD_KIND}</string>

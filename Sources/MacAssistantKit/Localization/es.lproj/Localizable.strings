@@ -111,6 +111,8 @@
 "toolfinder.feature.macApp.detail" = "Inyecta plugins en una app de macOS local, o escanea y quita bibliotecas de terceros ya escritas";
 "toolfinder.feature.appUninstall.title" = "Desinstalar apps";
 "toolfinder.feature.appUninstall.detail" = "Mueve una app normal y sus restos en tu Biblioteca a la Papelera";
+"toolfinder.feature.defaultApps.title" = "Predeterminadas";
+"toolfinder.feature.defaultApps.detail" = "Elige la app predeterminada para png, pdf, md, ai y otras extensiones, y restáurala";
 "permission.repair-files.title" = "Archivos y carpetas";
 "permission.repair-files.usedBy" = "La app que elijas, para quitar la cuarentena, restablecer xattr y volver a firmar";
 "permission.repair-files.withoutIt" = "Esas acciones se quedan en vista previa si no hay app seleccionada; no se cambia nada más en el Mac";
@@ -373,6 +375,22 @@
 "cleanup.vm-vmware-item.name" = "VMware · %@";
 "cleanup.slack-cache.name" = "Caché de Slack";
 "cleanup.slack-cache.detail" = "Vistas previas de mensajes y archivos; se reconstruyen al usar Slack";
+"cleanup.project-artifact.name" = "%@ · %@";
+"cleanup.project-artifact.detail" = "%@. Para recuperarlo: %@";
+"cleanup.project-artifact.removes" = "Una carpeta que este proyecto puede volver a generar";
+"cleanup.project-artifact.keeps" = "El código, los archivos de bloqueo y la configuración";
+"cleanup.project-artifact.kind.node" = "dependencias";
+"cleanup.project-artifact.kind.cargo" = "resultado de compilación";
+"cleanup.project-artifact.kind.pods" = "Pods";
+"cleanup.project-artifact.kind.gradle" = "caché de Gradle";
+"cleanup.project-artifact.kind.venv" = "entorno virtual";
+"cleanup.project-artifact.kind.flutter" = "caché de herramientas";
+"cleanup.project-artifact.reinstall.node" = "npm ci / pnpm install / yarn / bun install";
+"cleanup.project-artifact.reinstall.cargo" = "cargo build";
+"cleanup.project-artifact.reinstall.pods" = "pod install";
+"cleanup.project-artifact.reinstall.gradle" = "./gradlew build";
+"cleanup.project-artifact.reinstall.venv" = "python -m venv .venv";
+"cleanup.project-artifact.reinstall.flutter" = "flutter pub get";
 "cleanup.discord-cache.name" = "Caché de Discord";
 "cleanup.discord-cache.detail" = "Vistas previas de medios; se reconstruyen al usar Discord";
 "cleanup.spotify-cache.name" = "Caché de Spotify";
@@ -438,6 +456,10 @@
 "cleanup.message.denied-skipped" = "%@: bloqueado por la lista de denegación de seguridad integrada";
 "cleanup.message.process-running" = "%@ está en ejecución, así que se omitió este elemento";
 "cleanup.message.process-unknown" = "No se ha podido leer la lista de procesos, así que se omitió este elemento";
+"cleanup.message.project-in-use" = "El proyecto está en uso, así que se omitió este elemento";
+"cleanup.snapshots.none-removable" = "No hay nada que borrar. Se quedan la más reciente y la última copia.";
+"cleanup.snapshots.preview.policy" = "Conserva la instantánea más reciente y la última copia cuyo nombre termina en .backup";
+"cleanup.snapshots.preview.none" = "No hay nada que borrar. Se quedan la más reciente y la última copia.";
 "cleanup.message.sqlite-busy" = "%@: SQLite/WAL está en uso, así que se omitió";
 "cleanup.message.sqlite-unknown" = "%@: no se ha podido saber si SQLite/WAL está en uso, así que se omitió";
 
@@ -690,7 +712,10 @@
 "classdump.skip.emptyClassList" = "La lista de clases Objective-C está vacía o mal formada";
 "classdump.skip.unresolvableClassPointer" = "No se ha podido resolver un puntero de metadatos de clase";
 "classdump.skip.unresolvableMethodListPointer" = "No se ha podido resolver un puntero de lista de métodos";
-"classdump.skip.relativeMethodList" = "Las listas de métodos relativos están fuera del alcance del analizador experimental integrado";
+"classdump.skip.relativeMethodList" = "Algunas entradas de listas de métodos relativos no se han podido analizar";
+"classdump.skip.malformedFixups" = "La cabecera de chained fixups está dañada o tiene una versión no compatible; no se trataron las palabras crudas como direcciones";
+"classdump.skip.compressedFixupSymbols" = "La tabla de símbolos de chained fixups está comprimida; no se recuperaron los nombres externos";
+"classdump.skip.unknownFixupFormat" = "Formato de puntero chained fixups no compatible: %@";
 "classdump.skip.partialTraditionalMethods" = "Algunas entradas de métodos tradicionales no se han podido analizar";
 "classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1: primero debes obtener un binario sin cifrar en un entorno legalmente autorizado";
 "classdump.reason.arm64eMayNeedExternal" = "La autenticación de punteros arm64e puede requerir un potenciador externo";
@@ -883,8 +908,8 @@
 "tool.error.installFailed" = "La instalación ha fallado: %@";
 "tool.homebrew.guidance.legacy" = "Consulta las instrucciones de instalación oficiales o el instalador firmado en brew.sh. El intervalo compatible de Homebrew cambia con el tiempo y esta app no promete que macOS 13 siga siendo compatible.";
 "tool.homebrew.guidance.current" = "Consulta las instrucciones de instalación oficiales de Homebrew, los requisitos del sistema y el instalador firmado en brew.sh. Esta app nunca ejecuta curl | bash.";
-"tool.classDump.builtInFallback" = "El Class Dump integrado funciona de inmediato; el class-dump externo solo añade compatibilidad con formatos complejos";
-"tool.dsdump.builtInFallback" = "El análisis integrado no necesita dsdump. El repositorio no tiene LICENSE y el código dice All rights reserved, así que no se incluye ni se instala automáticamente";
+"tool.classDump.builtInFallback" = "El Class Dump integrado cubre chained fixups y relative method lists. El class-dump externo es GPL y solo sirve de contraste opcional; no se distribuye con la app";
+"tool.dsdump.builtInFallback" = "El análisis integrado ya exporta cabeceras Objective-C, incluidos chained fixups y relative method lists. El repositorio de dsdump no tiene LICENSE y el código dice All rights reserved, así que no se incluye ni se instala automáticamente";
 "tool.xtool.builtInFallback" = "Opcional. Esta app ya firma e instala con Apple ID; xtool es solo una vía alternativa";
 "tool.installHint.openProjectPage" = "Abrir página del proyecto";
 
@@ -922,6 +947,7 @@
 "sidebar.cleanup" = "Limpieza";
 "sidebar.appUninstall" = "Desinstalar apps";
 "sidebar.desktopIcons" = "Iconos del escritorio";
+"sidebar.defaultApps" = "Predeterminadas";
 "sidebar.appClone" = "Clones de apps";
 "sidebar.memory" = "Memoria";
 "sidebar.network" = "Red";
@@ -1204,3 +1230,17 @@
 
 /* Diálogo de autorización del modo de energía. El permiso dura hasta salir. */
 "energy.auth.once" = "Cambiar el modo de energía requiere un administrador. Después de permitirlo una vez, esta sesión no volverá a preguntar.";
+
+"sidebar.aiQuota" = "Consulta de cuota";
+
+/* Default apps */
+"defaultapp.error.invalidExtension" = "La extensión no es válida. Escribe un sufijo como png, sin ruta.";
+"defaultapp.error.unknownType" = "El sistema no dio un tipo de archivo para esta extensión";
+"defaultapp.error.unsafeType" = "El tipo %@ es demasiado amplio. Cambiarlo afectaría a muchos archivos";
+"defaultapp.error.sharedType" = "El tipo %@ abarca más que esta extensión";
+"defaultapp.error.appMissing" = "No se encontró esa app";
+"defaultapp.error.notAnApp" = "Elige una .app";
+"defaultapp.error.nothingToRestore" = "No hay una app predeterminada que restaurar";
+"defaultapp.error.originalMissing" = "La app anterior ya no está";
+"defaultapp.error.historyUnreadable" = "No se pudo leer el registro de apps predeterminadas";
+"defaultapp.error.applyFailed" = "No se cambió: %@";

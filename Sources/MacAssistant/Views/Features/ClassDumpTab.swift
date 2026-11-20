@@ -24,7 +24,7 @@ struct ClassDumpTab: View {
                         Spacer()
                         Label(
                             externalAvailable ? L("classdumptab.engine.enhanced") : L("classdumptab.engine.builtIn"),
-                            systemImage: externalAvailable ? "checkmark.circle" : "testtube.2"
+                            systemImage: "checkmark.circle"
                         )
                             .font(.caption)
                             .foregroundStyle(.green)
@@ -220,6 +220,10 @@ struct ClassDumpTab: View {
                 }
                 if facts.isEncrypted {
                     Text(L("classdumptab.encrypted.detail"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } else if facts.hasSwift {
+                    Text(L("classdumptab.swift.detail"))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 } else if !facts.nativeObjCDumpSupported {

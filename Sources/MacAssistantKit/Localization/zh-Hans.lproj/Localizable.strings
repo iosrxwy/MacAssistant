@@ -111,6 +111,8 @@
 "toolfinder.feature.macApp.detail" = "向本机 macOS App 注入插件，或扫描并卸载已写入的第三方库";
 "toolfinder.feature.appUninstall.title" = "应用卸载";
 "toolfinder.feature.appUninstall.detail" = "把普通应用和它在个人资料库里的残留移到废纸篓";
+"toolfinder.feature.defaultApps.title" = "默认方式";
+"toolfinder.feature.defaultApps.detail" = "为 png、pdf、md、ai 等扩展名指定默认打开的应用，并可恢复";
 "permission.repair-files.title" = "文件与文件夹";
 "permission.repair-files.usedBy" = "你选中的 App，用来去隔离、清扩展属性和重签";
 "permission.repair-files.withoutIt" = "选不到目标时，这些动作会停在预览，不会改系统别处";
@@ -390,6 +392,22 @@
 "cleanup.vm-vmware-item.name" = "VMware · %@";
 "cleanup.slack-cache.name" = "Slack 缓存";
 "cleanup.slack-cache.detail" = "消息和文件预览，用 Slack 时会重建";
+"cleanup.project-artifact.name" = "%@ · %@";
+"cleanup.project-artifact.detail" = "%@。装回来：%@";
+"cleanup.project-artifact.removes" = "这个工程里可重新生成的目录";
+"cleanup.project-artifact.keeps" = "源码、锁文件和工程配置";
+"cleanup.project-artifact.kind.node" = "依赖";
+"cleanup.project-artifact.kind.cargo" = "构建产物";
+"cleanup.project-artifact.kind.pods" = "Pods";
+"cleanup.project-artifact.kind.gradle" = "Gradle 缓存";
+"cleanup.project-artifact.kind.venv" = "虚拟环境";
+"cleanup.project-artifact.kind.flutter" = "工具缓存";
+"cleanup.project-artifact.reinstall.node" = "npm ci / pnpm install / yarn / bun install";
+"cleanup.project-artifact.reinstall.cargo" = "cargo build";
+"cleanup.project-artifact.reinstall.pods" = "pod install";
+"cleanup.project-artifact.reinstall.gradle" = "./gradlew build";
+"cleanup.project-artifact.reinstall.venv" = "python -m venv .venv";
+"cleanup.project-artifact.reinstall.flutter" = "flutter pub get";
 "cleanup.discord-cache.name" = "Discord 缓存";
 "cleanup.discord-cache.detail" = "媒体预览，用 Discord 时会重建";
 "cleanup.spotify-cache.name" = "Spotify 缓存";
@@ -455,6 +473,10 @@
 "cleanup.message.denied-skipped" = "%@：已由内建安全拒绝名单排除";
 "cleanup.message.process-running" = "%@ 正在运行，已跳过";
 "cleanup.message.process-unknown" = "无法读取进程表，已跳过";
+"cleanup.message.project-in-use" = "工程正在使用，已跳过";
+"cleanup.snapshots.none-removable" = "没有可删的快照。最新一张和上次备份已保留。";
+"cleanup.snapshots.preview.policy" = "保留最新一张，以及名称以 .backup 结尾的上次备份";
+"cleanup.snapshots.preview.none" = "没有可删的快照。最新一张和上次备份会保留。";
 "cleanup.message.sqlite-busy" = "%@：SQLite/WAL 正在被占用，已跳过";
 "cleanup.message.sqlite-unknown" = "%@：无法确认 SQLite/WAL 是否被占用，已跳过";
 
@@ -707,7 +729,10 @@
 "classdump.skip.emptyClassList" = "Objective-C 类列表为空或异常";
 "classdump.skip.unresolvableClassPointer" = "类元数据指针无法解析";
 "classdump.skip.unresolvableMethodListPointer" = "方法列表指针无法解析";
-"classdump.skip.relativeMethodList" = "relative method list 超出内置实验性解析范围";
+"classdump.skip.relativeMethodList" = "relative method list 有条目无法解析";
+"classdump.skip.malformedFixups" = "chained fixups 头损坏或版本不对，没有把原始字当成地址";
+"classdump.skip.compressedFixupSymbols" = "chained fixups 符号表是压缩的，外部符号名未能还原";
+"classdump.skip.unknownFixupFormat" = "未支持的 chained fixups 指针格式：%@";
 "classdump.skip.partialTraditionalMethods" = "部分传统方法条目无法解析";
 "classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1：必须先在合法授权环境获得未加密二进制";
 "classdump.reason.arm64eMayNeedExternal" = "arm64e 指针认证可能需要外部增强工具";
@@ -900,8 +925,8 @@
 "tool.error.installFailed" = "安装失败：%@";
 "tool.homebrew.guidance.legacy" = "请在 brew.sh 查看官方安装说明或签名安装包。Homebrew 当前支持范围会变化，本应用不承诺 macOS 13 仍受支持。";
 "tool.homebrew.guidance.current" = "请在 brew.sh 查看 Homebrew 官方安装说明、系统要求和签名安装包；本应用不会执行 curl | bash。";
-"tool.classDump.builtInFallback" = "内置 Class Dump 默认可用；外部 class-dump 仅为复杂格式增强";
-"tool.dsdump.builtInFallback" = "内置解析不依赖 dsdump。仓库无 LICENSE，源码为 All rights reserved，不能捆绑或代装";
+"tool.classDump.builtInFallback" = "内置 Class Dump 已覆盖 chained fixups 与 relative method list。外部 class-dump 是 GPL，只作可选对照，不随应用分发";
+"tool.dsdump.builtInFallback" = "内置解析已能导出 ObjC 头文件，包括 chained fixups 和 relative method list。dsdump 仓库无 LICENSE，源码为 All rights reserved，不能捆绑或代装";
 "tool.xtool.builtInFallback" = "可选。本应用已内置 Apple ID 签名与安装，不装 xtool 也能用";
 "tool.installHint.openProjectPage" = "打开项目官网";
 
@@ -939,16 +964,17 @@
 "sidebar.cleanup" = "系统清理";
 "sidebar.appUninstall" = "应用卸载";
 "sidebar.desktopIcons" = "桌面图标";
+"sidebar.defaultApps" = "默认方式";
 "sidebar.appClone" = "应用分身";
 "sidebar.memory" = "内存工具";
 "sidebar.network" = "网络工具";
 "sidebar.cheatsheet" = "命令速查";
 "sidebar.recipes" = "快捷开关";
 "sidebar.deb" = "插件功能";
-"sidebar.dylib" = "动态链接";
+"sidebar.dylib" = "依赖工具";
 "sidebar.ipa" = "应用封装";
 "sidebar.macApp" = "注入工具";
-"sidebar.binary" = "逆向分析";
+"sidebar.binary" = "程序解析";
 "sidebar.environment" = "环境检查";
 "sidebar.about" = "关于软件";
 "sidebar.opensource" = "开源许可";
@@ -1219,3 +1245,17 @@
 
 /* 能耗模式授权框。授权会保持到退出应用，所以提示只在第一次切换出现。 */
 "energy.auth.once" = "切换能耗模式需要管理员权限。授权这一次后，本次打开不用再确认。";
+
+"sidebar.aiQuota" = "额度速查";
+
+/* Default apps */
+"defaultapp.error.invalidExtension" = "扩展名无效。请输入 png 这样的后缀，不要带路径。";
+"defaultapp.error.unknownType" = "系统没有为这个扩展名给出文件类型";
+"defaultapp.error.unsafeType" = "类型 %@ 太宽，改它会影响大量文件";
+"defaultapp.error.sharedType" = "类型 %@ 不只有这一个扩展名";
+"defaultapp.error.appMissing" = "找不到这个应用";
+"defaultapp.error.notAnApp" = "请选择一个 .app";
+"defaultapp.error.nothingToRestore" = "没有可恢复的默认应用";
+"defaultapp.error.originalMissing" = "原来的应用已经不在了";
+"defaultapp.error.historyUnreadable" = "读不到默认打开方式的记录";
+"defaultapp.error.applyFailed" = "没有改成：%@";

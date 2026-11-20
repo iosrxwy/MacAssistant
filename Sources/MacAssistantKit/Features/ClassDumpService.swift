@@ -176,12 +176,10 @@ public enum ObjCRuntime {
     }
 
     /// 解析 64 位「传统指针格式」method_list_t。
-    /// - Parameters:
-    ///   - listOffset: method_list_t 在缓冲区中的绝对偏移。
-    ///   - resolvePointer: 把一个 vmaddr 指针解析成字符串(用于 SEL/types)。
+    /// `stringAtField` 收到的是 name/types 字段在缓冲区中的绝对偏移，由调用方决定怎么读指针。
     public static func parseMethodListTraditional(
         _ b: [UInt8], at listOffset: Int, le: Bool, isClassMethod: Bool,
-        resolvePointer: (UInt64) -> String?
+        stringAtField: (Int) -> String?
     ) -> [ObjCMethod] {
         guard listOffset + 8 <= b.count else { return [] }
         let entsize = Int(MachOInspector.readU32(b, listOffset, le) & 0x0000_FFFF)
@@ -193,16 +191,58 @@ public enum ObjCRuntime {
         var p = listOffset + 8
         for _ in 0..<count {
             guard p + 24 <= b.count else { break }
-            let namePtr = MachOInspector.readU64(b, p, le)
-            let typePtr = MachOInspector.readU64(b, p + 8, le)
-            let sel = resolvePointer(namePtr) ?? ""
-            let types = resolvePointer(typePtr) ?? ""
+            let sel = stringAtField(p) ?? ""
+            let types = stringAtField(p + 8) ?? ""
             if !sel.isEmpty {
                 methods.append(ObjCMethod(selector: sel, typeEncoding: types, isClassMethod: isClassMethod))
             }
             p += entsize
         }
         return methods
+    }
+
+    /// 解析 relative method list。name/types 的 int32 是相对该字段自身地址的偏移。
+    /// 高位 `0x40000000` 表示 selector 直接指向 C 字符串；否则指向一个 SEL 指针槽。
+    public static func parseMethodListRelative(
+        _ b: [UInt8], at listOffset: Int, le: Bool, isClassMethod: Bool,
+        targetFileOffset: (_ fieldFileOffset: Int, _ relative: Int32) -> Int?,
+        cStringAt: (Int) -> String?,
+        pointerStringAt: (Int) -> String?
+    ) -> (methods: [ObjCMethod], skipped: Int) {
+        guard listOffset + 8 <= b.count else { return ([], 1) }
+        let flags = MachOInspector.readU32(b, listOffset, le)
+        let entsize = Int(flags & 0x0000_FFFF)
+        let count = Int(MachOInspector.readU32(b, listOffset + 4, le))
+        guard isRelativeMethodList(b, at: listOffset, le: le),
+              entsize >= 12, count > 0, count < 100_000 else { return ([], 1) }
+        let directSelectors = (flags & 0x4000_0000) != 0
+        var methods: [ObjCMethod] = []
+        var skipped = 0
+        var p = listOffset + 8
+        for _ in 0..<count {
+            guard p + 12 <= b.count else { skipped += 1; break }
+            let nameRel = Int32(bitPattern: MachOInspector.readU32(b, p, le))
+            let typesRel = Int32(bitPattern: MachOInspector.readU32(b, p + 4, le))
+            let sel: String
+            if let nameAt = targetFileOffset(p, nameRel) {
+                sel = (directSelectors ? cStringAt(nameAt) : pointerStringAt(nameAt)) ?? ""
+            } else {
+                sel = ""
+            }
+            let types: String
+            if let typesAt = targetFileOffset(p + 4, typesRel) {
+                types = cStringAt(typesAt) ?? ""
+            } else {
+                types = ""
+            }
+            if sel.isEmpty {
+                skipped += 1
+            } else {
+                methods.append(ObjCMethod(selector: sel, typeEncoding: types, isClassMethod: isClassMethod))
+            }
+            p += entsize
+        }
+        return (methods, skipped)
     }
 }
 
@@ -251,12 +291,20 @@ public struct ObjCClass: Sendable {
     }
 }
 
-/// 未加密、传统指针格式的 arm64/x86_64 二进制的 ObjC 元数据遍历器(尽力而为)。
+/// 未加密 arm64/x86_64 二进制的 ObjC 元数据遍历器。
+/// 传统绝对指针、relative method list，以及 chained fixups / arm64e 指针槽都从这里读。
 struct NativeObjCParser {
     let b: [UInt8]
     let le: Bool
     let sliceOffset: Int
     let segments: [MachOSegment]
+    let fixups: ChainedFixupTable?
+
+    enum ResolvedPointer {
+        case address(UInt64)
+        case bind(String?)
+        case unreadable
+    }
 
     func fileOffset(forVMAddr vmaddr: UInt64) -> Int? {
         guard vmaddr != 0 else { return nil }
@@ -268,9 +316,60 @@ struct NativeObjCParser {
         return nil
     }
 
-    func readPtr(atVMAddr vmaddr: UInt64) -> UInt64? {
-        guard let off = fileOffset(forVMAddr: vmaddr), off + 8 <= b.count else { return nil }
-        return MachOInspector.readU64(b, off, le)
+    func vmAddress(ofFileOffset absolute: Int) -> UInt64? {
+        guard absolute >= sliceOffset else { return nil }
+        let rel = UInt64(absolute - sliceOffset)
+        for seg in segments where seg.filesize > 0 {
+            if rel >= seg.fileoff, rel < seg.fileoff &+ seg.filesize {
+                return seg.vmaddr &+ (rel &- seg.fileoff)
+            }
+        }
+        return nil
+    }
+
+    func fileOffset(relativeTo field: Int, delta: Int32) -> Int? {
+        guard let vm = vmAddress(ofFileOffset: field) else { return nil }
+        let target = Int64(bitPattern: vm) + Int64(delta)
+        guard target > 0 else { return nil }
+        return fileOffset(forVMAddr: UInt64(bitPattern: target))
+    }
+
+    func resolvePointer(atFileOffset off: Int) -> ResolvedPointer {
+        if let slot = fixups?.slot(at: off) {
+            switch slot {
+            case let .rebase(vm): return .address(vm)
+            case let .bind(name): return .bind(name)
+            }
+        }
+        guard off + 8 <= b.count else { return .unreadable }
+        let raw = MachOInspector.readU64(b, off, le)
+        if raw == 0 { return .address(0) }
+        if fixups?.usesChains == true {
+            let cleaned = raw & ~0x7
+            if fileOffset(forVMAddr: cleaned) != nil { return .address(raw) }
+            return .unreadable
+        }
+        return .address(raw)
+    }
+
+    func pointerVM(atFileOffset off: Int) -> UInt64? {
+        if case let .address(vm) = resolvePointer(atFileOffset: off), vm != 0 {
+            return vm
+        }
+        return nil
+    }
+
+    func bindSymbol(atFileOffset off: Int) -> String? {
+        if case let .bind(name) = resolvePointer(atFileOffset: off) {
+            return name
+        }
+        return nil
+    }
+
+    func cString(atFileOffset off: Int) -> String? {
+        guard off >= 0, off < b.count else { return nil }
+        let text = MachOInspector.cString(b, off, max: 4096)
+        return text.isEmpty ? nil : text
     }
 
     func cString(atVMAddr vmaddr: UInt64) -> String? {
@@ -308,10 +407,26 @@ struct NativeObjCParser {
         var classes: [ObjCClass] = []
         var skippedCount = 0
         var skipReasons: [String] = []
+        if fixups?.malformed == true {
+            skipReasons.append(L("classdump.skip.malformedFixups"))
+        }
+        if fixups?.symbolsCompressed == true {
+            skipReasons.append(L("classdump.skip.compressedFixupSymbols"))
+        }
+        if let formats = fixups?.unsupportedFormats, !formats.isEmpty {
+            skipReasons.append(L(
+                "classdump.skip.unknownFixupFormat",
+                formats.map(String.init).joined(separator: ", ")
+            ))
+        }
         for i in 0..<n {
             let p = base + i * 8
             guard p + 8 <= b.count else { break }
-            let classVM = MachOInspector.readU64(b, p, le)
+            guard let classVM = pointerVM(atFileOffset: p) else {
+                skippedCount += 1
+                skipReasons.append(L("classdump.skip.unresolvableClassPointer"))
+                continue
+            }
             if let parsedClass = parseClass(atVMAddr: classVM) {
                 classes.append(parsedClass.value)
                 skippedCount += parsedClass.skippedCount
@@ -330,33 +445,35 @@ struct NativeObjCParser {
 
     private func classRO(ofClassVM classVM: UInt64) -> Int? {
         guard let classOff = fileOffset(forVMAddr: classVM), classOff + 40 <= b.count else { return nil }
-        let dataVM = MachOInspector.readU64(b, classOff + 32, le) & ~UInt64(0x7)
-        return fileOffset(forVMAddr: dataVM)
+        guard let dataVM = pointerVM(atFileOffset: classOff + 32) else { return nil }
+        return fileOffset(forVMAddr: dataVM & ~UInt64(0x7))
     }
 
     private func parseClass(atVMAddr classVM: UInt64) -> (value: ObjCClass, skippedCount: Int, skipReasons: [String])? {
         guard let classOff = fileOffset(forVMAddr: classVM), classOff + 40 <= b.count else { return nil }
-        let superVM = MachOInspector.readU64(b, classOff + 8, le)
         guard let roOff = classRO(ofClassVM: classVM), roOff + 72 <= b.count else { return nil }
-
-        let nameVM = MachOInspector.readU64(b, roOff + 24, le)
-        guard let name = cString(atVMAddr: nameVM), !name.isEmpty else { return nil }
+        guard let nameVM = pointerVM(atFileOffset: roOff + 24),
+              let name = cString(atVMAddr: nameVM), !name.isEmpty else { return nil }
 
         var superName: String?
-        if superVM != 0, let sOff = classRO(ofClassVM: superVM), sOff + 32 <= b.count {
-            superName = cString(atVMAddr: MachOInspector.readU64(b, sOff + 24, le))
+        if let symbol = bindSymbol(atFileOffset: classOff + 8) {
+            superName = Self.objcClassName(fromBind: symbol)
+        } else if let superVM = pointerVM(atFileOffset: classOff + 8),
+                  let sOff = classRO(ofClassVM: superVM), sOff + 32 <= b.count,
+                  let superNameVM = pointerVM(atFileOffset: sOff + 24) {
+            superName = cString(atVMAddr: superNameVM)
         }
 
-        let instance = methods(atVMAddr: MachOInspector.readU64(b, roOff + 32, le), isClass: false)
-        let protocols = parseProtocols(atVMAddr: MachOInspector.readU64(b, roOff + 40, le))
-        let ivars = parseIvars(atVMAddr: MachOInspector.readU64(b, roOff + 48, le))
-        let properties = parseProperties(atVMAddr: MachOInspector.readU64(b, roOff + 64, le))
+        let instance = methods(atFileOffset: roOff + 32, isClass: false)
+        let protocols = parseProtocols(atFileOffset: roOff + 40)
+        let ivars = parseIvars(atFileOffset: roOff + 48)
+        let properties = parseProperties(atFileOffset: roOff + 64)
 
         // 元类的方法即类方法
-        let isaVM = MachOInspector.readU64(b, classOff, le)
         var classMethods = (methods: [ObjCMethod](), skippedCount: 0, reason: String?.none)
-        if let metaRO = classRO(ofClassVM: isaVM), metaRO + 40 <= b.count {
-            classMethods = methods(atVMAddr: MachOInspector.readU64(b, metaRO + 32, le), isClass: true)
+        if let isaVM = pointerVM(atFileOffset: classOff),
+           let metaRO = classRO(ofClassVM: isaVM), metaRO + 40 <= b.count {
+            classMethods = methods(atFileOffset: metaRO + 32, isClass: true)
         }
 
         let reasons = [instance.reason, classMethods.reason].compactMap { $0 }
@@ -369,35 +486,46 @@ struct NativeObjCParser {
         )
     }
 
-    private func methods(atVMAddr listVM: UInt64, isClass: Bool) -> (methods: [ObjCMethod], skippedCount: Int, reason: String?) {
-        guard listVM != 0 else { return ([], 0, nil) }
+    private func methods(atFileOffset pointerField: Int, isClass: Bool) -> (methods: [ObjCMethod], skippedCount: Int, reason: String?) {
+        guard let listVM = pointerVM(atFileOffset: pointerField) else { return ([], 0, nil) }
         guard let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else {
             return ([], 1, L("classdump.skip.unresolvableMethodListPointer"))
         }
         let count = Int(MachOInspector.readU32(b, off + 4, le))
         if ObjCRuntime.isRelativeMethodList(b, at: off, le: le) {
-            return ([], max(1, count), L("classdump.skip.relativeMethodList"))
+            let parsed = ObjCRuntime.parseMethodListRelative(
+                b, at: off, le: le, isClassMethod: isClass,
+                targetFileOffset: { field, relative in
+                    self.fileOffset(relativeTo: field, delta: relative)
+                },
+                cStringAt: { self.cString(atFileOffset: $0) },
+                pointerStringAt: { field in
+                    guard let vm = self.pointerVM(atFileOffset: field) else { return nil }
+                    return self.cString(atVMAddr: vm)
+                }
+            )
+            return (parsed.methods, parsed.skipped, parsed.skipped > 0 ? L("classdump.skip.relativeMethodList") : nil)
         }
-        let parsed = ObjCRuntime.parseMethodListTraditional(b, at: off, le: le, isClassMethod: isClass) { ptr in
-            self.cString(atVMAddr: ptr)
+        let parsed = ObjCRuntime.parseMethodListTraditional(b, at: off, le: le, isClassMethod: isClass) { field in
+            guard let vm = self.pointerVM(atFileOffset: field) else { return nil }
+            return self.cString(atVMAddr: vm)
         }
         let skipped = max(0, count - parsed.count)
         return (parsed, skipped, skipped > 0 ? L("classdump.skip.partialTraditionalMethods") : nil)
     }
 
-    private func parseIvars(atVMAddr listVM: UInt64) -> [(type: String, name: String)] {
-        guard listVM != 0, let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
-        let entsize = Int(MachOInspector.readU32(b, off, le))
+    private func parseIvars(atFileOffset pointerField: Int) -> [(type: String, name: String)] {
+        guard let listVM = pointerVM(atFileOffset: pointerField),
+              let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
+        let entsize = Int(MachOInspector.readU32(b, off, le) & 0x0000_FFFF)
         let count = Int(MachOInspector.readU32(b, off + 4, le))
         guard entsize >= 32, count > 0, count < 100_000 else { return [] }
         var result: [(String, String)] = []
         var p = off + 8
         for _ in 0..<count {
             guard p + 32 <= b.count else { break }
-            let nameVM = MachOInspector.readU64(b, p + 8, le)
-            let typeVM = MachOInspector.readU64(b, p + 16, le)
-            let name = cString(atVMAddr: nameVM) ?? ""
-            let enc = cString(atVMAddr: typeVM) ?? "@"
+            let name = pointerVM(atFileOffset: p + 8).flatMap { cString(atVMAddr: $0) } ?? ""
+            let enc = pointerVM(atFileOffset: p + 16).flatMap { cString(atVMAddr: $0) } ?? "@"
             let type = ObjCTypeDecoder.types(from: enc).first ?? "id"
             if !name.isEmpty { result.append((type, name)) }
             p += entsize
@@ -405,8 +533,9 @@ struct NativeObjCParser {
         return result
     }
 
-    private func parseProperties(atVMAddr listVM: UInt64) -> [ObjCProperty] {
-        guard listVM != 0, let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
+    private func parseProperties(atFileOffset pointerField: Int) -> [ObjCProperty] {
+        guard let listVM = pointerVM(atFileOffset: pointerField),
+              let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
         let entsize = Int(MachOInspector.readU32(b, off, le) & 0x0000_FFFF)
         let count = Int(MachOInspector.readU32(b, off + 4, le))
         guard entsize >= 16, count > 0, count < 100_000 else { return [] }
@@ -414,8 +543,8 @@ struct NativeObjCParser {
         var p = off + 8
         for _ in 0..<count {
             guard p + 16 <= b.count else { break }
-            let name = cString(atVMAddr: MachOInspector.readU64(b, p, le)) ?? ""
-            let attributes = cString(atVMAddr: MachOInspector.readU64(b, p + 8, le)) ?? ""
+            let name = pointerVM(atFileOffset: p).flatMap { cString(atVMAddr: $0) } ?? ""
+            let attributes = pointerVM(atFileOffset: p + 8).flatMap { cString(atVMAddr: $0) } ?? ""
             if !name.isEmpty {
                 result.append(ObjCProperty(name: name, attributes: attributes))
             }
@@ -424,22 +553,32 @@ struct NativeObjCParser {
         return result
     }
 
-    private func parseProtocols(atVMAddr listVM: UInt64) -> [String] {
-        guard listVM != 0, let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
+    private func parseProtocols(atFileOffset pointerField: Int) -> [String] {
+        guard let listVM = pointerVM(atFileOffset: pointerField),
+              let off = fileOffset(forVMAddr: listVM), off + 8 <= b.count else { return [] }
         let count = Int(MachOInspector.readU64(b, off, le))
         guard count > 0, count < 100_000 else { return [] }
         var result: [String] = []
         for index in 0..<count {
             let entry = off + 8 + index * 8
             guard entry + 8 <= b.count else { break }
-            let protocolVM = MachOInspector.readU64(b, entry, le)
-            guard let protocolOff = fileOffset(forVMAddr: protocolVM), protocolOff + 16 <= b.count else { continue }
-            let nameVM = MachOInspector.readU64(b, protocolOff + 8, le)
-            if let name = cString(atVMAddr: nameVM), !name.isEmpty {
-                result.append(name)
-            }
+            guard let protocolVM = pointerVM(atFileOffset: entry),
+                  let protocolOff = fileOffset(forVMAddr: protocolVM),
+                  protocolOff + 16 <= b.count,
+                  let nameVM = pointerVM(atFileOffset: protocolOff + 8),
+                  let name = cString(atVMAddr: nameVM), !name.isEmpty else { continue }
+            result.append(name)
         }
         return result
+    }
+
+    static func objcClassName(fromBind symbol: String) -> String? {
+        let prefixes = ["_OBJC_CLASS_$_", "_OBJC_METACLASS_$_", "OBJC_CLASS_$_", "OBJC_METACLASS_$_"]
+        for prefix in prefixes where symbol.hasPrefix(prefix) {
+            let name = String(symbol.dropFirst(prefix.count))
+            if !name.isEmpty { return name }
+        }
+        return nil
     }
 }
 
@@ -582,17 +721,16 @@ struct ExternalHeaderDump {
 }
 
 /// 从 Mach-O / .app / .ipa / dylib 导出 Objective-C 头文件。
-/// 分级:未加密 + 传统指针格式走原生解析;arm64e / chained fixups / Swift 回退外部 class-dump/dsdump。
+/// 未加密二进制走内置解析，包括 chained fixups、arm64e 和 relative method list。
+/// Swift 类型只报告、不冒充；FairPlay 加密直接停止。已安装的 class-dump 只在内置没有结果时可选使用。
 public enum ClassDumpService {
     public static func preflightCapability(fileAt url: URL) throws -> ClassDumpCapabilityReport {
         guard let facts = MachOInspector.facts(fileAt: url) else { throw ClassDumpError.notMachO }
         var reasons: [String] = []
         if facts.isEncrypted { reasons.append(L("classdump.reason.fairPlayNeedsDecrypted")) }
-        if facts.isArm64e { reasons.append(L("classdump.reason.arm64eMayNeedExternal")) }
-        if facts.hasChainedFixups { reasons.append(L("classdump.reason.chainedFixupsUnsupported")) }
         if facts.hasSwift { reasons.append(L("classdump.reason.swiftOutOfScope")) }
         let completeness: ClassDumpCompleteness
-        if facts.isEncrypted || facts.isArm64e || facts.hasChainedFixups {
+        if facts.isEncrypted {
             completeness = .unsupported
         } else {
             completeness = .partial
@@ -623,8 +761,6 @@ public enum ClassDumpService {
     ) -> ClassDumpCapabilityReport {
         var reasons = skipReasons
         if facts.hasSwift { reasons.append(L("classdump.reason.swiftMetadataDetected")) }
-        if facts.hasChainedFixups { reasons.append(L("classdump.reason.chainedFixupsUnsupported")) }
-        if facts.isArm64e { reasons.append(L("classdump.reason.arm64eUnsupported")) }
         if facts.isEncrypted { reasons.append("FairPlay cryptid=1") }
         reasons = Array(Set(reasons)).sorted()
         let discovered = classes.count + max(0, skippedCount)
@@ -634,7 +770,7 @@ public enum ClassDumpService {
                 || !$0.protocols.isEmpty || !$0.ivars.isEmpty
         }
         let completeness: ClassDumpCompleteness
-        if facts.isEncrypted || facts.hasChainedFixups || facts.isArm64e || classes.isEmpty || meaningful.isEmpty {
+        if facts.isEncrypted || classes.isEmpty || meaningful.isEmpty {
             completeness = .unsupported
         } else if !reasons.isEmpty || skippedCount > 0 || exportedClassCount < classes.count {
             completeness = .partial
@@ -733,6 +869,7 @@ public enum ClassDumpService {
         guard let facts = MachOInspector.facts(fileAt: binary) else { throw ClassDumpError.notMachO }
         if facts.isEncrypted { throw ClassDumpError.encrypted }
 
+        var nativeReasons: [String] = []
         if !preferExternal, facts.nativeObjCDumpSupported {
             let native = try nativeDumpDetailed(fileAt: binary, arch: arch, facts: facts)
             if native.report.completeness != .unsupported {
@@ -746,12 +883,13 @@ public enum ClassDumpService {
                     capabilityReport: native.report
                 )
             }
-            // 原生没解析到类:回退外部工具(带上原因)。
+            nativeReasons = native.report.skipReasons
         }
 
-        // 外部工具回退
-        let reasonBits = [facts.hasChainedFixups ? "chained fixups(arm64e/iOS15+)" : nil,
-                          facts.hasSwift ? L("classdump.reason.containsSwiftTypes") : nil].compactMap { $0 }
+        // 内置没有可用声明时，才使用用户自己安装的外部工具。
+        let reasonBits = nativeReasons.isEmpty
+            ? [facts.hasSwift ? L("classdump.reason.containsSwiftTypes") : nil].compactMap { $0 }
+            : nativeReasons
         if allowExternalFallback, let tool = availableExternalDumper() {
             let external = try externalDumpDetailed(
                 fileAt: binary,
@@ -783,13 +921,10 @@ public enum ClassDumpService {
         let why = reasonBits.isEmpty
             ? L("classdump.reason.nativeFoundNoClasses")
             : reasonBits.joined(separator: L("classdump.reasonSeparator"))
-        if !allowExternalFallback {
-            throw ClassDumpError.unsupportedBuiltIn(why)
-        }
-        throw ClassDumpError.noExternalTool(L("classdump.error.buildExternalToolYourself", why))
+        throw ClassDumpError.unsupportedBuiltIn(why)
     }
 
-    /// 原生解析(仅未加密 + 传统指针格式)。
+    /// 原生解析。未加密即可，含 chained fixups 与 relative method list。
     public static func nativeDump(fileAt url: URL, arch: String?, facts: MachOFacts) throws -> (String, [String], [String]) {
         let detailed = try nativeDumpDetailed(fileAt: url, arch: arch, facts: facts)
         return (detailed.headers, detailed.classes.map(\.name), detailed.report.skipReasons)
@@ -803,7 +938,7 @@ public enum ClassDumpService {
         let b = [UInt8](try Data(contentsOf: url))
         let idx = MachOInspector.sliceIndex(b, arch: arch)
         guard let parsed = MachOInspector.segments(b, sliceIndex: idx) else { throw ClassDumpError.notMachO }
-        var parser = NativeObjCParser(b: b, le: parsed.le, sliceOffset: parsed.sliceOffset, segments: parsed.segments)
+        var parser = makeParser(b, parsed: parsed)
         let parsedObjC = parser.parse()
         let classes = parsedObjC.classes
         let report = capabilityReport(
@@ -832,8 +967,27 @@ public enum ClassDumpService {
         let b = [UInt8](data)
         let idx = MachOInspector.sliceIndex(b, arch: arch)
         guard let parsed = MachOInspector.segments(b, sliceIndex: idx) else { return [] }
-        var parser = NativeObjCParser(b: b, le: parsed.le, sliceOffset: parsed.sliceOffset, segments: parsed.segments)
+        var parser = makeParser(b, parsed: parsed)
         return parser.parse().classes.map { ClassHeader(name: $0.name, contents: $0.header() + "\n") }
+    }
+
+    private static func makeParser(
+        _ b: [UInt8],
+        parsed: (sliceOffset: Int, le: Bool, is64: Bool, segments: [MachOSegment])
+    ) -> NativeObjCParser {
+        let fixups = ChainedFixupTable.parse(
+            b,
+            sliceOffset: parsed.sliceOffset,
+            littleEndian: parsed.le,
+            segments: parsed.segments
+        )
+        return NativeObjCParser(
+            b: b,
+            le: parsed.le,
+            sliceOffset: parsed.sliceOffset,
+            segments: parsed.segments,
+            fixups: fixups
+        )
     }
 
     @discardableResult

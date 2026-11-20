@@ -28,8 +28,8 @@ public struct MachOFacts: Sendable {
     public var hasSwift: Bool           // 含 __swift5_* section
     public var isArm64e: Bool
 
-    /// 原生 ObjC 元数据解析是否适用(未加密、传统指针格式)。
-    public var nativeObjCDumpSupported: Bool { !isEncrypted && !hasChainedFixups && !isArm64e }
+    /// 未加密就能走内置 ObjC 解析。chained fixups、arm64e 和 relative method list 由内置引擎读取。
+    public var nativeObjCDumpSupported: Bool { !isEncrypted }
 
     public init(archs: [String] = [], isFat: Bool = false, isEncrypted: Bool = false,
                 hasChainedFixups: Bool = false, hasSwift: Bool = false, isArm64e: Bool = false) {

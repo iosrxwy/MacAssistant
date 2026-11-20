@@ -125,7 +125,7 @@ public enum DesktopIconPresets {
         ai("deepseek", 0.95, 0.95, 0.96),
         ai("kimi", 0.10, 0.10, 0.11),
         ai("doubao", 0.78, 0.88, 0.96),
-        ai("workbuddy", 0.98, 0.95, 0.82),
+        ai("workbuddy", 0.18, 0.78, 0.62),
         ai("glm", 0.18, 0.18, 0.18),
         ai("muse", 0.45, 0.50, 0.86)
     ]
@@ -607,6 +607,16 @@ private final class ImageCache: @unchecked Sendable {
         images[key] = created
         lock.unlock()
         return created
+    }
+}
+
+public enum AIQuotaArtwork {
+    public static func image(named name: String) -> NSImage? {
+        let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "AIIcons")
+            ?? Bundle.module.url(forResource: name, withExtension: "png")
+        guard let url, let image = NSImage(contentsOf: url), image.isValid else { return nil }
+        image.isTemplate = false
+        return image
     }
 }
 

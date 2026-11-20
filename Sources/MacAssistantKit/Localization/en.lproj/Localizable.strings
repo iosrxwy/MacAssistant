@@ -111,6 +111,8 @@
 "toolfinder.feature.macApp.detail" = "Inject plugins into a local macOS app, or scan and remove third-party libraries already written into it";
 "toolfinder.feature.appUninstall.title" = "Uninstall Apps";
 "toolfinder.feature.appUninstall.detail" = "Move an ordinary app and its leftovers in your Library to the Trash";
+"toolfinder.feature.defaultApps.title" = "Defaults";
+"toolfinder.feature.defaultApps.detail" = "Choose the default app for png, pdf, md, ai, and other extensions, and restore it";
 "permission.repair-files.title" = "Files and Folders";
 "permission.repair-files.usedBy" = "The app you choose, for quarantine removal, xattr reset and resigning";
 "permission.repair-files.withoutIt" = "Those actions stay at preview if no app is selected; nothing else on the Mac is changed";
@@ -373,6 +375,22 @@
 "cleanup.vm-vmware-item.name" = "VMware · %@";
 "cleanup.slack-cache.name" = "Slack cache";
 "cleanup.slack-cache.detail" = "Message and file previews; rebuilt as you use Slack";
+"cleanup.project-artifact.name" = "%@ · %@";
+"cleanup.project-artifact.detail" = "%@. Restore with: %@";
+"cleanup.project-artifact.removes" = "A folder this project can generate again";
+"cleanup.project-artifact.keeps" = "Source, lockfiles, and project settings";
+"cleanup.project-artifact.kind.node" = "dependencies";
+"cleanup.project-artifact.kind.cargo" = "build output";
+"cleanup.project-artifact.kind.pods" = "Pods";
+"cleanup.project-artifact.kind.gradle" = "Gradle cache";
+"cleanup.project-artifact.kind.venv" = "virtualenv";
+"cleanup.project-artifact.kind.flutter" = "tool cache";
+"cleanup.project-artifact.reinstall.node" = "npm ci / pnpm install / yarn / bun install";
+"cleanup.project-artifact.reinstall.cargo" = "cargo build";
+"cleanup.project-artifact.reinstall.pods" = "pod install";
+"cleanup.project-artifact.reinstall.gradle" = "./gradlew build";
+"cleanup.project-artifact.reinstall.venv" = "python -m venv .venv";
+"cleanup.project-artifact.reinstall.flutter" = "flutter pub get";
 "cleanup.discord-cache.name" = "Discord cache";
 "cleanup.discord-cache.detail" = "Media previews; rebuilt as you use Discord";
 "cleanup.spotify-cache.name" = "Spotify cache";
@@ -438,6 +456,10 @@
 "cleanup.message.denied-skipped" = "%@: blocked by the built-in safety deny list";
 "cleanup.message.process-running" = "%@ is running, so this item was skipped";
 "cleanup.message.process-unknown" = "Couldn’t read the process list, so this item was skipped";
+"cleanup.message.project-in-use" = "The project is in use, so this item was skipped";
+"cleanup.snapshots.none-removable" = "Nothing to delete. The newest snapshot and the last backup stay.";
+"cleanup.snapshots.preview.policy" = "Keeps the newest snapshot and the last backup whose name ends in .backup";
+"cleanup.snapshots.preview.none" = "Nothing to delete. The newest snapshot and the last backup stay.";
 "cleanup.message.sqlite-busy" = "%@: SQLite/WAL is in use, so it was skipped";
 "cleanup.message.sqlite-unknown" = "%@: couldn’t tell if SQLite/WAL is in use, so it was skipped";
 
@@ -690,7 +712,10 @@
 "classdump.skip.emptyClassList" = "The Objective-C class list is empty or malformed";
 "classdump.skip.unresolvableClassPointer" = "A class metadata pointer could not be resolved";
 "classdump.skip.unresolvableMethodListPointer" = "A method list pointer could not be resolved";
-"classdump.skip.relativeMethodList" = "Relative method lists are beyond the scope of the built-in experimental parser";
+"classdump.skip.relativeMethodList" = "Some relative method list entries could not be parsed";
+"classdump.skip.malformedFixups" = "The chained fixups header is malformed or an unsupported version, so raw words were not treated as addresses";
+"classdump.skip.compressedFixupSymbols" = "Chained fixup symbols are compressed, so external symbol names were not recovered";
+"classdump.skip.unknownFixupFormat" = "Unsupported chained fixup pointer format: %@";
 "classdump.skip.partialTraditionalMethods" = "Some traditional method entries could not be parsed";
 "classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1: you must first obtain an unencrypted binary in a legally authorized environment";
 "classdump.reason.arm64eMayNeedExternal" = "arm64e pointer authentication may require an external enhancer";
@@ -883,8 +908,8 @@
 "tool.error.installFailed" = "Installation failed: %@";
 "tool.homebrew.guidance.legacy" = "See the official installation instructions or the signed installer at brew.sh. Homebrew's supported range changes over time, and this app makes no promise that macOS 13 is still supported.";
 "tool.homebrew.guidance.current" = "See Homebrew's official installation instructions, system requirements, and signed installer at brew.sh. This app never runs curl | bash.";
-"tool.classDump.builtInFallback" = "The built-in Class Dump works out of the box; external class-dump only adds support for complex formats";
-"tool.dsdump.builtInFallback" = "Built-in parsing does not need dsdump. The repo has no LICENSE and the source says All rights reserved, so it is not bundled or auto-installed";
+"tool.classDump.builtInFallback" = "The built-in Class Dump covers chained fixups and relative method lists. External class-dump is GPL and is only an optional cross-check, not shipped with the app";
+"tool.dsdump.builtInFallback" = "Built-in parsing already exports Objective-C headers, including chained fixups and relative method lists. The dsdump repo has no LICENSE and the source says All rights reserved, so it is not bundled or auto-installed";
 "tool.xtool.builtInFallback" = "Optional. This app already signs and installs with Apple ID; xtool is only an alternative path";
 "tool.installHint.openProjectPage" = "Open project page";
 
@@ -922,6 +947,7 @@
 "sidebar.cleanup" = "Cleanup";
 "sidebar.appUninstall" = "Uninstall Apps";
 "sidebar.desktopIcons" = "Desktop Icons";
+"sidebar.defaultApps" = "Defaults";
 "sidebar.appClone" = "App Clones";
 "sidebar.memory" = "Memory";
 "sidebar.network" = "Network";
@@ -1204,3 +1230,17 @@
 
 /* Energy-mode authorization dialog. The grant lasts until quit, so this appears once. */
 "energy.auth.once" = "Changing the energy mode needs an administrator. After you allow it once, this launch will not ask again.";
+
+"sidebar.aiQuota" = "Quota Lookup";
+
+/* Default apps */
+"defaultapp.error.invalidExtension" = "That extension is not valid. Enter a suffix such as png, without a path.";
+"defaultapp.error.unknownType" = "The system did not provide a file type for this extension";
+"defaultapp.error.unsafeType" = "The type %@ is too broad. Changing it would affect many files";
+"defaultapp.error.sharedType" = "The type %@ covers more than this extension";
+"defaultapp.error.appMissing" = "That app could not be found";
+"defaultapp.error.notAnApp" = "Choose an .app";
+"defaultapp.error.nothingToRestore" = "There is no default app to restore";
+"defaultapp.error.originalMissing" = "The previous app is no longer there";
+"defaultapp.error.historyUnreadable" = "The default-app record could not be read";
+"defaultapp.error.applyFailed" = "Nothing was changed: %@";

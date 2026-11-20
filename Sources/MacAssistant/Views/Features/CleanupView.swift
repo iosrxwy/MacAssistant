@@ -1382,6 +1382,10 @@ private struct CleanupStandaloneActionsView: View {
     @State private var dockerReclaimable: String?
     @State private var simulatorListing = CleanupSimulatorListing.empty
 
+    private var snapshotRetention: SnapshotRetentionPlan {
+        RepairService.retentionPlan(for: snapshots)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
@@ -1539,7 +1543,7 @@ private struct CleanupStandaloneActionsView: View {
                     RiskBadge(risk: .danger)
                     Spacer()
                     Button(role: .destructive) { confirmDocker = true } label: {
-                        Label("prune", systemImage: "shippingbox")
+                        Label(L("cleanupview.docker.action"), systemImage: "shippingbox")
                     }
                     .disabled(!model.canRunStandalone)
                     .confirmationDialog(
@@ -1593,6 +1597,11 @@ private struct CleanupStandaloneActionsView: View {
                         HStack {
                             Image(systemName: "camera.aperture").foregroundStyle(.secondary)
                             Text(snap.date).font(.system(.caption, design: .monospaced))
+                            if snapshotRetention.keptDates.contains(snap.date) {
+                                Text(L("cleanupview.snapshots.kept"))
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                             Spacer()
                             Button(role: .destructive) { deleteSnapshot(snap.date) } label: {
                                 Text(L("cleanupview.snapshots.delete"))
@@ -1604,11 +1613,11 @@ private struct CleanupStandaloneActionsView: View {
                         .insetSurfaceBackground(RoundedRectangle(cornerRadius: 8), legacyFill: .black.opacity(0.04))
                     }
                 }
-                commandPreview(RepairService.thinSnapshotsCommand)
+                commandPreview(RepairService.thinSnapshotsPreview(for: snapshots))
                 Button(role: .destructive) { confirmThin = true } label: {
                     Label(L("cleanupview.snapshots.thin"), systemImage: "arrow.down.circle")
                 }
-                .disabled(!model.canRunStandalone)
+                .disabled(!model.canRunStandalone || (!snapshots.isEmpty && snapshotRetention.removableDates.isEmpty))
                 .confirmationDialog(
                     L("cleanupview.snapshots.thin.confirm.title"),
                     isPresented: $confirmThin,

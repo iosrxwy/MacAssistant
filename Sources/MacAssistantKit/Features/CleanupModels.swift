@@ -202,6 +202,8 @@ public struct CleanupTargetDefinition: Identifiable, Equatable, Sendable {
     public let category: CleanupCategory
     public let systemImage: String
     public let safetyDetails: CleanupSafetyDetails?
+    /// 删除前要再确认「没人正在用」的工程根。不参与删除。
+    public let activityRoot: URL?
 
     public init(
         id: String,
@@ -213,7 +215,8 @@ public struct CleanupTargetDefinition: Identifiable, Equatable, Sendable {
         defaultSelected: Bool,
         category: CleanupCategory = .system,
         systemImage: String = "folder",
-        safetyDetails: CleanupSafetyDetails? = nil
+        safetyDetails: CleanupSafetyDetails? = nil,
+        activityRoot: URL? = nil
     ) {
         self.id = id
         self.name = name
@@ -225,6 +228,7 @@ public struct CleanupTargetDefinition: Identifiable, Equatable, Sendable {
         self.category = category
         self.systemImage = systemImage
         self.safetyDetails = safetyDetails
+        self.activityRoot = activityRoot
     }
 
     public var isSelectable: Bool {

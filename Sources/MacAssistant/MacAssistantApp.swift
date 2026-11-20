@@ -69,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         DuoStatusBarController.shared.install()
+        AIQuotaCenter.shared.install()
 
         Task.detached(priority: .utility) {
             _ = AppleIDSigningService.renewDueJobs()
@@ -77,6 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         DuoStatusBarController.shared.prepareForTermination()
+        AIQuotaCenter.shared.prepareForTermination()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

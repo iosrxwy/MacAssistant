@@ -12,6 +12,12 @@ public struct PortProcess: Identifiable, Sendable, Hashable {
 }
 
 /// 一条 Time Machine 本地快照。
+/// 批量删除本地快照时留下和删掉的日期。日期相同的快照会一起留下。
+public struct SnapshotRetentionPlan: Equatable, Sendable {
+    public let keptDates: Set<String>
+    public let removableDates: [String]
+}
+
 public struct SnapshotEntry: Identifiable, Sendable, Hashable {
     public let id = UUID()
     public let name: String     // 完整快照名
@@ -182,7 +188,8 @@ public enum RepairService {
 
     // MARK: - Docker / Time Machine（系统清理页调用）
 
-    public static let dockerPruneCommand = "docker system prune -a --volumes -f"
+    /// 不带 `-a` 和 `--volumes`：不删未使用的镜像，也不删数据卷。
+    public static let dockerPruneCommand = "docker system prune -f"
 
     @discardableResult
     public static func dockerPrune() throws -> CommandResult {
@@ -191,12 +198,24 @@ public enum RepairService {
 
     /// 解析 `docker system df --format '{{json .}}'` 各行的 Reclaimable。
     public static func dockerReclaimableBytes(from dfOutput: String) -> Int64 {
+        dockerReclaimableBytes(from: dfOutput, types: nil)
+    }
+
+    /// 这次 prune 实际会碰到的两类：停止的容器和构建缓存。镜像与数据卷不计入。
+    public static func dockerPruneReclaimableBytes(from dfOutput: String) -> Int64 {
+        dockerReclaimableBytes(from: dfOutput, types: ["Containers", "Build Cache"])
+    }
+
+    private static func dockerReclaimableBytes(from dfOutput: String, types: Set<String>?) -> Int64 {
         dfOutput.split(separator: "\n").reduce(0) { total, line in
             guard let data = String(line).data(using: .utf8),
                   let row = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let text = row["Reclaimable"] as? String
             else {
                 return total
+            }
+            if let types {
+                guard let type = row["Type"] as? String, types.contains(type) else { return total }
             }
             return total + parseDockerSize(text)
         }
@@ -209,7 +228,7 @@ public enum RepairService {
         else {
             return nil
         }
-        return dockerReclaimableBytes(from: result.stdout)
+        return dockerPruneReclaimableBytes(from: result.stdout)
     }
 
     /// 解析 Docker 的 "1.23GB (45%)" 字符串。
@@ -247,25 +266,68 @@ public enum RepairService {
         }
     }
 
-    public static let thinSnapshotsCommand = "sudo tmutil thinlocalsnapshots / 999999999999 4"
+    /// 保留最新一张，以及名称以 `.backup` 结尾的上次备份。同一日期会一起留下，因为删日期会删掉该时刻的全部快照。
+    public static func retentionPlan(for snapshots: [SnapshotEntry]) -> SnapshotRetentionPlan {
+        let ordered = snapshots.sorted { lhs, rhs in
+            if lhs.date != rhs.date { return lhs.date < rhs.date }
+            return lhs.name < rhs.name
+        }
+        var kept = Set<String>()
+        if let newest = ordered.last {
+            kept.insert(newest.date)
+        }
+        if let backup = ordered.last(where: { $0.name.hasSuffix(".backup") }) {
+            kept.insert(backup.date)
+        }
+        var seen = Set<String>()
+        var removable: [String] = []
+        for entry in ordered where !kept.contains(entry.date) {
+            if seen.insert(entry.date).inserted {
+                removable.append(entry.date)
+            }
+        }
+        return SnapshotRetentionPlan(keptDates: kept, removableDates: removable)
+    }
 
-    @discardableResult
-    public static func thinSnapshots() throws -> CommandResult {
-        try AdminRunner.run(
-            executable: "/usr/bin/tmutil",
-            arguments: ["thinlocalsnapshots", "/", "999999999999", "4"]
-        )
+    public static func thinSnapshotsPreview(for snapshots: [SnapshotEntry]) -> String {
+        if snapshots.isEmpty {
+            return L("cleanup.snapshots.preview.policy")
+        }
+        let removable = retentionPlan(for: snapshots).removableDates
+        if removable.isEmpty {
+            return L("cleanup.snapshots.preview.none")
+        }
+        return removable.map { "tmutil deletelocalsnapshots \($0)" }.joined(separator: "\n")
     }
 
     @discardableResult
-    public static func deleteSnapshot(date: String) throws -> CommandResult {
+    public static func thinSnapshots() throws -> CommandResult {
+        let dates = retentionPlan(for: localSnapshots()).removableDates
+        guard !dates.isEmpty else {
+            return CommandResult(exitCode: 0, stdout: L("cleanup.snapshots.none-removable"), stderr: "")
+        }
+        let commands = try dates.map { date in
+            try AdminRunner.PrivilegedCommand(
+                executable: "/usr/bin/tmutil",
+                arguments: ["deletelocalsnapshots", validatedSnapshotDate(date)]
+            )
+        }
+        return try AdminRunner.runSequence(commands)
+    }
+
+    private static func validatedSnapshotDate(_ date: String) throws -> String {
         guard date.range(of: #"^\d{4}-\d{2}-\d{2}-\d{6}$"#, options: .regularExpression) != nil else {
             throw NSError(domain: "RepairService", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: L("repair.error.invalid-snapshot-date")])
         }
-        return try AdminRunner.run(
+        return date
+    }
+
+    @discardableResult
+    public static func deleteSnapshot(date: String) throws -> CommandResult {
+        try AdminRunner.run(
             executable: "/usr/bin/tmutil",
-            arguments: ["deletelocalsnapshots", date]
+            arguments: ["deletelocalsnapshots", validatedSnapshotDate(date)]
         )
     }
 

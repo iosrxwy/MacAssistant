@@ -77,10 +77,16 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
     public let footprintBytes: UInt64
     public let executablePath: String
     public let displayName: String
-    /// `ps` 的 comm：Electron 会改成带窗口/工作区的名称，例如 `extension-host Mac小助手`。
+    /// 进程自己改过的名称。Electron 会写成带窗口或工作区的标题，用来区分同一个 App 的多个进程。
     public let processTitle: String
     /// 进程处于 SSTOP（SIGSTOP / 调试挂起）。冻结后列表仍保留，方便再点一次恢复。
     public let isStopped: Bool
+    public let parentPID: Int32
+    public let startTime: Date?
+    /// 用户态加内核态，单位纳秒。百分比要和上一次采样做差，单次读数没有意义。
+    public let cpuTimeNanoseconds: UInt64
+    /// 占满一个核心为 100%。还没有第二次采样，或低于可见阈值时为空。
+    public let cpuPercent: Double?
 
     public var id: Int32 { pid }
     public var name: String {
@@ -106,7 +112,11 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
         footprintBytes: UInt64 = 0,
         displayName: String? = nil,
         processTitle: String = "",
-        isStopped: Bool = false
+        isStopped: Bool = false,
+        parentPID: Int32 = 0,
+        startTime: Date? = nil,
+        cpuTimeNanoseconds: UInt64 = 0,
+        cpuPercent: Double? = nil
     ) {
         self.pid = pid
         self.userID = userID
@@ -115,12 +125,33 @@ public struct ProcessMemoryInfo: Identifiable, Hashable, Sendable {
         self.executablePath = executablePath
         self.processTitle = processTitle
         self.isStopped = isStopped
+        self.parentPID = parentPID
+        self.startTime = startTime
+        self.cpuTimeNanoseconds = cpuTimeNanoseconds
+        self.cpuPercent = cpuPercent
         let fallback = ProcessDisplayNameResolver.executableName(executablePath)
         if let displayName, !displayName.isEmpty {
             self.displayName = displayName
         } else {
             self.displayName = fallback
         }
+    }
+
+    public func settingCPUPercent(_ percent: Double?) -> ProcessMemoryInfo {
+        ProcessMemoryInfo(
+            pid: pid,
+            userID: userID,
+            rssBytes: rssBytes,
+            executablePath: executablePath,
+            footprintBytes: footprintBytes,
+            displayName: displayName,
+            processTitle: processTitle,
+            isStopped: isStopped,
+            parentPID: parentPID,
+            startTime: startTime,
+            cpuTimeNanoseconds: cpuTimeNanoseconds,
+            cpuPercent: percent
+        )
     }
 
     public func matches(_ query: String) -> Bool {
@@ -289,6 +320,16 @@ public struct ProcessIconCacheKey: Hashable, Sendable {
     }
 }
 
+public struct ProcessSampleResult: Sendable, Equatable {
+    public let text: String
+    public let truncated: Bool
+
+    public init(text: String, truncated: Bool) {
+        self.text = text
+        self.truncated = truncated
+    }
+}
+
 public enum ProcessSignal: Equatable, Sendable {
     case terminate
     case kill
@@ -440,42 +481,66 @@ public enum MemoryService {
     }
 
     public static func processes(currentUserOnly: Bool = true) throws -> [ProcessMemoryInfo] {
-        let result = try Shell.run("/bin/ps", ["-axo", "pid=,uid=,rss=,comm="])
+        let currentUID = currentUserOnly ? getuid() : nil
+        var listed: [ProcessMemoryInfo] = []
+        for pid in try listProcessIDs() {
+            guard let info = processBSDInfo(pid: pid) else { continue }
+            if let currentUID, info.pbi_uid != currentUID { continue }
+            let short = shortName(info)
+            let path = processExecutablePath(pid: pid) ?? ""
+            let executable = path.isEmpty ? short : path
+            guard !executable.isEmpty else { continue }
+            let resource = processResourceSample(pid: pid)
+            let footprint = resource?.footprint ?? 0
+            let rss = residentBytes(pid: pid)
+            let memory = footprint > 0 ? footprint : rss
+            let stopped = isStoppedBSDStatus(info.pbi_status)
+            // 冻结成功后 footprint 可能降到 0，仍要留在列表里，否则无法恢复。
+            guard shouldListProcess(memoryBytes: memory, isStopped: stopped) else { continue }
+            let arguments = ProcessArguments.shouldReadCommandTitle(executablePath: executable, shortName: short)
+                ? ProcessArguments.read(pid: pid)
+                : nil
+            listed.append(ProcessMemoryInfo(
+                pid: pid,
+                userID: info.pbi_uid,
+                rssBytes: rss,
+                executablePath: executable,
+                footprintBytes: footprint,
+                displayName: ProcessDisplayNameResolver.displayName(executablePath: executable),
+                processTitle: ProcessArguments.listTitle(
+                    executablePath: executable,
+                    shortName: short,
+                    arguments: arguments
+                ),
+                isStopped: stopped,
+                parentPID: Int32(bitPattern: info.pbi_ppid),
+                startTime: startDate(info),
+                cpuTimeNanoseconds: resource?.cpuNanoseconds ?? 0
+            ))
+        }
+        return listed.sorted(by: Self.isHigherMemoryUsage)
+    }
+
+    /// 采样约 3 秒调用栈。需要管理员的 spindump 不在这里。
+    public static func sample(pid: Int32, processName: String, seconds: Int = 3) throws -> ProcessSampleResult {
+        try validatePID(pid, processName: processName)
+        guard (1...10).contains(seconds) else { throw MemoryServiceError.invalidPID }
+        let result = try Shell.run("/usr/bin/sample", [String(pid), String(seconds)])
         guard result.succeeded else { throw MemoryServiceError.commandFailed(result.combinedOutput) }
-        return parsePS(result.stdout, currentUserID: currentUserOnly ? getuid() : nil)
-            .compactMap { process -> ProcessMemoryInfo? in
-                let path = processExecutablePath(pid: process.pid) ?? process.executablePath
-                let footprint = processMemoryFootprint(pid: process.pid) ?? 0
-                let memory = footprint > 0 ? footprint : process.rssBytes
-                let stopped = processIsStopped(pid: process.pid)
-                // 冻结成功后 footprint 可能降到 0，仍要留在列表里，否则无法恢复。
-                guard shouldListProcess(memoryBytes: memory, isStopped: stopped) else { return nil }
-                return ProcessMemoryInfo(
-                    pid: process.pid,
-                    userID: process.userID,
-                    rssBytes: process.rssBytes,
-                    executablePath: path,
-                    footprintBytes: footprint,
-                    displayName: ProcessDisplayNameResolver.displayName(executablePath: path),
-                    processTitle: process.processTitle,
-                    isStopped: stopped
-                )
-            }
-            .sorted(by: Self.isHigherMemoryUsage)
+        let text = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { throw MemoryServiceError.commandFailed(result.stderr) }
+        let limit = 400_000
+        if text.count > limit {
+            let end = text.index(text.startIndex, offsetBy: limit)
+            return ProcessSampleResult(text: String(text[..<end]), truncated: true)
+        }
+        return ProcessSampleResult(text: text, truncated: false)
     }
 
     /// 活动监视器「内存」列：phys_footprint，包含压缩和仍记在该进程头上的换出页。
-    /// 不能用 ps 的 RSS：大工具（IDA / Xcode）被压缩后 RSS 会掉到几十 MB，列表里就像“没开”。
+    /// 不能用 RSS：大工具（IDA / Xcode）被压缩后 RSS 会掉到几十 MB，列表里就像“没开”。
     public static func processMemoryFootprint(pid: Int32) -> UInt64? {
-        guard pid > 0 else { return nil }
-        var info = rusage_info_v4()
-        let status = withUnsafeMutablePointer(to: &info) { pointer -> Int32 in
-            pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { rebound in
-                proc_pid_rusage(pid, Int32(RUSAGE_INFO_V4), rebound)
-            }
-        }
-        guard status == 0 else { return nil }
-        return info.ri_phys_footprint
+        processResourceSample(pid: pid)?.footprint
     }
 
     public static func isHigherMemoryUsage(_ lhs: ProcessMemoryInfo, _ rhs: ProcessMemoryInfo) -> Bool {
@@ -585,7 +650,7 @@ public enum MemoryService {
         status == UInt32(SSTOP)
     }
 
-    static func processBSDStatus(pid: Int32) -> UInt32? {
+    static func processBSDInfo(pid: Int32) -> proc_bsdinfo? {
         guard pid > 0 else { return nil }
         var info = proc_bsdinfo()
         let size = Int32(MemoryLayout<proc_bsdinfo>.size)
@@ -593,7 +658,77 @@ public enum MemoryService {
             proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, pointer, size)
         }
         guard written > 0 else { return nil }
-        return info.pbi_status
+        return info
+    }
+
+    static func processBSDStatus(pid: Int32) -> UInt32? {
+        processBSDInfo(pid: pid)?.pbi_status
+    }
+
+    private static func listProcessIDs() throws -> [Int32] {
+        let needed = proc_listallpids(nil, 0)
+        if needed < 0 { throw MemoryServiceError.commandFailed("proc_listallpids") }
+        guard needed > 0 else { return [] }
+        let stride = MemoryLayout<pid_t>.stride
+        let count = Int(needed) / stride + 64
+        var buffer = [pid_t](repeating: 0, count: count)
+        let written = proc_listallpids(&buffer, Int32(buffer.count * stride))
+        if written < 0 { throw MemoryServiceError.commandFailed("proc_listallpids") }
+        guard written > 0 else { return [] }
+        let filled = min(buffer.count, Int(written) / stride)
+        return buffer.prefix(filled).filter { $0 > 1 }
+    }
+
+    private static func shortName(_ info: proc_bsdinfo) -> String {
+        let registered = cStringField(info.pbi_name)
+        if !registered.isEmpty { return registered }
+        return cStringField(info.pbi_comm)
+    }
+
+    private static func startDate(_ info: proc_bsdinfo) -> Date? {
+        guard info.pbi_start_tvsec > 0 else { return nil }
+        let seconds = TimeInterval(info.pbi_start_tvsec) + TimeInterval(info.pbi_start_tvusec) / 1_000_000
+        return Date(timeIntervalSince1970: seconds)
+    }
+
+    private static func cStringField<T>(_ value: T) -> String {
+        withUnsafeBytes(of: value) { raw in
+            let bytes = raw.prefix { $0 != 0 }
+            guard !bytes.isEmpty else { return "" }
+            return String(bytes: bytes, encoding: .utf8) ?? ""
+        }
+    }
+
+    private struct ProcessResourceSample {
+        var footprint: UInt64
+        var cpuNanoseconds: UInt64
+    }
+
+    private static func processResourceSample(pid: Int32) -> ProcessResourceSample? {
+        guard pid > 0 else { return nil }
+        var info = rusage_info_v4()
+        let status = withUnsafeMutablePointer(to: &info) { pointer -> Int32 in
+            pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { rebound in
+                proc_pid_rusage(pid, Int32(RUSAGE_INFO_V4), rebound)
+            }
+        }
+        guard status == 0 else { return nil }
+        let (sum, overflow) = info.ri_user_time.addingReportingOverflow(info.ri_system_time)
+        return ProcessResourceSample(
+            footprint: info.ri_phys_footprint,
+            cpuNanoseconds: overflow ? UInt64.max : sum
+        )
+    }
+
+    private static func residentBytes(pid: Int32) -> UInt64 {
+        guard pid > 0 else { return 0 }
+        var info = proc_taskinfo()
+        let size = Int32(MemoryLayout<proc_taskinfo>.size)
+        let written = withUnsafeMutablePointer(to: &info) { pointer in
+            proc_pidinfo(pid, PROC_PIDTASKINFO, 0, pointer, size)
+        }
+        guard written > 0 else { return 0 }
+        return info.pti_resident_size
     }
 
     public static func processIsStopped(pid: Int32) -> Bool {

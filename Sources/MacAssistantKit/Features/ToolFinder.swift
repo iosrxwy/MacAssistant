@@ -111,6 +111,15 @@ public enum ToolFinder {
             ]
         ),
         FeatureEntry(
+            id: "defaultApps",
+            destination: .defaultApps,
+            keywords: [
+                "默认方式", "默认打开", "打开方式", "默认应用", "文件关联", "用其他应用打开",
+                "png", "pdf", "markdown", "md", "ai", "psd",
+                "default app", "open with", "file association", "duti"
+            ]
+        ),
+        FeatureEntry(
             id: "appUninstall",
             destination: .appUninstall,
             keywords: [

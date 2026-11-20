@@ -263,6 +263,7 @@ struct DuoStatusDetail: View {
     @ObservedObject var model: DuoStatusBarController
     @ObservedObject var actions: DuoQuickActions
     @ObservedObject var bluetooth: DuoBluetoothModel
+    @ObservedObject private var quota = AIQuotaCenter.shared
     var placement: DuoDetailPlacement
     @AppStorage(LocalizationSettings.defaultsKey) private var language = AppLanguage.system.rawValue
     @State private var showingCustomize = false
@@ -311,6 +312,9 @@ struct DuoStatusDetail: View {
         .onAppear {
             actions.refreshForDisplay(onBattery: model.status.powerSource == .battery)
             bluetooth.refresh()
+            if placement == .popover {
+                quota.refresh(interactive: false)
+            }
         }
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             guard placement == .page else { return }
@@ -331,8 +335,141 @@ struct DuoStatusDetail: View {
             volumeBlock
             menuDivider
                 .padding(.vertical, 6)
+            if showsQuotaSection {
+                quotaBlock
+                menuDivider
+                    .padding(.vertical, 6)
+            }
             shortcutsBlock(onlyVisible: true)
         }
+    }
+
+    private var quotaRows: [AIQuotaSnapshot] {
+        let ready = quota.snapshots.filter { $0.state == .ready && $0.headline != nil }
+        return AIQuotaProviderID.displayOrder.compactMap { id in
+            ready.first { $0.id == id }
+        }
+    }
+
+    private var showsQuotaSection: Bool {
+        guard placement == .popover, quota.menuBarEnabled else { return false }
+        if !quotaRows.isEmpty { return true }
+        if quota.snapshots.contains(where: { $0.state == .needsKeychain }) { return true }
+        return quota.refreshing || quota.snapshots.isEmpty
+    }
+
+    private var quotaBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(L("aiquota.menu.section"))
+                .font(DuoRowMetrics.section)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 2)
+            if quotaRows.isEmpty {
+                Text(quota.snapshots.contains(where: { $0.state == .needsKeychain })
+                    ? L("aiquota.needsKeychain")
+                    : L("aiquota.refreshing"))
+                    .font(DuoRowMetrics.subtitle)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 4)
+                if quota.snapshots.contains(where: { $0.state == .needsKeychain }) {
+                    Button(L("aiquota.authorize")) {
+                        quota.refresh(interactive: true)
+                    }
+                    .buttonStyle(.plain)
+                    .font(DuoRowMetrics.subtitle)
+                    .foregroundStyle(Color(nsColor: .systemBlue))
+                    .accessibilityIdentifier("duo.quota.authorize")
+                }
+            } else {
+                ForEach(quotaRows) { snapshot in
+                    quotaRow(snapshot)
+                }
+            }
+        }
+    }
+
+    /// Cursor 的 API 池不在头条里。菜单只补这一条，别的服务仍只显示综合剩余。
+    private func quotaSupplements(_ snapshot: AIQuotaSnapshot) -> [AIQuotaWindow] {
+        guard snapshot.id == .cursor else { return [] }
+        let headlineID = snapshot.headline?.id
+        return snapshot.windows.filter {
+            $0.titleKey == "aiquota.window.otherModels" && $0.id != headlineID
+        }
+    }
+
+    private func quotaRow(_ snapshot: AIQuotaSnapshot) -> some View {
+        let percent = snapshot.headline?.remainingPercent ?? 0
+        let remaining = snapshot.headline?.remainingFraction ?? 1
+        let extras = quotaSupplements(snapshot)
+        return Button {
+            model.showDestination(.aiQuota)
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                quotaLine(
+                    title: snapshot.id.displayName,
+                    percent: percent,
+                    remaining: remaining,
+                    icon: AIQuotaIcons.image(for: snapshot.id),
+                    detail: false
+                )
+                ForEach(extras) { window in
+                    quotaLine(
+                        title: AIQuotaFormat.windowTitle(window),
+                        percent: window.remainingPercent,
+                        remaining: window.remainingFraction,
+                        icon: nil,
+                        detail: true
+                    )
+                }
+            }
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(quotaAccessLabel(snapshot, percent: percent, extras: extras))
+        .accessibilityIdentifier("duo.quota.\(snapshot.id.rawValue)")
+    }
+
+    private func quotaLine(
+        title: String,
+        percent: Int,
+        remaining: Double,
+        icon: NSImage?,
+        detail: Bool
+    ) -> some View {
+        HStack(spacing: 8) {
+            if let icon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 16, height: 16)
+            } else {
+                Color.clear.frame(width: 16, height: 16)
+            }
+            Text(title)
+                .font(detail ? DuoRowMetrics.subtitle : DuoRowMetrics.title)
+                .foregroundStyle(detail ? Color.secondary : Color.primary)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text("\(percent)%")
+                .font(DuoRowMetrics.subtitle)
+                .foregroundStyle(quotaValueColor(remaining))
+                .frame(width: 40, alignment: .trailing)
+        }
+    }
+
+    /// 充足时跟音量读数一样用次要色。只有偏低才换成橙色或红色。
+    private func quotaValueColor(_ remaining: Double) -> Color {
+        if remaining <= 0.2 { return AIQuotaFormat.remainingColor(remaining) }
+        return .secondary
+    }
+
+    private func quotaAccessLabel(_ snapshot: AIQuotaSnapshot, percent: Int, extras: [AIQuotaWindow]) -> String {
+        var parts = ["\(snapshot.id.displayName) \(percent)%"]
+        for window in extras {
+            parts.append("\(AIQuotaFormat.windowTitle(window)) \(window.remainingPercent)%")
+        }
+        return parts.joined(separator: ", ")
     }
 
     private var menuDivider: some View {

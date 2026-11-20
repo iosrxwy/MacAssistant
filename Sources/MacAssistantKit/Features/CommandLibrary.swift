@@ -386,8 +386,8 @@ public enum CommandLibrary {
         rm -rf "$(brew --cache)"
         """#,
          "清旧版本、孤儿依赖与下载缓存。", .safe, nil),
-        ("系统清理", "Docker 全面清理", #"docker system prune -a --volumes"#,
-         "会删除未使用镜像/容器/卷;Docker.raw 常吃几十 GB。", .danger, nil),
+        ("系统清理", "Docker 缓存清理", #"docker system prune -f"#,
+         "只清停止的容器、未使用的网络、悬空镜像和构建缓存。不删未使用的镜像，也不删数据卷。", .caution, nil),
         ("系统清理", "清各语言包管理器缓存", #"""
         npm cache clean --force
         yarn cache clean

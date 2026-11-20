@@ -111,6 +111,8 @@
 "toolfinder.feature.macApp.detail" = "Внедряйте плагины в локальное приложение macOS или сканируйте и удаляйте уже записанные сторонние библиотеки";
 "toolfinder.feature.appUninstall.title" = "Удаление приложений";
 "toolfinder.feature.appUninstall.detail" = "Перемещает обычное приложение и его остатки в библиотеке в Корзину";
+"toolfinder.feature.defaultApps.title" = "По умолчанию";
+"toolfinder.feature.defaultApps.detail" = "Назначает программу по умолчанию для png, pdf, md, ai и других расширений и возвращает её";
 "permission.repair-files.title" = "Файлы и папки";
 "permission.repair-files.usedBy" = "Выбранное приложение — для снятия карантина, сброса xattr и повторной подписи";
 "permission.repair-files.withoutIt" = "Без выбранного приложения эти действия остаются на предпросмотре; остальное на Mac не меняется";
@@ -373,6 +375,22 @@
 "cleanup.vm-vmware-item.name" = "VMware · %@";
 "cleanup.slack-cache.name" = "Кэш Slack";
 "cleanup.slack-cache.detail" = "Предпросмотры сообщений и файлов; восстанавливаются при использовании Slack";
+"cleanup.project-artifact.name" = "%@ · %@";
+"cleanup.project-artifact.detail" = "%@. Восстановление: %@";
+"cleanup.project-artifact.removes" = "Папка, которую этот проект может создать заново";
+"cleanup.project-artifact.keeps" = "Исходники, lock-файлы и настройки проекта";
+"cleanup.project-artifact.kind.node" = "зависимости";
+"cleanup.project-artifact.kind.cargo" = "результат сборки";
+"cleanup.project-artifact.kind.pods" = "Pods";
+"cleanup.project-artifact.kind.gradle" = "кэш Gradle";
+"cleanup.project-artifact.kind.venv" = "виртуальное окружение";
+"cleanup.project-artifact.kind.flutter" = "кэш инструментов";
+"cleanup.project-artifact.reinstall.node" = "npm ci / pnpm install / yarn / bun install";
+"cleanup.project-artifact.reinstall.cargo" = "cargo build";
+"cleanup.project-artifact.reinstall.pods" = "pod install";
+"cleanup.project-artifact.reinstall.gradle" = "./gradlew build";
+"cleanup.project-artifact.reinstall.venv" = "python -m venv .venv";
+"cleanup.project-artifact.reinstall.flutter" = "flutter pub get";
 "cleanup.discord-cache.name" = "Кэш Discord";
 "cleanup.discord-cache.detail" = "Предпросмотры медиа; восстанавливаются при использовании Discord";
 "cleanup.spotify-cache.name" = "Кэш Spotify";
@@ -438,6 +456,10 @@
 "cleanup.message.denied-skipped" = "%@: заблокировано встроенным списком запрета безопасности";
 "cleanup.message.process-running" = "%@ запущен, поэтому этот элемент пропущен";
 "cleanup.message.process-unknown" = "Не удалось прочитать список процессов, поэтому этот элемент пропущен";
+"cleanup.message.project-in-use" = "Проект сейчас используется, поэтому этот элемент пропущен";
+"cleanup.snapshots.none-removable" = "Удалять нечего. Новейший снимок и последний бэкап остаются.";
+"cleanup.snapshots.preview.policy" = "Оставляет новейший снимок и последний бэкап с окончанием .backup";
+"cleanup.snapshots.preview.none" = "Удалять нечего. Новейший снимок и последний бэкап остаются.";
 "cleanup.message.sqlite-busy" = "%@: SQLite/WAL занят, поэтому пропущено";
 "cleanup.message.sqlite-unknown" = "%@: не удалось определить, занят ли SQLite/WAL, поэтому пропущено";
 
@@ -690,7 +712,10 @@
 "classdump.skip.emptyClassList" = "Список классов Objective-C пуст или повреждён";
 "classdump.skip.unresolvableClassPointer" = "Не удалось разрешить указатель метаданных класса";
 "classdump.skip.unresolvableMethodListPointer" = "Не удалось разрешить указатель списка методов";
-"classdump.skip.relativeMethodList" = "Relative method lists выходят за рамки встроенного экспериментального анализатора";
+"classdump.skip.relativeMethodList" = "Некоторые записи relative method list не удалось разобрать";
+"classdump.skip.malformedFixups" = "Заголовок chained fixups повреждён или имеет неподдерживаемую версию; сырые слова не считались адресами";
+"classdump.skip.compressedFixupSymbols" = "Таблица символов chained fixups сжата, внешние имена не восстановлены";
+"classdump.skip.unknownFixupFormat" = "Неподдерживаемый формат указателя chained fixups: %@";
 "classdump.skip.partialTraditionalMethods" = "Некоторые традиционные записи методов не удалось разобрать";
 "classdump.reason.fairPlayNeedsDecrypted" = "FairPlay cryptid=1: сначала получите незашифрованный бинарник в юридически разрешённой среде";
 "classdump.reason.arm64eMayNeedExternal" = "Аутентификация указателей arm64e может потребовать внешнего усилителя";
@@ -883,8 +908,8 @@
 "tool.error.installFailed" = "Установка не удалась: %@";
 "tool.homebrew.guidance.legacy" = "См. официальные инструкции по установке или подписанный установщик на brew.sh. Поддерживаемый диапазон Homebrew со временем меняется, и это приложение не обещает, что macOS 13 всё ещё поддерживается.";
 "tool.homebrew.guidance.current" = "См. официальные инструкции Homebrew, системные требования и подписанный установщик на brew.sh. Это приложение никогда не запускает curl | bash.";
-"tool.classDump.builtInFallback" = "Встроенный Class Dump работает сразу; внешний class-dump лишь добавляет поддержку сложных форматов";
-"tool.dsdump.builtInFallback" = "Встроенный разбор не нуждается в dsdump. В репозитории нет LICENSE, в исходниках All rights reserved — не включаем и не устанавливаем";
+"tool.classDump.builtInFallback" = "Встроенный Class Dump покрывает chained fixups и relative method list. Внешний class-dump — GPL и только необязательная сверка, в приложение не входит";
+"tool.dsdump.builtInFallback" = "Встроенный разбор уже экспортирует заголовки ObjC, включая chained fixups и relative method list. В репозитории dsdump нет LICENSE, в исходниках All rights reserved — не включаем и не устанавливаем";
 "tool.xtool.builtInFallback" = "Необязательно. Приложение уже подписывает и устанавливает через Apple ID; xtool — лишь запасной путь";
 "tool.installHint.openProjectPage" = "Открыть страницу проекта";
 
@@ -922,6 +947,7 @@
 "sidebar.cleanup" = "Очистка";
 "sidebar.appUninstall" = "Удаление приложений";
 "sidebar.desktopIcons" = "Значки";
+"sidebar.defaultApps" = "По умолчанию";
 "sidebar.appClone" = "Клоны";
 "sidebar.memory" = "Память";
 "sidebar.network" = "Сеть";
@@ -1204,3 +1230,17 @@
 
 /* Диалог прав для режима энергопотребления. Разрешение действует до выхода. */
 "energy.auth.once" = "Для смены режима энергопотребления нужны права администратора. После одного разрешения этот запуск больше не спросит.";
+
+"sidebar.aiQuota" = "Проверка квоты";
+
+/* Default apps */
+"defaultapp.error.invalidExtension" = "Недопустимое расширение. Введите суффикс вроде png, без пути.";
+"defaultapp.error.unknownType" = "Система не дала тип файла для этого расширения";
+"defaultapp.error.unsafeType" = "Тип %@ слишком широкий. Его смена затронет много файлов";
+"defaultapp.error.sharedType" = "Тип %@ относится не только к этому расширению";
+"defaultapp.error.appMissing" = "Это приложение не найдено";
+"defaultapp.error.notAnApp" = "Выберите .app";
+"defaultapp.error.nothingToRestore" = "Нет приложения по умолчанию, которое можно вернуть";
+"defaultapp.error.originalMissing" = "Прежнего приложения уже нет";
+"defaultapp.error.historyUnreadable" = "Не удалось прочитать запись о программах по умолчанию";
+"defaultapp.error.applyFailed" = "Не изменено: %@";

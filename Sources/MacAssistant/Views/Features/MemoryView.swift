@@ -6,8 +6,18 @@ struct MemoryView: View {
     @StateObject private var iconProvider = ProcessIconProvider()
     @State private var snapshot: MemorySnapshot?
     @State private var processes: [ProcessMemoryInfo] = []
-    @State private var selectedPID: Int32?
+    @State private var selectedID: String?
     @State private var query = ""
+    @State private var sort: ProcessListSort = .memory
+    @State private var grouped = true
+    @State private var expandedGroups: Set<String> = []
+    @State private var cpuHistory: [Int32: ProcessCPUSample] = [:]
+    @State private var seenPIDs: Set<Int32>?
+    @State private var freshUntil: [Int32: Date] = [:]
+    @State private var inspection: ProcessInspection?
+    @State private var detailLoading = false
+    @State private var sampleSheet: SampleSheet?
+    @State private var sampling = false
     @State private var busy = false
     @State private var live = true
     @State private var statusText = ""
@@ -24,7 +34,11 @@ struct MemoryView: View {
     }
 
     private var selectedProcess: ProcessMemoryInfo? {
-        processes.first { $0.pid == selectedPID }
+        process(for: selectedID, among: processes)
+    }
+
+    private var searching: Bool {
+        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var totalMemory: UInt64 {
@@ -95,6 +109,12 @@ struct MemoryView: View {
         }
         .alert(item: $pendingSignal) { pending in
             confirmation(for: pending)
+        }
+        .sheet(item: $inspection) { inspection in
+            ProcessDetailSheet(inspection: inspection)
+        }
+        .sheet(item: $sampleSheet) { sheet in
+            ProcessSampleSheet(name: sheet.name, result: sheet.result)
         }
         .alert(L("memoryview.purge.confirmTitle"), isPresented: $showPurgeConfirmation) {
             if MemoryService.purgeAvailable {
@@ -205,56 +225,35 @@ struct MemoryView: View {
                         .frame(width: 220)
                         .accessibilityLabel(L("memoryview.search.accessibility"))
                         .accessibilityIdentifier("memory.search")
-                    Button(selectedProcess?.isStopped == true ? L("memoryview.resume") : L("memoryview.freeze")) {
-                        guard let selectedProcess else { return }
-                        let signal: ProcessSignal = selectedProcess.isStopped ? .resume : .suspend
-                        do {
-                            let targets = try MemoryService.suspensionTargets(
-                                for: selectedProcess,
-                                among: processes,
-                                action: signal
-                            )
-                            pendingSignal = PendingSignal(
-                                process: selectedProcess,
-                                signal: signal,
-                                targets: targets
-                            )
-                        } catch {
-                            showingTopProcessHint = false
-                            statusText = error.localizedDescription
-                        }
-                    }
-                    .disabled(selectedProcess == nil || busy)
-                    .help(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
-                    .accessibilityHint(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
-                    .accessibilityIdentifier(selectedProcess?.isStopped == true ? "memory.resume" : "memory.freeze")
-                    Button(L("memoryview.quit")) {
-                        if let selectedProcess {
-                            pendingSignal = PendingSignal(process: selectedProcess, signal: .terminate)
-                        }
-                    }
-                    .disabled(selectedProcess == nil || busy)
-                    .accessibilityHint(L("memoryview.quit.hint"))
-                    Button(L("memoryview.forceQuit")) {
-                        if let selectedProcess {
-                            pendingSignal = PendingSignal(process: selectedProcess, signal: .kill)
-                        }
-                    }
-                    .disabled(selectedProcess == nil || busy)
-                    .accessibilityHint(L("memoryview.forceQuit.hint"))
                 }
-                .padding(14)
+                .padding(.horizontal, 14)
+                .padding(.top, 14)
+                .padding(.bottom, 8)
+
+                HStack(spacing: 8) {
+                    Toggle(isOn: $grouped) {
+                        Label(L("memoryview.group"), systemImage: "square.stack.3d.up")
+                    }
+                    .toggleStyle(.button)
+                    .controlSize(.small)
+                    .help(L("memoryview.group.help"))
+                    .accessibilityIdentifier("memory.group")
+                    Spacer()
+                    processActions
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 10)
 
                 Divider()
 
-                List(selection: $selectedPID) {
-                    ForEach(filteredProcesses) { process in
-                        ProcessMemoryRow(
-                            process: process,
-                            physicalMemory: snapshot?.physical ?? 0,
-                            icon: iconProvider.icon(for: process)
-                        )
-                            .tag(process.pid)
+                processColumns
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+
+                List(selection: $selectedID) {
+                    ForEach(listEntries) { entry in
+                        listRow(entry)
+                            .tag(entry.id)
                             .sceneListRowFill()
                     }
                 }
@@ -264,6 +263,135 @@ struct MemoryView: View {
                 .accessibilityIdentifier("memory.processList")
             }
         }
+    }
+
+    private var processActions: some View {
+        HStack(spacing: 8) {
+            Button {
+                openDetail()
+            } label: {
+                Label(L("memoryview.detail"), systemImage: "info.circle")
+            }
+            .disabled(selectedProcess == nil || detailLoading || busy)
+            .help(L("memoryview.detail.help"))
+            .accessibilityIdentifier("memory.detail")
+            Button {
+                bringSelectionToFront()
+            } label: {
+                Label(L("memoryview.front"), systemImage: "macwindow.on.rectangle")
+            }
+            .disabled(selectedProcess == nil || busy)
+            .help(L("memoryview.front.help"))
+            .accessibilityIdentifier("memory.front")
+            Button {
+                sampleSelection()
+            } label: {
+                Label(L("memoryview.sample"), systemImage: "waveform.path.ecg")
+            }
+            .disabled(selectedProcess == nil || sampling || busy)
+            .help(L("memoryview.sample.help"))
+            .accessibilityIdentifier("memory.sample")
+            Button(selectedProcess?.isStopped == true ? L("memoryview.resume") : L("memoryview.freeze")) {
+                guard let selectedProcess else { return }
+                let signal: ProcessSignal = selectedProcess.isStopped ? .resume : .suspend
+                do {
+                    let targets = try MemoryService.suspensionTargets(
+                        for: selectedProcess,
+                        among: processes,
+                        action: signal
+                    )
+                    pendingSignal = PendingSignal(
+                        process: selectedProcess,
+                        signal: signal,
+                        targets: targets
+                    )
+                } catch {
+                    showingTopProcessHint = false
+                    statusText = error.localizedDescription
+                }
+            }
+            .disabled(selectedProcess == nil || busy)
+            .help(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
+            .accessibilityHint(selectedProcess?.isStopped == true ? L("memoryview.resume.hint") : L("memoryview.freeze.hint"))
+            .accessibilityIdentifier(selectedProcess?.isStopped == true ? "memory.resume" : "memory.freeze")
+            Button(L("memoryview.quit")) {
+                if let selectedProcess {
+                    pendingSignal = PendingSignal(process: selectedProcess, signal: .terminate)
+                }
+            }
+            .disabled(selectedProcess == nil || busy)
+            .accessibilityHint(L("memoryview.quit.hint"))
+            Button(L("memoryview.forceQuit")) {
+                if let selectedProcess {
+                    pendingSignal = PendingSignal(process: selectedProcess, signal: .kill)
+                }
+            }
+            .disabled(selectedProcess == nil || busy)
+            .accessibilityHint(L("memoryview.forceQuit.hint"))
+        }
+        .controlSize(.small)
+    }
+
+    private var processColumns: some View {
+        HStack(spacing: 10) {
+            sortButton(.name, L("memoryview.column.name"), help: nil)
+            Spacer()
+            sortButton(.cpu, L("memoryview.column.cpu"), help: L("memoryview.column.cpu.help"))
+                .frame(width: 72, alignment: .trailing)
+            sortButton(.memory, L("memoryview.column.memory"), help: nil)
+                .frame(width: 148, alignment: .trailing)
+        }
+    }
+
+    private func sortButton(_ kind: ProcessListSort, _ title: String, help: String?) -> some View {
+        Button {
+            sort = kind
+        } label: {
+            Text(title)
+                .font(.caption.weight(sort == kind ? .semibold : .regular))
+                .foregroundStyle(sort == kind ? Color.accentColor : Color.secondary)
+        }
+        .buttonStyle(.borderless)
+        .help(help ?? title)
+        .accessibilityIdentifier(sortIdentifier(kind))
+        .accessibilityAddTraits(sort == kind ? .isSelected : [])
+    }
+
+    private func rowIcon(_ entry: ProcessListEntry) -> NSImage {
+        if let process = entry.iconProcess {
+            return iconProvider.icon(for: process)
+        }
+        return NSImage(systemSymbolName: "app", accessibilityDescription: L("memoryview.icon.app"))
+            ?? NSImage(size: NSSize(width: 24, height: 24))
+    }
+
+    private func listRow(_ entry: ProcessListEntry) -> some View {
+        HStack(spacing: 8) {
+            if let group = entry.group {
+                Button {
+                    toggle(group)
+                } label: {
+                    Image(systemName: isExpanded(group) ? "chevron.down" : "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .frame(width: 14)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(L("memoryview.group"))
+            } else if entry.depth > 0 {
+                Color.clear.frame(width: 14)
+            }
+            ProcessMemoryRow(
+                title: entry.title,
+                subtitle: entry.subtitle,
+                stopped: entry.stopped,
+                fresh: entry.fresh,
+                cpuPercent: entry.cpuPercent,
+                memoryBytes: entry.memoryBytes,
+                physicalMemory: snapshot?.physical ?? 0,
+                icon: rowIcon(entry)
+            )
+        }
+        .padding(.vertical, 3)
     }
 
     private func metric(_ title: String, _ bytes: UInt64) -> some View {
@@ -293,7 +421,9 @@ struct MemoryView: View {
                 (try MemoryService.snapshot(), try MemoryService.processes())
             }.value
             guard generation == loadGeneration else { return }
-            apply(snapshot: result.0, processes: result.1)
+            let stamped = ProcessCPUAccounting.annotate(result.1, history: cpuHistory, now: Date())
+            cpuHistory = stamped.history
+            apply(snapshot: result.0, processes: stamped.processes)
         } catch {
             guard generation == loadGeneration, markBusy else { return }
             statusText = error.localizedDescription
@@ -304,12 +434,15 @@ struct MemoryView: View {
         if snapshot != newSnapshot {
             snapshot = newSnapshot
         }
-        if processes != newProcesses {
+        noteArrivals(newProcesses)
+        if processes.map(\.pid) != newProcesses.map(\.pid) {
             iconProvider.retain(processes: newProcesses)
+        }
+        if processes != newProcesses {
             processes = newProcesses
         }
-        if let selectedPID, !processes.contains(where: { $0.pid == selectedPID }) {
-            self.selectedPID = nil
+        if process(for: selectedID, among: processes) == nil {
+            selectedID = nil
         }
         applyTopProcessHint()
     }
@@ -317,7 +450,7 @@ struct MemoryView: View {
     private func applyTopProcessHint() {
         guard showingTopProcessHint else { return }
         if let process = processes.first {
-            selectedPID = process.pid
+            selectedID = "p:\(process.pid)"
             statusText = L(
                 "memoryview.topProcess",
                 process.displayName,
@@ -450,6 +583,166 @@ struct MemoryView: View {
         }
     }
 
+    private var listEntries: [ProcessListEntry] {
+        let filtered = filteredProcesses
+        if grouped {
+            return ProcessListOrganizer.groups(from: filtered, sort: sort).flatMap { group in
+                var rows = [groupEntry(group)]
+                if group.processes.count > 1, isExpanded(group) {
+                    rows.append(contentsOf: group.processes.map { processEntry($0, depth: 1) })
+                }
+                return rows
+            }
+        }
+        return ProcessListOrganizer.sorted(filtered, by: sort).map { processEntry($0, depth: 0) }
+    }
+
+    private func groupEntry(_ group: ProcessAppGroup) -> ProcessListEntry {
+        if group.processes.count == 1, let process = group.processes.first {
+            return processEntry(process, depth: 0)
+        }
+        let iconProcess = group.primaryProcess ?? group.processes.first
+        return ProcessListEntry(
+            id: "g:\(group.id)",
+            title: group.displayName,
+            subtitle: L("memoryview.group.count", group.processes.count),
+            stopped: group.isStopped,
+            fresh: false,
+            cpuPercent: group.cpuPercent,
+            memoryBytes: group.memoryBytes,
+            iconProcess: iconProcess,
+            group: group,
+            depth: 0
+        )
+    }
+
+    private func processEntry(_ process: ProcessMemoryInfo, depth: Int) -> ProcessListEntry {
+        ProcessListEntry(
+            id: "p:\(process.pid)",
+            title: process.displayName,
+            subtitle: processSubtitle(process),
+            stopped: process.isStopped,
+            fresh: isFresh(process.pid),
+            cpuPercent: process.cpuPercent,
+            memoryBytes: process.memoryBytes,
+            iconProcess: process,
+            group: nil,
+            depth: depth
+        )
+    }
+
+    private func processSubtitle(_ process: ProcessMemoryInfo) -> String {
+        let pid = "PID \(process.pid)"
+        if let remark = process.remark, !remark.isEmpty {
+            return "\(remark) · \(pid)"
+        }
+        if process.displayName.compare(process.name, options: [.caseInsensitive, .diacriticInsensitive]) != .orderedSame {
+            return "\(process.name) · \(pid)"
+        }
+        return pid
+    }
+
+    private func isExpanded(_ group: ProcessAppGroup) -> Bool {
+        searching || expandedGroups.contains(group.id)
+    }
+
+    private func toggle(_ group: ProcessAppGroup) {
+        if expandedGroups.contains(group.id) {
+            expandedGroups.remove(group.id)
+        } else {
+            expandedGroups.insert(group.id)
+        }
+    }
+
+    private func process(for selection: String?, among processes: [ProcessMemoryInfo]) -> ProcessMemoryInfo? {
+        guard let selection else { return nil }
+        if selection.hasPrefix("p:"), let pid = Int32(selection.dropFirst(2)) {
+            return processes.first { $0.pid == pid }
+        }
+        guard selection.hasPrefix("g:") else { return nil }
+        let groupID = String(selection.dropFirst(2))
+        let members = processes.filter { ($0.applicationBundlePath ?? "pid:\($0.pid)") == groupID }
+        return members.first(where: MemoryService.isApplicationMainProcess) ?? members.first
+    }
+
+    private func noteArrivals(_ processes: [ProcessMemoryInfo], now: Date = Date()) {
+        let fresh = ProcessArrival.freshPIDs(previous: seenPIDs, current: processes.map(\.pid))
+        seenPIDs = Set(processes.map(\.pid))
+        let expiry = now.addingTimeInterval(4)
+        for pid in fresh {
+            freshUntil[pid] = expiry
+        }
+        freshUntil = freshUntil.filter { seenPIDs?.contains($0.key) == true && $0.value > now }
+    }
+
+    private func isFresh(_ pid: Int32) -> Bool {
+        guard let until = freshUntil[pid] else { return false }
+        return until > Date()
+    }
+
+    private func sortIdentifier(_ kind: ProcessListSort) -> String {
+        switch kind {
+        case .name: return "memory.sort.name"
+        case .cpu: return "memory.sort.cpu"
+        case .memory: return "memory.sort.memory"
+        }
+    }
+
+    private func openDetail() {
+        guard let selectedProcess else { return }
+        detailLoading = true
+        let peers = processes
+        Task {
+            let result = await Task.detached {
+                ProcessInspectionService.inspect(selectedProcess, among: peers)
+            }.value
+            inspection = result
+            detailLoading = false
+        }
+    }
+
+    private func bringSelectionToFront() {
+        guard let selectedProcess else { return }
+        showingTopProcessHint = false
+        if bringToFront(selectedProcess) {
+            statusText = ""
+        } else {
+            statusText = L("memoryview.front.failed")
+        }
+    }
+
+    private func bringToFront(_ process: ProcessMemoryInfo) -> Bool {
+        if let direct = NSRunningApplication(processIdentifier: process.pid),
+           direct.activationPolicy == .regular {
+            return direct.activate(options: [.activateAllWindows])
+        }
+        guard let bundle = process.applicationBundlePath else { return false }
+        guard let app = NSWorkspace.shared.runningApplications.first(where: { running in
+            running.bundleURL?.standardizedFileURL.path == bundle && running.activationPolicy == .regular
+        }) else { return false }
+        return app.activate(options: [.activateAllWindows])
+    }
+
+    private func sampleSelection() {
+        guard let selectedProcess else { return }
+        sampling = true
+        showingTopProcessHint = false
+        statusText = L("memoryview.sample.running")
+        let name = selectedProcess.displayName
+        Task {
+            do {
+                let result = try await Task.detached {
+                    try MemoryService.sample(pid: selectedProcess.pid, processName: selectedProcess.name)
+                }.value
+                sampleSheet = SampleSheet(name: name, result: result)
+                statusText = ""
+            } catch {
+                statusText = error.localizedDescription
+            }
+            sampling = false
+        }
+    }
+
     private func pressureColor(_ level: MemoryPressureLevel) -> Color {
         switch level {
         case .healthy: return .green
@@ -469,8 +762,26 @@ struct MemoryView: View {
     }
 }
 
+private struct ProcessListEntry: Identifiable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let stopped: Bool
+    let fresh: Bool
+    let cpuPercent: Double?
+    let memoryBytes: UInt64
+    let iconProcess: ProcessMemoryInfo?
+    let group: ProcessAppGroup?
+    let depth: Int
+}
+
 private struct ProcessMemoryRow: View {
-    let process: ProcessMemoryInfo
+    let title: String
+    let subtitle: String
+    let stopped: Bool
+    let fresh: Bool
+    let cpuPercent: Double?
+    let memoryBytes: UInt64
     let physicalMemory: UInt64
     let icon: NSImage
 
@@ -482,58 +793,274 @@ private struct ProcessMemoryRow: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
-                    Text(process.displayName)
+                    Text(title)
                         .lineLimit(1)
-                    if process.isStopped {
-                        Text(L("memoryview.frozen"))
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.orange)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.orange.opacity(0.15), in: Capsule())
+                    if stopped {
+                        badge(L("memoryview.frozen"), color: .orange)
+                    }
+                    if fresh {
+                        badge(L("memoryview.new"), color: .blue)
                     }
                 }
-                Text(processRowSubtitle(process))
+                Text(subtitle)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
-            Spacer()
-            Text(MemoryService.formatBytes(process.memoryBytes))
+            Spacer(minLength: 8)
+            Text(cpuText)
                 .font(.callout.monospacedDigit())
-            if physicalMemory > 0 {
-                Text(String(format: "%.1f%%", Double(process.memoryBytes) / Double(physicalMemory) * 100))
-                    .font(.caption.monospacedDigit())
+                .foregroundStyle(cpuPercent == nil ? Color.secondary : Color.primary)
+                .frame(width: 72, alignment: .trailing)
+            Text(MemoryService.formatBytes(memoryBytes))
+                .font(.callout.monospacedDigit())
+                .frame(width: 88, alignment: .trailing)
+            Text(memoryShare)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(width: 48, alignment: .trailing)
+        }
+        .opacity(stopped ? 0.72 : 1)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var cpuText: String {
+        guard let cpuPercent else { return "" }
+        return ProcessCPUAccounting.format(cpuPercent)
+    }
+
+    private var memoryShare: String {
+        guard physicalMemory > 0 else { return "" }
+        return String(format: "%.1f%%", Double(memoryBytes) / Double(physicalMemory) * 100)
+    }
+
+    private var accessibilityText: String {
+        var spoken = subtitle.isEmpty ? title : "\(title)，\(subtitle)"
+        if stopped {
+            spoken += "，\(L("memoryview.frozen"))"
+        }
+        if fresh {
+            spoken += "，\(L("memoryview.new"))"
+        }
+        if let cpuPercent {
+            return L(
+                "memoryview.row.accessibility.cpu",
+                spoken,
+                ProcessCPUAccounting.format(cpuPercent),
+                MemoryService.formatBytes(memoryBytes)
+            )
+        }
+        return L(
+            "memoryview.row.accessibility",
+            spoken,
+            MemoryService.formatBytes(memoryBytes)
+        )
+    }
+
+    private func badge(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(color)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(color.opacity(0.15), in: Capsule())
+    }
+}
+
+private struct SampleSheet: Identifiable {
+    let id = UUID()
+    let name: String
+    let result: ProcessSampleResult
+}
+
+private struct ProcessDetailSheet: View {
+    let inspection: ProcessInspection
+    @SwiftUI.Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(inspection.displayName)
+                    .font(.title3.weight(.semibold))
+                Text("PID \(inspection.pid)")
+                    .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 48, alignment: .trailing)
+                Spacer()
+                Button(L("common.cancel")) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    detailGrid
+                    commandSection
+                    signatureSection
+                    portSection
+                    fileSection
+                }
             }
         }
-        .padding(.vertical, 3)
-        .opacity(process.isStopped ? 0.72 : 1)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(L(
-            "memoryview.row.accessibility",
-            rowAccessibilityName(process),
-            Int(process.pid),
-            MemoryService.formatBytes(process.memoryBytes)
-        ))
+        .padding(20)
+        .frame(width: 640, height: 560)
     }
 
-    private func rowAccessibilityName(_ process: ProcessMemoryInfo) -> String {
-        let spoken = process.remark.map { "\(process.displayName)，\($0)" } ?? process.displayName
-        guard process.isStopped else { return spoken }
-        return "\(spoken)，\(L("memoryview.frozen"))"
+    private var detailGrid: some View {
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+            gridRow(L("memoryview.detail.user"), inspection.userName)
+            gridRow(L("memoryview.detail.parent"), parentText)
+            gridRow(L("memoryview.detail.started"), startText)
+            gridRow(L("memoryview.detail.path"), inspection.executablePath)
+        }
     }
 
-    private func processRowSubtitle(_ process: ProcessMemoryInfo) -> String {
-        let pid = "PID \(process.pid)"
-        if let remark = process.remark, !remark.isEmpty {
-            return "\(remark) · \(pid)"
+    private var commandSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionTitle(L("memoryview.detail.command"))
+            Text(inspection.commandLine.isEmpty ? L("memoryview.detail.none") : inspection.commandLine)
+                .font(.caption.monospaced())
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack {
+                CopyButton(text: inspection.commandLine)
+                Button(L("memoryview.detail.reveal")) {
+                    reveal(inspection.executablePath)
+                }
+                .disabled(!FileManager.default.fileExists(atPath: inspection.executablePath))
+            }
         }
-        if process.displayName.compare(process.name, options: [.caseInsensitive, .diacriticInsensitive]) != .orderedSame {
-            return "\(process.name) · \(pid)"
+    }
+
+    private var signatureSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionTitle(L("memoryview.detail.signature"))
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                gridRow(L("memoryview.detail.signature"), signatureKind)
+                gridRow(L("memoryview.detail.authority"), inspection.signature.authority ?? L("memoryview.detail.none"))
+                gridRow(L("memoryview.detail.team"), inspection.signature.teamID ?? L("memoryview.detail.none"))
+                gridRow(L("memoryview.detail.sandbox"), yesNo(inspection.signature.isSandboxed))
+                gridRow(L("memoryview.detail.notarized"), yesNo(inspection.signature.hasNotarizationTicket))
+            }
         }
-        return pid
+    }
+
+    private var portSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionTitle(L("memoryview.detail.ports"))
+            if inspection.listeningPorts.isEmpty {
+                Text(L("memoryview.detail.none")).foregroundStyle(.secondary)
+            } else {
+                ForEach(inspection.listeningPorts) { port in
+                    Text(port.display).font(.caption.monospaced()).textSelection(.enabled)
+                }
+            }
+        }
+    }
+
+    private var fileSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionTitle(L("memoryview.detail.files"))
+            if inspection.openFiles.isEmpty {
+                Text(L("memoryview.detail.none")).foregroundStyle(.secondary)
+            } else {
+                ForEach(inspection.openFiles) { file in
+                    Text(file.path)
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                        .lineLimit(2)
+                }
+                if inspection.omittedFileCount > 0 {
+                    Text(L("memoryview.detail.files.more", inspection.omittedFileCount))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var parentText: String {
+        guard inspection.parentPID > 1 else { return L("memoryview.detail.none") }
+        if let parentName = inspection.parentName, !parentName.isEmpty {
+            return "\(parentName) · PID \(inspection.parentPID)"
+        }
+        return "PID \(inspection.parentPID)"
+    }
+
+    private var startText: String {
+        guard let startTime = inspection.startTime else { return L("memoryview.detail.none") }
+        return Self.startFormatter.string(from: startTime)
+    }
+
+    private var signatureKind: String {
+        switch inspection.signature.kind {
+        case .apple: return L("memoryview.signature.apple")
+        case .developerID: return L("memoryview.signature.developerID")
+        case .adHoc: return L("memoryview.signature.adHoc")
+        case .other: return L("memoryview.signature.other")
+        case .unsigned: return L("memoryview.signature.unsigned")
+        case .unavailable: return L("memoryview.signature.unavailable")
+        }
+    }
+
+    private func yesNo(_ value: Bool?) -> String {
+        guard let value else { return L("memoryview.detail.none") }
+        return value ? L("memoryview.yes") : L("memoryview.no")
+    }
+
+    private func sectionTitle(_ title: String) -> some View {
+        Text(title).font(.headline)
+    }
+
+    private func gridRow(_ title: String, _ value: String) -> some View {
+        GridRow {
+            Text(title).foregroundStyle(.secondary)
+            Text(value).textSelection(.enabled)
+        }
+        .font(.callout)
+    }
+
+    private func reveal(_ path: String) {
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+    }
+
+    private static let startFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter
+    }()
+}
+
+private struct ProcessSampleSheet: View {
+    let name: String
+    let result: ProcessSampleResult
+    @SwiftUI.Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(L("memoryview.sample.title"))
+                    .font(.title3.weight(.semibold))
+                Text(name)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                CopyButton(text: result.text)
+                Button(L("common.cancel")) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+            }
+            if result.truncated {
+                Text(L("memoryview.sample.truncated"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            ScrollView {
+                Text(result.text)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(20)
+        .frame(width: 760, height: 560)
     }
 }
 
